@@ -1,0 +1,3 @@
+/home/dev/Documents/opencv_practice/read_camera/CMakeFiles/read_camera.dir
+/home/dev/Documents/opencv_practice/read_camera/CMakeFiles/edit_cache.dir
+/home/dev/Documents/opencv_practice/read_camera/CMakeFiles/rebuild_cache.dir
