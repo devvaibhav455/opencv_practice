@@ -3,9 +3,11 @@
 
 #include <opencv2/opencv.hpp>
 #include <iostream>
+#include <unistd.h> // To use sleep functionality
+
 
 // How to build the project and run the executable: https://docs.opencv.org/4.x/db/df5/tutorial_linux_gcc_cmake.html
-// cmake . && make #The executable gets stored into the bin folder
+// clear && cmake . && make #The executable gets stored into the bin folder
 
 // Ref: https://soubhihadri.medium.com/image-processing-best-practices-c-280caadacb82
 
@@ -22,24 +24,29 @@ public:
                         const int height,
                         const int channel,
                         unsigned char* output);
+    static void rotate(const unsigned char* input,
+                           const int width,
+                           const int height,
+                           const int channel,
+                           unsigned char* &output);
 
     
 };
 
-void ImageOperator::to_gray_m1(const cv::Mat &input, cv::Mat &output) {
-        unsigned char *data_out = (unsigned char*)(output.data);
-        int ind = 0;
-        auto end = input.end<cv::Vec3b>();
-        cv::MatConstIterator_<cv::Vec3b> it = input.begin<cv::Vec3b>();
-        for (; it != end; ++it) {
-            const unsigned char &r = (*it)[2];
-            const unsigned char &g = (*it)[1];
-            const unsigned char &b = (*it)[0];
-            data_out[ind] = 0.3*r+0.59*g+0.11*b;
-            ind++;
+    void ImageOperator::to_gray_m1(const cv::Mat &input, cv::Mat &output) {
+            unsigned char *data_out = (unsigned char*)(output.data);
+            int ind = 0;
+            auto end = input.end<cv::Vec3b>();
+            cv::MatConstIterator_<cv::Vec3b> it = input.begin<cv::Vec3b>();
+            for (; it != end; ++it) {
+                const unsigned char &r = (*it)[2];
+                const unsigned char &g = (*it)[1];
+                const unsigned char &b = (*it)[0];
+                data_out[ind] = 0.3*r+0.59*g+0.11*b;
+                ind++;
+            }
+            
         }
-        
-    }
 
     void ImageOperator::to_gray_m2(const cv::Mat &input, cv::Mat &output) {
         unsigned char *data_in = (unsigned char*)(input.data);
@@ -89,23 +96,51 @@ void ImageOperator::to_gray_m1(const cv::Mat &input, cv::Mat &output) {
         
     }
 
+    void ImageOperator::rotate(const unsigned char* input,
+                           const int width,
+                           const int height,
+                           const int channel,
+                           unsigned char* &output){
+        
+        // std::cout << "Rotate fn: width, height, channels are: " << width << " " << height << " " << " " << channel << std::endl;
+        
+        unsigned char* tmp = new unsigned char[width*height*channel]; //Storing value on the heap; https://stackoverflow.com/questions/5688417/how-to-initialize-unsigned-char-pointer
+
+        for (int row = 0; row < height; ++row) {
+            for (int col = 0; col < width; col+=1) {
+                tmp[(col*width) + width - 1 - row] = input[(row*width) + col];
+                
+            }
+        }
+        output = tmp;
+    }
+
 int main(int argc, char** argv)
 {
+    // CV_[The number of bits per item][Signed or Unsigned][Type Prefix]C[The channel number]
+    // For instance, CV_8UC3 means we use unsigned char types that are 8 bit long and each pixel has three of these to form the three channels. There are types predefined for up to four channels. https://docs.opencv.org/3.4/d6/d6d/tutorial_mat_the_basic_image_container.html
     cv::VideoCapture cam(0);
     if (!cam.isOpened()) {
         throw std::runtime_error("Error");
     }
     
-    cv::Mat output(350,350,CV_8UC1);
-    cv::Mat rgb_output(350,350,CV_8UC3);
+    int res_width = 400; //columns
+    int res_height = 400; //rows
+
+
+    cv::Mat output(res_height,res_width,CV_8UC1); //Single channel matrix for grayscale image
+    cv::Mat rgb_output(res_height,res_width,CV_8UC3); //3 channel matrix for color image
 
     ImageOperator ImageOperator;
 
     // cv::namedWindow("Window");
     while (true) {
-        cv::Mat frame;
-        cam >> frame;
-        cv::resize(frame, frame, cv::Size(400, 400));
+        cv::Mat frame; //frame.type() is 0 viz. 8UC1 (https://stackoverflow.com/questions/10167534/how-to-find-out-what-type-of-a-mat-object-is-with-mattype-in-opencv/39780825#39780825)
+        // std::cout << "Frame before input from camera = " << std::endl << " " << frame << std::endl << std::endl;
+        cam >> frame; //frame.type() is 16 viz. 8UC3
+        cv::resize(frame, frame, cv::Size(res_height, res_width));
+        // std::cout << "Frame after input from camera = " << std::endl << " " << frame.at<cv::Vec3b>(0,0) << std::endl; 
+        // std::cout << "Frame after input from camera = " << std::endl << " " << frame << std::endl << std::endl;
         cv::imshow("bgr_frame", frame);
 
         cv::cvtColor(frame, output, cv::COLOR_BGR2GRAY);
@@ -126,6 +161,16 @@ int main(int argc, char** argv)
         ImageOperator::to_gray(bgr_input,frame.cols,frame.rows,frame.channels(),gray_output);
         cv::Mat output_gray(frame.rows, frame.cols, CV_8UC1, gray_output);
         cv::imshow("to_gray_no_opencv", output_gray);
+
+        // std::cout << "Data after B/W conversion m3= " << std::endl << " " << output << std::endl << std::endl;
+
+        cv::Mat output_rotate(output.rows, output.cols, CV_8UC1);
+        ImageOperator::rotate(output.data, output.cols, output.rows, output.channels(), output_rotate.data);
+        cv::imshow("Rotated by 90deg", output_rotate);
+        
+        // std::cout << "M after rotation = " << std::endl << " " << output_rotate << std::endl << std::endl;
+        // sleep(20);
+
         if(cv::waitKey(30) >= 0) break;
     }
     return 0;
