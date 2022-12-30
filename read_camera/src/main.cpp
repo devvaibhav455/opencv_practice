@@ -28,7 +28,7 @@ public:
                            const int width,
                            const int height,
                            const int channel,
-                           unsigned char* &output);
+                           unsigned char* &output); //Receiving the pointer via reference. It is essentially saying that the pointer is referenced or aliased as `output`. While calling it, we are using `output_rotate.data`. So, we are basically saying that `output_rotate.data` and `output` are one and the same thing and whatever changes are made to output will be made to `output_rotate.data` as well. Src: https://stackoverflow.com/questions/5789806/meaning-of-and-in-c. Check Mahesh (simple code for difference) and Juna Chavarro answer (read from right to left). Practice https://onlinegdb.com/n1d1nYx4S
 
     
 };
@@ -100,11 +100,13 @@ public:
                            const int width,
                            const int height,
                            const int channel,
-                           unsigned char* &output){
+                           unsigned char* &output){ //Receiving the pointer via reference
         
         // std::cout << "Rotate fn: width, height, channels are: " << width << " " << height << " " << " " << channel << std::endl;
         
         unsigned char* tmp = new unsigned char[width*height*channel]; //Storing value on the heap; https://stackoverflow.com/questions/5688417/how-to-initialize-unsigned-char-pointer
+
+        int step = channel*width;
 
         for (int row = 0; row < height; ++row) {
             for (int col = 0; col < width; col+=1) {
@@ -167,6 +169,9 @@ int main(int argc, char** argv)
         cv::Mat output_rotate(output.rows, output.cols, CV_8UC1);
         ImageOperator::rotate(output.data, output.cols, output.rows, output.channels(), output_rotate.data);
         cv::imshow("Rotated by 90deg", output_rotate);
+
+        ImageOperator::rotate(output_rotate.data, output_rotate.cols, output_rotate.rows, output.channels(), output_rotate.data);
+        cv::imshow("Rotated by 180deg", output_rotate);
         
         // std::cout << "M after rotation = " << std::endl << " " << output_rotate << std::endl << std::endl;
         // sleep(20);
