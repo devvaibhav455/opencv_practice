@@ -1,0 +1,4 @@
+/home/dev/Documents/opencv_practice/Project_01_Real_Time_Filtering/CMakeFiles/imgDisplay.dir
+/home/dev/Documents/opencv_practice/Project_01_Real_Time_Filtering/CMakeFiles/vidDisplay.dir
+/home/dev/Documents/opencv_practice/Project_01_Real_Time_Filtering/CMakeFiles/edit_cache.dir
+/home/dev/Documents/opencv_practice/Project_01_Real_Time_Filtering/CMakeFiles/rebuild_cache.dir
