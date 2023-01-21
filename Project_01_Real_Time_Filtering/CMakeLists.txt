@@ -8,7 +8,7 @@ if (${OpenCV_FOUND})
 endif()
 
 set( SRC_FILES_PATH_IMG_DISP src/imgDisplay.cpp)
-set( SRC_FILES_PATH_VID_DISP src/vidDisplay.cpp)
+set( SRC_FILES_PATH_VID_DISP src/vidDisplay.cpp src/filter.cpp)
 
 message("[MY_MESSAGE] CMake reading source files from: ${SRC_FILES_PATH_IMG_DISP}")
 # Ref: https://stackoverflow.com/questions/13970377/configuring-an-c-opencv-project-with-cmake

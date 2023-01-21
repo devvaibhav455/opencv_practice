@@ -8,6 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "/home/dev/Documents/opencv_practice/Project_01_Real_Time_Filtering/src/filter.cpp" "CMakeFiles/vidDisplay.dir/src/filter.cpp.o" "gcc" "CMakeFiles/vidDisplay.dir/src/filter.cpp.o.d"
   "/home/dev/Documents/opencv_practice/Project_01_Real_Time_Filtering/src/vidDisplay.cpp" "CMakeFiles/vidDisplay.dir/src/vidDisplay.cpp.o" "gcc" "CMakeFiles/vidDisplay.dir/src/vidDisplay.cpp.o.d"
   )
 

@@ -109,12 +109,12 @@ CMakeFiles/imgDisplay.dir/clean:
 CMakeFiles/vidDisplay.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/vidDisplay.dir/build.make CMakeFiles/vidDisplay.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/vidDisplay.dir/build.make CMakeFiles/vidDisplay.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/dev/Documents/opencv_practice/Project_01_Real_Time_Filtering/CMakeFiles --progress-num=3,4 "Built target vidDisplay"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/dev/Documents/opencv_practice/Project_01_Real_Time_Filtering/CMakeFiles --progress-num=3,4,5 "Built target vidDisplay"
 .PHONY : CMakeFiles/vidDisplay.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/vidDisplay.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/dev/Documents/opencv_practice/Project_01_Real_Time_Filtering/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/dev/Documents/opencv_practice/Project_01_Real_Time_Filtering/CMakeFiles 3
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/vidDisplay.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/dev/Documents/opencv_practice/Project_01_Real_Time_Filtering/CMakeFiles 0
 .PHONY : CMakeFiles/vidDisplay.dir/rule

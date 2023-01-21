@@ -1,11 +1,12 @@
-// Dev Vaibhav
-// Spring 2023 CS 5330
-// Project 1: Real-time filtering
-// Task 2. Display live video  
+/*Dev Vaibhav
+Spring 2023 CS 5330
+Project 1: Real-time filtering
+*/
 
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <unistd.h> // To use sleep functionality
+#include <filter.h>
 
 
 // How to build the project and run the executable: https://docs.opencv.org/4.x/db/df5/tutorial_linux_gcc_cmake.html
@@ -121,6 +122,7 @@ public:
 
 int main(int argc, char** argv)
 {
+    // Task 2 | Displaying live video
     // CV_[The number of bits per item][Signed or Unsigned][Type Prefix]C[The channel number]
     // For instance, CV_8UC3 means we use unsigned char types that are 8 bit long and each pixel has three of these to form the three channels. There are types predefined for up to four channels. https://docs.opencv.org/3.4/d6/d6d/tutorial_mat_the_basic_image_container.html
     cv::VideoCapture *capdev;
@@ -139,11 +141,15 @@ int main(int argc, char** argv)
     int res_height = 400; //rows
 
 
-    cv::Mat output(res_height,res_width,CV_8UC1); //Single channel matrix for grayscale image
+    cv::Mat output(res_height,res_width,CV_8UC1); //Single channel matrix for greyscale image
     cv::Mat rgb_output(res_height,res_width,CV_8UC3); //3 channel matrix for color image
 
     ImageOperator ImageOperator;
+    
+    int greyscale_mode = 0;
     cv::namedWindow("Color_Image");
+    cv::namedWindow("greyscale_opencv_func");
+    cv::namedWindow("greyscale_user_func");
 
     // cv::namedWindow("Window");
     while (true) {
@@ -154,18 +160,35 @@ int main(int argc, char** argv)
         // std::cout << "Frame after input from camera = " << std::endl << " " << frame.at<cv::Vec3b>(0,0) << std::endl; 
         // std::cout << "Frame after input from camera = " << std::endl << " " << frame << std::endl << std::endl;
         cv::imshow("Color_Image", frame);
-        if(cv::waitKey(25) == 113){ //Search for the function's output if no key is pressed within the given time           
+        int key_pressed = cv::waitKey(1); //Returns -1 if key is not pressed within the given time
+        // ASCII table reference: http://sticksandstones.kstrom.com/appen.html
+        if(key_pressed == 113){ //Search for the function's output if no key is pressed within the given time           
             //Wait indefinitely until 'q' is pressed. 113 is q's ASCII value  
+            std::cout << "q is pressed. Exiting the program" << std::endl;
             cv::destroyWindow("Color_Image"); //destroy the created window
             return 0;
-        }else if (cv::waitKey(0) == 115){
+        }else if (key_pressed == 115){
             //Save image if 's' is pressed. 115 is s's ASCII value 
+            std::cout << "Saving image to file saved_image.jpeg" << std::endl;
             cv::imwrite("saved_image.jpeg", frame);
+        }else if (key_pressed == 103){
+            //Show greyscale image if 'g' is pressed. 71 is g's ASCII value 
+            greyscale_mode = 1;
+            std::cout << "Showing greyscale output" << std::endl;
+            
         }
+        if (greyscale_mode == 1){
+            // Explanation for the math part: https://docs.opencv.org/3.4/de/d25/imgproc_color_conversions.html
+            cv::cvtColor(frame, output, cv::COLOR_BGR2GRAY);
+            cv::imshow("greyscale_opencv_func", output);
+        }
+
+        greyscale(frame, output);
+        cv::imshow("greyscale_user_func", output);
+
+        
             
 
-        // cv::cvtColor(frame, output, cv::COLOR_BGR2GRAY);
-        // cv::imshow("opencv_func", output);
 
         // ImageOperator::to_gray_m1(frame,output);
         // cv::imshow("to_gray_m1",output);

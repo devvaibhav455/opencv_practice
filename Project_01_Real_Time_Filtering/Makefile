@@ -142,6 +142,30 @@ vidDisplay/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/vidDisplay.dir/build.make CMakeFiles/vidDisplay.dir/build
 .PHONY : vidDisplay/fast
 
+src/filter.o: src/filter.cpp.o
+.PHONY : src/filter.o
+
+# target to build an object file
+src/filter.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vidDisplay.dir/build.make CMakeFiles/vidDisplay.dir/src/filter.cpp.o
+.PHONY : src/filter.cpp.o
+
+src/filter.i: src/filter.cpp.i
+.PHONY : src/filter.i
+
+# target to preprocess a source file
+src/filter.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vidDisplay.dir/build.make CMakeFiles/vidDisplay.dir/src/filter.cpp.i
+.PHONY : src/filter.cpp.i
+
+src/filter.s: src/filter.cpp.s
+.PHONY : src/filter.s
+
+# target to generate assembly for a file
+src/filter.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vidDisplay.dir/build.make CMakeFiles/vidDisplay.dir/src/filter.cpp.s
+.PHONY : src/filter.cpp.s
+
 src/imgDisplay.o: src/imgDisplay.cpp.o
 .PHONY : src/imgDisplay.o
 
@@ -200,6 +224,9 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... imgDisplay"
 	@echo "... vidDisplay"
+	@echo "... src/filter.o"
+	@echo "... src/filter.i"
+	@echo "... src/filter.s"
 	@echo "... src/imgDisplay.o"
 	@echo "... src/imgDisplay.i"
 	@echo "... src/imgDisplay.s"
