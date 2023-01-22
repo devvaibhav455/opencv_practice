@@ -137,30 +137,40 @@ int main(int argc, char** argv)
                    (int) capdev->get(cv::CAP_PROP_FRAME_HEIGHT));
     printf("Image size(WidthxHeight) from camera: %dx%d\n", refS.width, refS.height);
 
+    // Resolution required for the window
     int res_width = 400; //columns
-    int res_height = 400; //rows
+    int res_height = res_width*9/16; //rows
 
+    printf("Resizing image to %dx%d\n", res_width, res_height);
 
+    // Usage of cv::Mat(int rows, int cols, int type)
     cv::Mat output(res_height,res_width,CV_8UC1); //Single channel matrix for greyscale image
-    cv::Mat rgb_output(res_height,res_width,CV_8UC3); //3 channel matrix for color image
+    cv::Mat rgb_output(res_height,res_width,CV_8UC3), tmp_mat; //3 channel matrix for color image
+    cv::Mat rgb_short_output(res_height, res_width, CV_16SC3);
 
     ImageOperator ImageOperator;
     
-    int greyscale_mode = 0;
+    int greyscale_mode_opencv = 0;
+    int greyscale_mode_user = 0;
+    int blur_mode = 0;
+    int sobel_x_mode = 0; 
     cv::namedWindow("Color_Image");
-    cv::namedWindow("greyscale_opencv_func");
-    cv::namedWindow("greyscale_user_func");
+    
+    
 
     // cv::namedWindow("Window");
     while (true) {
         cv::Mat frame; //frame.type() is 0 viz. 8UC1 (https://stackoverflow.com/questions/10167534/how-to-find-out-what-type-of-a-mat-object-is-with-mattype-in-opencv/39780825#39780825)
         // std::cout << "Frame before input from camera = " << std::endl << " " << frame << std::endl << std::endl;
         *capdev >> frame; //frame.type() is 16 viz. 8UC3
-        // cv::resize(frame, frame, cv::Size(res_height, res_width));
+        cv::resize(frame, frame, cv::Size(res_width, res_height));
         // std::cout << "Frame after input from camera = " << std::endl << " " << frame.at<cv::Vec3b>(0,0) << std::endl; 
         // std::cout << "Frame after input from camera = " << std::endl << " " << frame << std::endl << std::endl;
+        
         cv::imshow("Color_Image", frame);
-        int key_pressed = cv::waitKey(1); //Returns -1 if key is not pressed within the given time
+        
+        int key_pressed = cv::waitKey(1); //Gets key input from user. Returns -1 if key is not pressed within the given time. Here, 1 ms.
+
         // ASCII table reference: http://sticksandstones.kstrom.com/appen.html
         if(key_pressed == 113){ //Search for the function's output if no key is pressed within the given time           
             //Wait indefinitely until 'q' is pressed. 113 is q's ASCII value  
@@ -172,19 +182,46 @@ int main(int argc, char** argv)
             std::cout << "Saving image to file saved_image.jpeg" << std::endl;
             cv::imwrite("saved_image.jpeg", frame);
         }else if (key_pressed == 103){
-            //Show greyscale image if 'g' is pressed. 71 is g's ASCII value 
-            greyscale_mode = 1;
-            std::cout << "Showing greyscale output" << std::endl;
-            
+            //Show greyscale image using openCV function if 'g' is pressed. 71 is g's ASCII value 
+            cv::namedWindow("greyscale_opencv_func");
+            greyscale_mode_opencv = 1;
+            std::cout << "Showing greyscale output using OpenCV function" << std::endl;
+        }else if (key_pressed == 104){
+            // Show greyscale image using user defined function if 'h' is pressed. 104 is h's ASCII value
+            cv::namedWindow("greyscale_user_func");
+            greyscale_mode_user = 1;
+            std::cout << "Showing greyscale output using user defined function" << std::endl;
+        }else if (key_pressed == 98){
+            //Show blurred version of the image using separable Gaussian filter
+            cv::namedWindow("Blurred_Gaussian_Filter");
+            blur_mode = 1;
+            std::cout << "Showing blurred version of the image using Separable Gaussian Filter [1 2 4 2 1] vertical and horizontal" << std::endl;
+        }else if (key_pressed == 120){
+            //Show Sobel X version of the image using separable Sobel X 3x3 filter if x is pressed. 120 is x's ASCII value.
+            cv::namedWindow("Sobel_X");
+            sobel_x_mode = 1;
+            std::cout << "Showing Sobel X version of the image using Separable filters [1 2 1]^T vertical and [-1 0 1] horizontal" << std::endl;
         }
-        if (greyscale_mode == 1){
+
+
+        if (greyscale_mode_opencv == 1){
             // Explanation for the math part: https://docs.opencv.org/3.4/de/d25/imgproc_color_conversions.html
             cv::cvtColor(frame, output, cv::COLOR_BGR2GRAY);
             cv::imshow("greyscale_opencv_func", output);
+        }else if (greyscale_mode_user == 1){
+            greyscale(frame, output);
+            cv::imshow("greyscale_user_func", output);
+        }else if (blur_mode == 1){
+            blur5x5(frame, rgb_output);
+            cv::imshow("Blurred_Gaussian_Filter", rgb_output);
+        }else if (sobel_x_mode == 1){
+            sobelX3x3(frame, tmp_mat);
+            // cv::convertScaleAbs(tmp_mat, rgb_short_output);
+            // printf("Size of sobel input: %dx%d | sobel output size: %dx%d", frame.cols, frame.rows, tmp_mat.cols, tmp_mat.rows);
+            cv::imshow("Sobel_X", tmp_mat);
         }
 
-        greyscale(frame, output);
-        cv::imshow("greyscale_user_func", output);
+        
 
         
             
