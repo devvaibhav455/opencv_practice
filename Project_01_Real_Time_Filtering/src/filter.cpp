@@ -6,6 +6,7 @@ Project 1: Real-time filtering
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include "filter.h"
+#include <cmath>
 
 
 
@@ -77,39 +78,37 @@ int blur5x5( cv::Mat &src, cv::Mat &dst ){
 }
 
 
-// src: input image
-// dst: output image, 
-// input is a color image (type vec3b) and the output should is a color image (type vec3s)
+// src: input image: 8UC3
+// dst: output image: 8Uc3
+// input is a color image (type vec3b) and the output should is a color image (type vec3b)
 // apply a 3x3 Gaussian filter as separable filters ([1 2 1]^T vertical and [-1 0 1] horizontal)
 int sobelX3x3( cv::Mat &src, cv::Mat &dst ){
-  dst = cv::Mat::zeros(src.size(), CV_16SC3); //Output is color image of shorts
-  cv::Mat tmp; //Using tmp matrix for intermediate operation as it is separable filter
-  dst.copyTo(tmp);
-
-  // loop over tmp, apply a 3x1  vertical filter: [1 2 1]^T and store the result in dst
+  
+  dst = cv::Mat::zeros(src.size(), CV_16SC3); //Output is color image of 16S
+  cv::Mat tmp_3s = cv::Mat::zeros(src.size(), CV_16SC3); //Using tmp_3s matrix for intermediate operation as it is separable filter
+  
+  // loop over tmp_3s, apply a 3x1  vertical filter: [1 2 1]^T and store the result in tmp_3s
   for(int i=1;i<=src.rows-1;i++) {
     // src pointer for the i-1 to i+1 rows. Now, the source is
     cv::Vec3b *rptrm1 = src.ptr<cv::Vec3b>(i-1);
     cv::Vec3b *rptr   = src.ptr<cv::Vec3b>(i);
     cv::Vec3b *rptrp1 = src.ptr<cv::Vec3b>(i+1);
     // destination pointer for the ith row
-    cv::Vec3s *dptr = tmp.ptr<cv::Vec3s>(i);
+    cv::Vec3s *dptr = tmp_3s.ptr<cv::Vec3s>(i);
     // for each column
     for(int j=1;j<=src.cols-1;j++) {
       // for each color channel
       for(int c=0;c<3;c++) {
 	      dptr[j][c] = (1*rptrm1[j][c] + 2*rptr[j][c] + 1*rptrp1[j][c])/4;
       }
-    // printf("Accessed all j's : %d\n " , j);
     }
-    // printf("Accessed all i's %d\n", i);
   }
-  
+
   
   // loop over src and apply a 1x3 horizontal filter: [-1 0 1]
   for(int i=1 ; i <= src.rows-1 ; i++) {
     // src pointer for the ith row
-    cv::Vec3s *rptr = tmp.ptr<cv::Vec3s>(i);
+    cv::Vec3s *rptr = tmp_3s.ptr<cv::Vec3s>(i);
     // destination pointer for the ith row
     cv::Vec3s *dptr = dst.ptr<cv::Vec3s>(i);
     // for each column
@@ -118,53 +117,83 @@ int sobelX3x3( cv::Mat &src, cv::Mat &dst ){
       for(int c=0;c<3;c++) {
 	      dptr[j][c] = -1*rptr[j-1][c] + 1*rptr[j+1][c];
       }
-      // printf("Accessed all j's : %d\n " , j);
     }
-    // printf("Accessed all i's %d\n", i);
+  }
+  // return
+  return(0);
+}
+
+// src: input image: 8UC3
+// dst: output image: 16SC3
+// input is a color image (type vec3b) and the output should is a color image (type vec3b)
+// apply a 3x3 Gaussian filter as separable filters ([1 2 1]^T vertical and [-1 0 1] horizontal)
+int sobelY3x3( cv::Mat &src, cv::Mat &dst ){
+  
+  dst = cv::Mat::zeros(src.size(), CV_16SC3); //Output is color image of uchar
+  cv::Mat tmp_3s = cv::Mat::zeros(src.size(), CV_16SC3); //Using tmp_3s matrix for intermediate operation as it is separable filter
+  
+  // loop over tmp_3s, apply a 3x1  vertical filter: [1 0 -1]^T and store the result in tmp_3s
+  for(int i=1;i<=src.rows-1;i++) {
+    // src pointer for the i-1 to i+1 rows. Now, the source is
+    cv::Vec3b *rptrm1 = src.ptr<cv::Vec3b>(i-1);
+    cv::Vec3b *rptrp1 = src.ptr<cv::Vec3b>(i+1);
+    // destination pointer for the ith row
+    cv::Vec3s *dptr = tmp_3s.ptr<cv::Vec3s>(i);
+    // for each column
+    for(int j=1;j<=src.cols-1;j++) {
+      // for each color channel
+      for(int c=0;c<3;c++) {
+	      dptr[j][c] = 1*rptrm1[j][c] - 1*rptrp1[j][c];
+      }
+    }
+  }
+
+  
+  // loop over src and apply a 1x3 horizontal filter: [1 2 1]
+  for(int i=1 ; i <= src.rows-1 ; i++) {
+    // src pointer for the ith row
+    cv::Vec3s *rptr = tmp_3s.ptr<cv::Vec3s>(i);
+    // destination pointer for the ith row
+    cv::Vec3s *dptr = dst.ptr<cv::Vec3s>(i);
+    // for each column
+    for(int j=1;j<=src.cols-2;j++) {
+      // for each color channel
+      for(int c=0;c<3;c++) {
+	      dptr[j][c] =  1*rptr[j-1][c] + 2*rptr[j][c] + 1*rptr[j+1][c];
+      }
+    }
   }
 
   // return
   return(0);
 }
 
+// sx: SobelX input image: 16SC3
+// sy: SobelY input image: 16SC3
+// dst: output image: 16SC3
+// gradient magnitude image using Euclidean distance for magnitude: I = sqrt( sx*sx + sy*sy )
+int magnitude( cv::Mat &sx, cv::Mat &sy, cv::Mat &dst ){
+  dst = cv::Mat::zeros(sx.size(), CV_16SC3); //Output is color image of uchar
+  
+  // loop over rows in the source
+  for(int i=0;i<=sx.rows-1;i++) {
+    // src pointer for the ith row. Now, the source is
+    cv::Vec3s *sx_rptr = sx.ptr<cv::Vec3s>(i);
+    cv::Vec3s *sy_rptr = sy.ptr<cv::Vec3s>(i);
+    // destination pointer for the ith row
+    cv::Vec3s *dptr = dst.ptr<cv::Vec3s>(i);
+    // for each column
+    for(int j=0;j<=sx.cols-1;j++) {
+      // for each color channel
+      for(int c=0;c<3;c++) {
+	      dptr[j][c] = sqrt(pow(sx_rptr[j][c] , 2) + pow(sy_rptr[j][c] , 2));
+      }
+    }
+  }
+  
+  // return
+  return(0);
+}
 
 
 
-// int sobelY3x3( cv::Mat &src, cv::Mat &dst );
-
-// src: input image
-// dst: output image, allocated by this function, data type is CV_16SC3
-// apply a 3x3 filter
-//  [ -1 0 1]
-//  [ -2 0 2]
-//  [ -1 0 1]
-//
-// int gradX( cv::Mat &src, cv::Mat &dst ) {
-//   // allocate dst image
-//   dst = cv::Mat::zeros( src.size(), CV_16SC3 ); // signed short data type
-
-//   // loop over src and apply a 3x3 filter
-//   for(int i=1;i<src.rows-1;i++) {
-//     // src pointer
-//     cv::Vec3b *rptrm1 = src.ptr<cv::Vec3b>(i-1);
-//     cv::Vec3b *rptr = src.ptr<cv::Vec3b>(i);
-//     cv::Vec3b *rptrp1 = src.ptr<cv::Vec3b>(i+1);
-
-//     // destination pointer
-//     cv::Vec3s *dptr = dst.ptr<cv::Vec3s>(i);
-
-//     // for each column
-//     for(int j=1;j<src.cols-1;j++) {
-
-//       // for each color channel
-//       for(int c=0;c<3;c++) {
-// 	dptr[j][c] = (-1 * rptrm1[j-1][c] + 1 * rptrm1[j+1][c] +
-// 		      -2*rptr[j-1][c] + 2*rptr[j+1][c] +
-// 		      -1 * rptrp1[j-1][c] + 1*rptrp1[j+1][c]) / 4;
-//       }
-//     }
-//   }
-
-//   // return
-//   return(0);
-// }

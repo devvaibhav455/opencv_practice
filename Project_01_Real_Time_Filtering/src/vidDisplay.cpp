@@ -145,15 +145,13 @@ int main(int argc, char** argv)
 
     // Usage of cv::Mat(int rows, int cols, int type)
     cv::Mat output(res_height,res_width,CV_8UC1); //Single channel matrix for greyscale image
-    cv::Mat rgb_output(res_height,res_width,CV_8UC3), tmp_mat; //3 channel matrix for color image
-    cv::Mat rgb_short_output(res_height, res_width, CV_16SC3);
+    cv::Mat rgb_output(res_height,res_width,CV_8UC3); //3 channel matrix for color image
+    cv::Mat short_c3_output(res_height,res_width,CV_16SC3); //3 channel matrix for color image
+    cv::Mat temp_sx_short16s(res_height,res_width,CV_16SC3); //3 channel matrix for color image
+    cv::Mat temp_sy_short16s(res_height,res_width,CV_16SC3); //3 channel matrix for color image
 
     ImageOperator ImageOperator;
-    
-    int greyscale_mode_opencv = 0;
-    int greyscale_mode_user = 0;
-    int blur_mode = 0;
-    int sobel_x_mode = 0; 
+    std::string desired_filter;
     cv::namedWindow("Color_Image");
     
     
@@ -183,42 +181,61 @@ int main(int argc, char** argv)
             cv::imwrite("saved_image.jpeg", frame);
         }else if (key_pressed == 103){
             //Show greyscale image using openCV function if 'g' is pressed. 71 is g's ASCII value 
-            cv::namedWindow("greyscale_opencv_func");
-            greyscale_mode_opencv = 1;
+            desired_filter = "greyscale_opencv_func";
+            cv::namedWindow(desired_filter);
             std::cout << "Showing greyscale output using OpenCV function" << std::endl;
         }else if (key_pressed == 104){
             // Show greyscale image using user defined function if 'h' is pressed. 104 is h's ASCII value
-            cv::namedWindow("greyscale_user_func");
-            greyscale_mode_user = 1;
+            desired_filter = "greyscale_user_func";
+            cv::namedWindow(desired_filter);
             std::cout << "Showing greyscale output using user defined function" << std::endl;
         }else if (key_pressed == 98){
             //Show blurred version of the image using separable Gaussian filter
-            cv::namedWindow("Blurred_Gaussian_Filter");
-            blur_mode = 1;
+            desired_filter = "Blurred_Gaussian_Filter";
+            cv::namedWindow(desired_filter);
             std::cout << "Showing blurred version of the image using Separable Gaussian Filter [1 2 4 2 1] vertical and horizontal" << std::endl;
         }else if (key_pressed == 120){
             //Show Sobel X version of the image using separable Sobel X 3x3 filter if x is pressed. 120 is x's ASCII value.
-            cv::namedWindow("Sobel_X");
-            sobel_x_mode = 1;
+            desired_filter = "Sobel_X";
+            cv::namedWindow(desired_filter);
             std::cout << "Showing Sobel X version of the image using Separable filters [1 2 1]^T vertical and [-1 0 1] horizontal" << std::endl;
+        }else if (key_pressed == 121){
+            //Show Sobel Y version of the image using separable Sobel Y 3x3 filter if y is pressed. 121 is x's ASCII value.
+            desired_filter = "Sobel_Y";
+            cv::namedWindow(desired_filter);
+            std::cout << "Showing Sobel Y version of the image using Separable filters [1 0 -1]^T vertical and [1 2 1] horizontal" << std::endl;
+        }else if (key_pressed == 109){
+            //Show Gradient Magnitude image using y is pressed. 109 is m's ASCII value.
+            desired_filter = "Gradient_Magnitude";
+            cv::namedWindow(desired_filter);
+            std::cout << "Showing Gradient Magnitude version of the image" << std::endl;
         }
 
 
-        if (greyscale_mode_opencv == 1){
+        if (desired_filter == "greyscale_opencv_func"){
             // Explanation for the math part: https://docs.opencv.org/3.4/de/d25/imgproc_color_conversions.html
             cv::cvtColor(frame, output, cv::COLOR_BGR2GRAY);
-            cv::imshow("greyscale_opencv_func", output);
-        }else if (greyscale_mode_user == 1){
+            cv::imshow(desired_filter, output);
+        }else if (desired_filter == "greyscale_user_func"){
             greyscale(frame, output);
-            cv::imshow("greyscale_user_func", output);
-        }else if (blur_mode == 1){
+            cv::imshow(desired_filter, output);
+        }else if (desired_filter == "blur_mode"){
             blur5x5(frame, rgb_output);
-            cv::imshow("Blurred_Gaussian_Filter", rgb_output);
-        }else if (sobel_x_mode == 1){
-            sobelX3x3(frame, tmp_mat);
-            // cv::convertScaleAbs(tmp_mat, rgb_short_output);
-            // printf("Size of sobel input: %dx%d | sobel output size: %dx%d", frame.cols, frame.rows, tmp_mat.cols, tmp_mat.rows);
-            cv::imshow("Sobel_X", tmp_mat);
+            cv::imshow(desired_filter, rgb_output);
+        }else if (desired_filter == "Sobel_X"){
+            sobelX3x3(frame, short_c3_output);
+            cv::convertScaleAbs(short_c3_output, rgb_output); //Converting 16SC3 to 8UC3
+            cv::imshow(desired_filter, rgb_output);
+        }else if (desired_filter == "Sobel_Y"){
+            sobelY3x3(frame, short_c3_output);
+            cv::convertScaleAbs(short_c3_output, rgb_output); //Converting 16SC3 to 8UC3
+            cv::imshow(desired_filter , rgb_output);
+        }else if (desired_filter == "Gradient_Magnitude"){
+            sobelX3x3(frame, temp_sx_short16s);
+            sobelY3x3(frame, temp_sy_short16s);
+            magnitude(temp_sx_short16s, temp_sy_short16s, short_c3_output);
+            cv::convertScaleAbs(short_c3_output, rgb_output); //Converting 16SC3 to 8UC3
+            cv::imshow(desired_filter , rgb_output);
         }
 
         
