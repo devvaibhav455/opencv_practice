@@ -1,1 +1,12 @@
-check for outer two rows in gaussian blur op. It should not be zeros
+DONE|| check for outer two rows in gaussian blur op. It should not be zeros
+
+up: 82
+down 84
+left 81
+right 83
+
+canny edge detection (difficult)
+rotation (90, 180)
+sketch filter.. its different from cartoonization
+image sharpening
+previtt filter.. similar to sobel

@@ -1,0 +1,17 @@
+[
+{
+  "directory": "/home/dev/Documents/opencv_practice/build",
+  "command": "/usr/bin/g++  -I/home/dev/Documents/opencv_practice/Project_01_Real_Time_Filtering/include -isystem /usr/include/opencv4 -g -o CMakeFiles/imgDisplay.dir/src/imgDisplay.cpp.o -c /home/dev/Documents/opencv_practice/Project_01_Real_Time_Filtering/src/imgDisplay.cpp",
+  "file": "/home/dev/Documents/opencv_practice/Project_01_Real_Time_Filtering/src/imgDisplay.cpp"
+},
+{
+  "directory": "/home/dev/Documents/opencv_practice/build",
+  "command": "/usr/bin/g++  -I/home/dev/Documents/opencv_practice/Project_01_Real_Time_Filtering/include -isystem /usr/include/opencv4 -g -o CMakeFiles/vidDisplay.dir/src/vidDisplay.cpp.o -c /home/dev/Documents/opencv_practice/Project_01_Real_Time_Filtering/src/vidDisplay.cpp",
+  "file": "/home/dev/Documents/opencv_practice/Project_01_Real_Time_Filtering/src/vidDisplay.cpp"
+},
+{
+  "directory": "/home/dev/Documents/opencv_practice/build",
+  "command": "/usr/bin/g++  -I/home/dev/Documents/opencv_practice/Project_01_Real_Time_Filtering/include -isystem /usr/include/opencv4 -g -o CMakeFiles/vidDisplay.dir/src/filter.cpp.o -c /home/dev/Documents/opencv_practice/Project_01_Real_Time_Filtering/src/filter.cpp",
+  "file": "/home/dev/Documents/opencv_practice/Project_01_Real_Time_Filtering/src/filter.cpp"
+}
+]

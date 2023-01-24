@@ -1,0 +1,4 @@
+/home/dev/Documents/opencv_practice/build/CMakeFiles/imgDisplay.dir
+/home/dev/Documents/opencv_practice/build/CMakeFiles/vidDisplay.dir
+/home/dev/Documents/opencv_practice/build/CMakeFiles/edit_cache.dir
+/home/dev/Documents/opencv_practice/build/CMakeFiles/rebuild_cache.dir
