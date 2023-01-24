@@ -68,5 +68,6 @@
         "optional": "cpp",
         "variant": "cpp"
     },
-    "C_Cpp.errorSquiggles": "enabled"
+    "C_Cpp.errorSquiggles": "enabled",
+    "cmake.sourceDirectory": "${workspaceFolder}/Project_01_Real_Time_Filtering"
 }

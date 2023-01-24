@@ -146,14 +146,13 @@ int main(int argc, char** argv)
     // Usage of cv::Mat(int rows, int cols, int type)
     cv::Mat output(res_height,res_width,CV_8UC1); //Single channel matrix for greyscale image
     cv::Mat rgb_output(res_height,res_width,CV_8UC3); //3 channel matrix for color image
-    cv::Mat short_c3_output(res_height,res_width,CV_16SC3); //3 channel matrix for color image
-    cv::Mat temp_sx_short16s(res_height,res_width,CV_16SC3); //3 channel matrix for color image
-    cv::Mat temp_sy_short16s(res_height,res_width,CV_16SC3); //3 channel matrix for color image
+    cv::Mat short_c3_output(res_height,res_width,CV_16SC3); //3 channel matrix of shorts for color image
+    
 
     ImageOperator ImageOperator;
     std::string desired_filter;
     cv::namedWindow("Color_Image");
-    
+    int change_brightness_level = 0;
     
 
     // cv::namedWindow("Window");
@@ -168,74 +167,113 @@ int main(int argc, char** argv)
         cv::imshow("Color_Image", frame);
         
         int key_pressed = cv::waitKey(1); //Gets key input from user. Returns -1 if key is not pressed within the given time. Here, 1 ms.
+        // std::cout << "Pressed key is: " << key_pressed << std::endl;
 
         // ASCII table reference: http://sticksandstones.kstrom.com/appen.html
-        if(key_pressed == 113){ //Search for the function's output if no key is pressed within the given time           
+        if(key_pressed == 'q'){ //Search for the function's output if no key is pressed within the given time           
             //Wait indefinitely until 'q' is pressed. 113 is q's ASCII value  
             std::cout << "q is pressed. Exiting the program" << std::endl;
             cv::destroyWindow("Color_Image"); //destroy the created window
             return 0;
-        }else if (key_pressed == 115){
+        }else if (key_pressed == 's'){
             //Save image if 's' is pressed. 115 is s's ASCII value 
             std::cout << "Saving image to file saved_image.jpeg" << std::endl;
             cv::imwrite("saved_image.jpeg", frame);
-        }else if (key_pressed == 103){
+        }else if (key_pressed == 'g'){
             //Show greyscale image using openCV function if 'g' is pressed. 71 is g's ASCII value 
-            desired_filter = "greyscale_opencv_func";
+            desired_filter = "GREYSCALE_OPENCV_FUNC";
             cv::namedWindow(desired_filter);
             std::cout << "Showing greyscale output using OpenCV function" << std::endl;
-        }else if (key_pressed == 104){
+        }else if (key_pressed == 'h'){
             // Show greyscale image using user defined function if 'h' is pressed. 104 is h's ASCII value
-            desired_filter = "greyscale_user_func";
+            desired_filter = "GREYSCALE_USER_FUNC";
             cv::namedWindow(desired_filter);
             std::cout << "Showing greyscale output using user defined function" << std::endl;
-        }else if (key_pressed == 98){
-            //Show blurred version of the image using separable Gaussian filter
-            desired_filter = "Blurred_Gaussian_Filter";
+        }else if (key_pressed == 'b'){
+            //Show blurred version of the image using separable Gaussian filter if b (ASCII = 98) is pressed
+            desired_filter = "BLURRED_GAUSSIAN_FILTER";
             cv::namedWindow(desired_filter);
             std::cout << "Showing blurred version of the image using Separable Gaussian Filter [1 2 4 2 1] vertical and horizontal" << std::endl;
-        }else if (key_pressed == 120){
+        }else if (key_pressed == 'x'){
             //Show Sobel X version of the image using separable Sobel X 3x3 filter if x is pressed. 120 is x's ASCII value.
-            desired_filter = "Sobel_X";
+            desired_filter = "SOBEL_X";
             cv::namedWindow(desired_filter);
             std::cout << "Showing Sobel X version of the image using Separable filters [1 2 1]^T vertical and [-1 0 1] horizontal" << std::endl;
-        }else if (key_pressed == 121){
+        }else if (key_pressed == 'y'){
             //Show Sobel Y version of the image using separable Sobel Y 3x3 filter if y is pressed. 121 is x's ASCII value.
-            desired_filter = "Sobel_Y";
+            desired_filter = "SOBEL_Y";
             cv::namedWindow(desired_filter);
             std::cout << "Showing Sobel Y version of the image using Separable filters [1 0 -1]^T vertical and [1 2 1] horizontal" << std::endl;
-        }else if (key_pressed == 109){
-            //Show Gradient Magnitude image using y is pressed. 109 is m's ASCII value.
-            desired_filter = "Gradient_Magnitude";
+        }else if (key_pressed == 'm'){
+            //Show Gradient Magnitude image if m is pressed. 109 is m's ASCII value.
+            desired_filter = "GRADIENT_MAGNITUDE";
             cv::namedWindow(desired_filter);
             std::cout << "Showing Gradient Magnitude version of the image" << std::endl;
-        }
+        }else if (key_pressed == 'l'){
+            //Show blur quantized image if l (ASCII = 108) is pressed.
+            desired_filter = "BLUR_QUANTIZE";
+            cv::namedWindow(desired_filter);
+            std::cout << "Showing blur quantized version of the image" << std::endl;
+        }else if (key_pressed == 'c'){
+            //Show live video cartoonization function using the gradient magnitude and blur/quantize filters if c (ASCII = 99) is pressed.
+            desired_filter = "LIVE_CARTOONIZATION";
+            cv::namedWindow(desired_filter);
+            std::cout << "live video cartoonization function using the gradient magnitude and blur/quantize filters" << std::endl;
+        }else if (key_pressed == 'n'){
+            //Show negative image if n (ASCII = 110) is pressed.
+            desired_filter = "NEGATIVE";
+            cv::namedWindow(desired_filter);
+            std::cout << "Showing the image negative" << std::endl;
+        }else if (key_pressed == 82 || key_pressed == 84){//Change brightness when up/ down arrow is pressed
+            desired_filter = "CHANGE_BRIGHTNESS";
+            greyscale(frame, output);
+            int current_brightness = cv::mean(output).val[0]*100/255;
+            if (key_pressed == 82){change_brightness_level += 10;} //Increase brightness if up arrow key is pressed
+            else {change_brightness_level -= 10;} //Decrease brightness if down arrow key is pressed
+            cv::namedWindow(desired_filter);
+         }
 
 
-        if (desired_filter == "greyscale_opencv_func"){
+
+        if (desired_filter == "GREYSCALE_OPENCV_FUNC"){
             // Explanation for the math part: https://docs.opencv.org/3.4/de/d25/imgproc_color_conversions.html
             cv::cvtColor(frame, output, cv::COLOR_BGR2GRAY);
             cv::imshow(desired_filter, output);
-        }else if (desired_filter == "greyscale_user_func"){
+        }else if (desired_filter == "GREYSCALE_USER_FUNC"){
             greyscale(frame, output);
             cv::imshow(desired_filter, output);
-        }else if (desired_filter == "blur_mode"){
+        }else if (desired_filter == "BLURRED_GAUSSIAN_FILTER"){
             blur5x5(frame, rgb_output);
             cv::imshow(desired_filter, rgb_output);
-        }else if (desired_filter == "Sobel_X"){
+        }else if (desired_filter == "SOBEL_X"){
             sobelX3x3(frame, short_c3_output);
             cv::convertScaleAbs(short_c3_output, rgb_output); //Converting 16SC3 to 8UC3
             cv::imshow(desired_filter, rgb_output);
-        }else if (desired_filter == "Sobel_Y"){
+        }else if (desired_filter == "SOBEL_Y"){
             sobelY3x3(frame, short_c3_output);
             cv::convertScaleAbs(short_c3_output, rgb_output); //Converting 16SC3 to 8UC3
             cv::imshow(desired_filter , rgb_output);
-        }else if (desired_filter == "Gradient_Magnitude"){
-            sobelX3x3(frame, temp_sx_short16s);
-            sobelY3x3(frame, temp_sy_short16s);
-            magnitude(temp_sx_short16s, temp_sy_short16s, short_c3_output);
-            cv::convertScaleAbs(short_c3_output, rgb_output); //Converting 16SC3 to 8UC3
+        }else if (desired_filter == "GRADIENT_MAGNITUDE"){
+            cv::Mat temp_sx_short16s(res_height,res_width,CV_16SC3); //3 channel matrix of shorts for color image
+            cv::Mat temp_sy_short16s(res_height,res_width,CV_16SC3); //3 channel matrix of shorts for color image
+            sobelX3x3(frame, temp_sx_short16s); // Computing Sobel X
+            sobelY3x3(frame, temp_sy_short16s); // Computing Sobel Y
+            magnitude(temp_sx_short16s, temp_sy_short16s, short_c3_output); // Combining Sobel X and Sobel Y
+            cv::convertScaleAbs(short_c3_output, rgb_output); //Converting 16SC3 to 8UC3 to make it suitable for display
             cv::imshow(desired_filter , rgb_output);
+        }else if (desired_filter == "BLUR_QUANTIZE"){
+            blurQuantize(frame, rgb_output, 15);
+            cv::imshow(desired_filter , rgb_output);
+        }else if (desired_filter == "LIVE_CARTOONIZATION"){
+            cartoon(frame, rgb_output, 15, 20);
+            cv::imshow(desired_filter , rgb_output);
+        }else if (desired_filter == "NEGATIVE"){
+            negative(frame, rgb_output);
+            cv::imshow(desired_filter , rgb_output);
+        }else if (desired_filter == "CHANGE_BRIGHTNESS"){
+            // Changing the brightness level by change_brightness_level in percentage
+            frame = frame + cv::Scalar(change_brightness_level,change_brightness_level,change_brightness_level)*2.55;
+            cv::imshow(desired_filter , frame);
         }
 
         
