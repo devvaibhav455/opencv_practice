@@ -24,3 +24,15 @@ int cartoon( cv::Mat &src, cv::Mat&dst, int levels, int magThreshold );
 
 // Function to calcuate the negative of a color image
 int negative( cv::Mat &src, cv::Mat&dst);
+
+// Function to sharpen color image
+int sharpen( cv::Mat &src, cv::Mat&dst);
+
+// Function to make color image's sketch
+int sketch( cv::Mat &src, cv::Mat&dst);
+
+// Adding caption to image
+int caption(cv::Mat &src, cv::Mat&dst, std::string text);
+
+// Rotating the image
+int rotate(cv::Mat &src, cv::Mat&dst);

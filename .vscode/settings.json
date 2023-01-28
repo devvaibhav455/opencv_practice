@@ -66,8 +66,10 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "optional": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "shared_mutex": "cpp"
     },
     "C_Cpp.errorSquiggles": "enabled",
-    "cmake.sourceDirectory": "${workspaceFolder}/Project_01_Real_Time_Filtering"
+    "cmake.sourceDirectory": "${workspaceFolder}/Project_01_Real_Time_Filtering",
+    "git.ignoreLimitWarning": true
 }

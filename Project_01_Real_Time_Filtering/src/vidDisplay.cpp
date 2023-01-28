@@ -12,133 +12,47 @@ Project 1: Real-time filtering
 // How to build the project and run the executable: https://docs.opencv.org/4.x/db/df5/tutorial_linux_gcc_cmake.html
 // clear && cmake . && make #The executable gets stored into the bin folder
 
-// Ref: https://soubhihadri.medium.com/image-processing-best-practices-c-280caadacb82
-
-class ImageOperator{
-public:
-    ImageOperator() = default;
-    ~ImageOperator() = default;
-    
-    static void to_gray_m1(const cv::Mat& input, cv::Mat& output);
-    static void to_gray_m2(const cv::Mat& input, cv::Mat& output);
-    static void to_gray_m3(const cv::Mat& input, cv::Mat& output);
-    static void to_gray(const unsigned char* input,
-                        const int width,
-                        const int height,
-                        const int channel,
-                        unsigned char* output);
-    static void rotate(const unsigned char* input,
-                           const int width,
-                           const int height,
-                           const int channel,
-                           unsigned char* &output); //Receiving the pointer via reference. It is essentially saying that the pointer is referenced or aliased as `output`. While calling it, we are using `output_rotate.data`. So, we are basically saying that `output_rotate.data` and `output` are one and the same thing and whatever changes are made to output will be made to `output_rotate.data` as well. Src: https://stackoverflow.com/questions/5789806/meaning-of-and-in-c. Check Mahesh (simple code for difference) and Juna Chavarro answer (read from right to left). Practice https://onlinegdb.com/n1d1nYx4S
-
-    
-};
-
-    void ImageOperator::to_gray_m1(const cv::Mat &input, cv::Mat &output) {
-            unsigned char *data_out = (unsigned char*)(output.data);
-            int ind = 0;
-            auto end = input.end<cv::Vec3b>();
-            cv::MatConstIterator_<cv::Vec3b> it = input.begin<cv::Vec3b>();
-            for (; it != end; ++it) {
-                const unsigned char &r = (*it)[2];
-                const unsigned char &g = (*it)[1];
-                const unsigned char &b = (*it)[0];
-                data_out[ind] = 0.3*r+0.59*g+0.11*b;
-                ind++;
-            }
-            
-        }
-
-    void ImageOperator::to_gray_m2(const cv::Mat &input, cv::Mat &output) {
-        unsigned char *data_in = (unsigned char*)(input.data);
-        unsigned char *data_out = (unsigned char*)(output.data);
-
-        int index = 0;
-        int byte_size = input.channels()*input.rows*input.cols;
-        while(index!=byte_size){
-            data_out[index/input.channels()] = unsigned(0.11*data_in[index]+0.59*data_in[index+1]+0.3*data_in[index+2]);
-
-            index+=3;
-        }
-        
-    }
-
-    void ImageOperator::to_gray_m3(const cv::Mat &input, cv::Mat &output) {
-        unsigned char *data_in = (unsigned char*)(input.data);
-        unsigned char *data_out = (unsigned char*)(output.data);
-
-        int index = 0;
-        for (int row = 0; row < input.rows; ++row) {
-            for (int col = 0; col < input.cols*input.channels(); col+=input.channels()) {
-                data_out[index]= 0.11*data_in[row*input.step+col]+
-                                0.59*data_in[row*input.step+col+1]+
-                                0.3*data_in[row*input.step+col+2];
-                index++;
-            }
-        }
-        
-    }
-
-    void ImageOperator::to_gray(const unsigned char* bgr_input,
-                            const int width,
-                            const int height,
-                            const int channel,
-                            unsigned char* gray_output){
-        int index = 0;
-        int step = channel*width;
-        for (int row = 0; row < height; ++row) {
-            for (int col = 0; col < width*channel; col+=channel) {
-                gray_output[index] = 0.11*bgr_input[row*step+col]+
-                                0.59*bgr_input[row*step+col+1]+
-                                0.3*bgr_input[row*step+col+2];
-                index++;
-            }
-        }
-        
-    }
-
-    void ImageOperator::rotate(const unsigned char* input,
-                           const int width,
-                           const int height,
-                           const int channel,
-                           unsigned char* &output){ //Receiving the pointer via reference
-        
-        // std::cout << "Rotate fn: width, height, channels are: " << width << " " << height << " " << " " << channel << std::endl;
-        
-        unsigned char* tmp = new unsigned char[width*height*channel]; //Storing value on the heap; https://stackoverflow.com/questions/5688417/how-to-initialize-unsigned-char-pointer
-
-        int step = channel*width;
-
-        for (int row = 0; row < height; ++row) {
-            for (int col = 0; col < width; col+=1) {
-                tmp[(col*width) + width - 1 - row] = input[(row*width) + col];
-                
-            }
-        }
-        output = tmp;
-    }
-
 int main(int argc, char** argv)
 {
     // Task 2 | Displaying live video
     // CV_[The number of bits per item][Signed or Unsigned][Type Prefix]C[The channel number]
     // For instance, CV_8UC3 means we use unsigned char types that are 8 bit long and each pixel has three of these to form the three channels. There are types predefined for up to four channels. https://docs.opencv.org/3.4/d6/d6d/tutorial_mat_the_basic_image_container.html
+    
     cv::VideoCapture *capdev;
     capdev = new cv::VideoCapture(0);
-    if (!capdev->isOpened()) {
-        throw std::runtime_error("Error");
-        return -1;
+    cv::Mat frame; //frame.type() is 0 viz. 8UC1 (https://stackoverflow.com/questions/10167534/how-to-find-out-what-type-of-a-mat-object-is-with-mattype-in-opencv/39780825#39780825)
+    // Use image as input if it is passed as a CLI, otherwise use video input from webcam.
+
+    if( argc == 2) {
+        char filename[256]; //To take user's desired image file as input 
+        strcpy( filename, argv[1] ); // copy command line filename to a local variable
+        // Read the image file
+        frame = cv::imread(filename,cv::ImreadModes::IMREAD_UNCHANGED);
+
+        // Check for failure
+        if (frame.empty()) {
+            std::cout << "Could not open or find the image" << std::endl;
+            // std::cin.get(); //wait for any key press
+            return -1;
+        }
+
+        // cv::String windowName = "Image display"; //Name of the window
+        // cv::namedWindow(windowName); // Create a window
+        // cv::imshow(windowName, frame); // Show our image inside the created window.
+    }else{
+        if (!capdev->isOpened()) {
+            throw std::runtime_error("Error");
+            return -1;
+        }
+        // get some properties of the image
+        cv::Size refS( (int) capdev->get(cv::CAP_PROP_FRAME_WIDTH ),
+                    (int) capdev->get(cv::CAP_PROP_FRAME_HEIGHT));
+        printf("Image size(WidthxHeight) from camera: %dx%d\n", refS.width, refS.height);
     }
-    
-    // get some properties of the image
-    cv::Size refS( (int) capdev->get(cv::CAP_PROP_FRAME_WIDTH ),
-                   (int) capdev->get(cv::CAP_PROP_FRAME_HEIGHT));
-    printf("Image size(WidthxHeight) from camera: %dx%d\n", refS.width, refS.height);
+
 
     // Resolution required for the window
-    int res_width = 400; //columns
+    int res_width = 600; //columns
     int res_height = res_width*9/16; //rows
 
     printf("Resizing image to %dx%d\n", res_width, res_height);
@@ -147,20 +61,31 @@ int main(int argc, char** argv)
     cv::Mat output(res_height,res_width,CV_8UC1); //Single channel matrix for greyscale image
     cv::Mat rgb_output(res_height,res_width,CV_8UC3); //3 channel matrix for color image
     cv::Mat short_c3_output(res_height,res_width,CV_16SC3); //3 channel matrix of shorts for color image
-    
+    cv::Mat filtered_output;
 
-    ImageOperator ImageOperator;
+
     std::string desired_filter;
     cv::namedWindow("Color_Image");
     int change_brightness_level = 0;
+    std::string user_caption;
     
-
+    // Define the codec and create VideoWriter object.The output is stored in 'saved_video.avi' file.
+    // Define the fps to be equal to 10. Also frame size is passed.
+    
+    cv::VideoWriter video_original("saved_video_original.avi",cv::VideoWriter::fourcc('M','J','P','G'),10, cv::Size(res_width,res_height));;
+    cv::VideoWriter video_color("saved_video_color.avi",cv::VideoWriter::fourcc('M','J','P','G'),10, cv::Size(res_width,res_height));;
+    cv::VideoWriter video_grey("saved_video_grey.avi",cv::VideoWriter::fourcc('M','J','P','G'),10, cv::Size(res_width,res_height), 0);;
+    int save_video = 0;
+    int save_video_grey = 0;
     // cv::namedWindow("Window");
     while (true) {
-        cv::Mat frame; //frame.type() is 0 viz. 8UC1 (https://stackoverflow.com/questions/10167534/how-to-find-out-what-type-of-a-mat-object-is-with-mattype-in-opencv/39780825#39780825)
         // std::cout << "Frame before input from camera = " << std::endl << " " << frame << std::endl << std::endl;
-        *capdev >> frame; //frame.type() is 16 viz. 8UC3
+        if( argc == 1){
+            *capdev >> frame; //frame.type() is 16 viz. 8UC3
+        }
+        // cv::Mat image = cv::imread(filename,cv::ImreadModes::IMREAD_UNCHANGED);~/Pictures/Screenshots
         cv::resize(frame, frame, cv::Size(res_width, res_height));
+        
         // std::cout << "Frame after input from camera = " << std::endl << " " << frame.at<cv::Vec3b>(0,0) << std::endl; 
         // std::cout << "Frame after input from camera = " << std::endl << " " << frame << std::endl << std::endl;
         
@@ -173,6 +98,9 @@ int main(int argc, char** argv)
         if(key_pressed == 'q'){ //Search for the function's output if no key is pressed within the given time           
             //Wait indefinitely until 'q' is pressed. 113 is q's ASCII value  
             std::cout << "q is pressed. Exiting the program" << std::endl;
+            video_original.release();
+            video_color.release();
+            video_grey.release();
             cv::destroyWindow("Color_Image"); //destroy the created window
             return 0;
         }else if (key_pressed == 's'){
@@ -182,11 +110,13 @@ int main(int argc, char** argv)
         }else if (key_pressed == 'g'){
             //Show greyscale image using openCV function if 'g' is pressed. 71 is g's ASCII value 
             desired_filter = "GREYSCALE_OPENCV_FUNC";
+            save_video_grey = 1;
             cv::namedWindow(desired_filter);
             std::cout << "Showing greyscale output using OpenCV function" << std::endl;
         }else if (key_pressed == 'h'){
             // Show greyscale image using user defined function if 'h' is pressed. 104 is h's ASCII value
             desired_filter = "GREYSCALE_USER_FUNC";
+            save_video_grey = 1;
             cv::namedWindow(desired_filter);
             std::cout << "Showing greyscale output using user defined function" << std::endl;
         }else if (key_pressed == 'b'){
@@ -226,11 +156,26 @@ int main(int argc, char** argv)
             std::cout << "Showing the image negative" << std::endl;
         }else if (key_pressed == 82 || key_pressed == 84){//Change brightness when up/ down arrow is pressed
             desired_filter = "CHANGE_BRIGHTNESS";
-            greyscale(frame, output);
-            int current_brightness = cv::mean(output).val[0]*100/255;
             if (key_pressed == 82){change_brightness_level += 10;} //Increase brightness if up arrow key is pressed
             else {change_brightness_level -= 10;} //Decrease brightness if down arrow key is pressed
             cv::namedWindow(desired_filter);
+         }else if (key_pressed == 49){//Sharpen the image when 1 is pressed
+            desired_filter = "SHARPEN";
+            cv::namedWindow(desired_filter);
+            std::cout << "Showing sharpened image" << std::endl;
+         }else if (key_pressed == 50){//Sketch the image when 2 is pressed
+            desired_filter = "SKETCH";
+            cv::namedWindow(desired_filter);
+            std::cout << "Showing sketched image" << std::endl;
+         }else if (key_pressed == 51){//Add captions to the image when 3 is pressed
+            desired_filter = "CAPTION";
+            cv::namedWindow(desired_filter);
+            std::cout << "Please enter the caption:" << std::endl;
+            std::cin >> user_caption;
+            std::cout << "Showing image with caption" << std::endl;
+         }else if (key_pressed == 52){//Let the user save the video with special effect when 4 is pressed
+            save_video = 1;
+            std::cout << "Saving video with special effects!" << std::endl;
          }
 
 
@@ -238,20 +183,25 @@ int main(int argc, char** argv)
         if (desired_filter == "GREYSCALE_OPENCV_FUNC"){
             // Explanation for the math part: https://docs.opencv.org/3.4/de/d25/imgproc_color_conversions.html
             cv::cvtColor(frame, output, cv::COLOR_BGR2GRAY);
+            output.copyTo(filtered_output);
             cv::imshow(desired_filter, output);
         }else if (desired_filter == "GREYSCALE_USER_FUNC"){
             greyscale(frame, output);
+            output.copyTo(filtered_output);
             cv::imshow(desired_filter, output);
         }else if (desired_filter == "BLURRED_GAUSSIAN_FILTER"){
             blur5x5(frame, rgb_output);
+            rgb_output.copyTo(filtered_output);
             cv::imshow(desired_filter, rgb_output);
         }else if (desired_filter == "SOBEL_X"){
             sobelX3x3(frame, short_c3_output);
             cv::convertScaleAbs(short_c3_output, rgb_output); //Converting 16SC3 to 8UC3
+            rgb_output.copyTo(filtered_output);
             cv::imshow(desired_filter, rgb_output);
         }else if (desired_filter == "SOBEL_Y"){
             sobelY3x3(frame, short_c3_output);
             cv::convertScaleAbs(short_c3_output, rgb_output); //Converting 16SC3 to 8UC3
+            rgb_output.copyTo(filtered_output);
             cv::imshow(desired_filter , rgb_output);
         }else if (desired_filter == "GRADIENT_MAGNITUDE"){
             cv::Mat temp_sx_short16s(res_height,res_width,CV_16SC3); //3 channel matrix of shorts for color image
@@ -260,57 +210,48 @@ int main(int argc, char** argv)
             sobelY3x3(frame, temp_sy_short16s); // Computing Sobel Y
             magnitude(temp_sx_short16s, temp_sy_short16s, short_c3_output); // Combining Sobel X and Sobel Y
             cv::convertScaleAbs(short_c3_output, rgb_output); //Converting 16SC3 to 8UC3 to make it suitable for display
+            rgb_output.copyTo(filtered_output);
             cv::imshow(desired_filter , rgb_output);
         }else if (desired_filter == "BLUR_QUANTIZE"){
             blurQuantize(frame, rgb_output, 15);
+            rgb_output.copyTo(filtered_output);
             cv::imshow(desired_filter , rgb_output);
         }else if (desired_filter == "LIVE_CARTOONIZATION"){
             cartoon(frame, rgb_output, 15, 20);
             cv::imshow(desired_filter , rgb_output);
+            rgb_output.copyTo(filtered_output);
         }else if (desired_filter == "NEGATIVE"){
             negative(frame, rgb_output);
             cv::imshow(desired_filter , rgb_output);
+            rgb_output.copyTo(filtered_output);
         }else if (desired_filter == "CHANGE_BRIGHTNESS"){
             // Changing the brightness level by change_brightness_level in percentage
-            frame = frame + cv::Scalar(change_brightness_level,change_brightness_level,change_brightness_level)*2.55;
-            cv::imshow(desired_filter , frame);
+            rgb_output = frame + cv::Scalar(change_brightness_level,change_brightness_level,change_brightness_level)*2.55;
+            rgb_output.copyTo(filtered_output);
+            cv::imshow(desired_filter , rgb_output);
+        }else if (desired_filter == "SHARPEN"){
+            cv::Mat temp_sx_short16s(res_height,res_width,CV_16SC3); //3 channel matrix of shorts for color image
+            sharpen(frame, temp_sx_short16s);
+            cv::convertScaleAbs(temp_sx_short16s, rgb_output); //Converting 16SC3 to 8UC3 to make it suitable for 
+            rgb_output.copyTo(filtered_output);
+            cv::imshow(desired_filter , rgb_output);
+        }else if (desired_filter == "SKETCH"){
+            sketch(frame, output);
+            output.copyTo(filtered_output);
+            cv::imshow(desired_filter , output);
+        }else if (desired_filter == "CAPTION"){
+            caption(frame, output, user_caption);
+            output.copyTo(filtered_output);
+            cv::imshow(desired_filter , output);
         }
 
-        
-
-        
-            
-
-
-        // ImageOperator::to_gray_m1(frame,output);
-        // cv::imshow("to_gray_m1",output);
-
-        // ImageOperator::to_gray_m2(frame,output);
-        // cv::imshow("to_gray_m2",output);
-
-        // ImageOperator::to_gray_m3(frame,output);
-        // cv::imshow("to_gray_m3",output);
-
-        ///No OpenCV
-        // const unsigned char* bgr_input = (unsigned char*)frame.data;
-        // unsigned char* gray_output = new unsigned char[frame.rows*frame.cols];
-        // ImageOperator::to_gray(bgr_input,frame.cols,frame.rows,frame.channels(),gray_output);
-        // cv::Mat output_gray(frame.rows, frame.cols, CV_8UC1, gray_output);
-        // cv::imshow("to_gray_no_opencv", output_gray);
-
-        // std::cout << "Data after B/W conversion m3= " << std::endl << " " << output << std::endl << std::endl;
-
-        // cv::Mat output_rotate(output.rows, output.cols, CV_8UC1);
-        // ImageOperator::rotate(output.data, output.cols, output.rows, output.channels(), output_rotate.data);
-        // cv::imshow("Rotated by 90deg", output_rotate);
-
-        // ImageOperator::rotate(output_rotate.data, output_rotate.cols, output_rotate.rows, output.channels(), output_rotate.data);
-        // cv::imshow("Rotated by 180deg", output_rotate);
-        
-        // std::cout << "M after rotation = " << std::endl << " " << output_rotate << std::endl << std::endl;
-        // sleep(20);
-
-        // if(cv::waitKey(30) >= 0) break;
+        if (save_video_grey == 1){
+            video_original.write(frame);
+            video_grey.write(filtered_output);
+        }else {
+            video_original.write(frame);
+            video_color.write(filtered_output);
+        }
     }
     return 0;
 }
