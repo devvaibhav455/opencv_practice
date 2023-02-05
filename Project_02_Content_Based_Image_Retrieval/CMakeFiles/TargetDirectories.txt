@@ -1,0 +1,4 @@
+/home/dev/Documents/opencv_practice/Project_02_Content_Based_Image_Retrieval/CMakeFiles/write_csv.dir
+/home/dev/Documents/opencv_practice/Project_02_Content_Based_Image_Retrieval/CMakeFiles/read_csv.dir
+/home/dev/Documents/opencv_practice/Project_02_Content_Based_Image_Retrieval/CMakeFiles/edit_cache.dir
+/home/dev/Documents/opencv_practice/Project_02_Content_Based_Image_Retrieval/CMakeFiles/rebuild_cache.dir
