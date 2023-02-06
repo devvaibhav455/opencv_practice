@@ -93,24 +93,52 @@ int main(int argc, char *argv[]) {
   }
 
   // Distance metric calculation
-  std::vector<float> distance_metric_vector;
+  std::vector<std::pair<float, int>> distance_metric_vector; //Less distance means that images are more similar
+
+  std::vector<std::pair<int, int> > vp;
 
   std::vector< std::vector<float> >::iterator feature_vectors_image;
   std::vector<float>::iterator feature_vectors_image_data;
-  std:: cout << "Feature vector of the target image:\n" << feature_vectors_from_csv[target_index][0] << std::endl;
+  // std:: cout << "Feature vector of the target image:\n" << feature_vectors_from_csv[target_index][0] << std::endl;
+  
   // Calculate distance transform using sum-of-squared-difference as the distance metric if feature_set is baseline
   // Perform calculations between target image and all the images
-  // if (strcmp ("baseline", feature_set ) != 0){
-  //   // Iterating through the features of all the images one by one
-  //   for (feature_vectors_image = feature_vectors_from_csv.begin(); feature_vectors_image != feature_vectors_from_csv.end(); feature_vectors_image++) {
-  //     float distance = 0;
-  //     for (feature_vectors_image_data = feature_vectors_image->begin(); feature_vectors_image_data != feature_vectors_image->end(); feature_vectors_image_data++) {
-  //       distance += feature_vectors_from_csv[target_index] - feature_vectors_image
-  //     }
-  // }   
+  if (strcmp ("baseline", feature_set ) == 0){
+    // Iterating through the features of all the images one by one
+    for (feature_vectors_image = feature_vectors_from_csv.begin() ; feature_vectors_image != feature_vectors_from_csv.end(); feature_vectors_image++) {
+      int index_image = feature_vectors_image - feature_vectors_from_csv.begin();
+      float distance = 0;
+      for (feature_vectors_image_data = feature_vectors_image->begin(); feature_vectors_image_data != feature_vectors_image->end(); feature_vectors_image_data++) {
+        int index = feature_vectors_image_data - feature_vectors_image->begin();
+        distance += pow(feature_vectors_from_csv[target_index][index] - feature_vectors_from_csv[index_image][index], 2);
+      }
+      distance_metric_vector.push_back(std::make_pair(distance, index_image));
+    }   
+  }
+
+  //Handling boundary case. Removing the distance corresponding to the target_image for matching. Just in case, there is an exactly similar image apart from target_image in the database which has distance 0 and we want to find that.
+
+  distance_metric_vector.erase(distance_metric_vector.begin() + target_index);
+
+  // Sorting pair vector in ascending order: Src: https://www.geeksforgeeks.org/keep-track-of-previous-indexes-after-sorting-a-vector-in-c-stl/
+  std::sort(distance_metric_vector.begin(), distance_metric_vector.end());
   
-  // }
-  
+  // Printing the distance_metric_vector for confirmation
+  for (int i = 0; i <distance_metric_vector.size(); i++){
+      std::cout << distance_metric_vector[i].first << " , " << distance_metric_vector[i].second << std::endl;
+  }  
+
+  // Need to find the minimum N (say 3) distances (except 0 for the target index) because they are the closest
+  int n = 3;
+  printf("The %d closest matches to %s are", n, target_image);
+  for (int i = 0; i<n ; i++){
+    printf("%s | ", files_in_csv[distance_metric_vector[i].second]);
+  }
+
+
+
+
+
 
   
       

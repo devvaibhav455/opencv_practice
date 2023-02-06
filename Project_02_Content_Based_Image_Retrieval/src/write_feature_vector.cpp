@@ -124,7 +124,7 @@ int main(int argc, char *argv[]) {
 
       // Calculate the feature vector using 9x9 square in the middle
       append_image_data_csv(csv_filename, buffer, feature_vector, reset_initially );
-      sleep(1);
+      // sleep(1);
       std::cout << loop_counter << std::endl;
       loop_counter++;
       reset_initially = 0; //Don't reset the file after it has been done once. Instead start appending to it now.
