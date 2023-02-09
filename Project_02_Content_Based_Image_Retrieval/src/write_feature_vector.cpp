@@ -10,6 +10,7 @@ Code adapted from the sample code provided by Professor: Bruce A. Maxwell
   
   Sample code to identify image fils in a directory
 */
+
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
@@ -18,6 +19,7 @@ Code adapted from the sample code provided by Professor: Bruce A. Maxwell
 #include <unistd.h>
 #include "csv_util.h"
 #include <opencv2/opencv.hpp>
+#include "filter.h" // To use Sobel Magnitude Image
 
 int num_buckets = 8;
 
@@ -43,8 +45,9 @@ int main(int argc, char *argv[]) {
 
   // check for sufficient arguments
   if( argc < 3) {
+    printf("Please enter sufficient arguments\n");
     printf("usage:\n %s <directory path> <feature set>\n", argv[0]);
-    printf("Valid feature sets:\nbaseline | hm :stands for Histogram Matching | mhm :stands for Multi Histogram Matching\n");    
+    printf("Valid feature sets:\n\tbaseline\n\thm :stands for Histogram Matching\n\tmhm :stands for Multi Histogram Matching\n\ttc: stands for Texture and Color");    
     exit(-1);
   }
 
@@ -56,9 +59,10 @@ int main(int argc, char *argv[]) {
   const char* csv_filename = result;
 
   // Check if the feature_set is entered correctly or not
-  if (!((strcmp("baseline", feature_set ) == 0) || (strcmp("hm", feature_set ) == 0) || (strcmp("mhm", feature_set ) == 0))){
+  if (!((strcmp("baseline", feature_set ) == 0) || (strcmp("hm", feature_set ) == 0) || (strcmp("mhm", feature_set ) == 0) || (strcmp("tc", feature_set ) == 0))){
+    printf("Please enter correct feature_set\n");
     printf("usage:\n %s <target image> <feature set>\n", argv[0]);
-    printf("Valid feature sets:\nbaseline | hm :stands for Histogram Matching | mhm :stands for Multi Histogram Matching\n");    
+    printf("Valid feature sets:\n\tbaseline\n\thm :stands for Histogram Matching\n\tmhm :stands for Multi Histogram Matching\n\ttc: stands for Texture and Color");    
     exit(-1);
   }
 
@@ -112,6 +116,8 @@ int main(int argc, char *argv[]) {
       // }
       // cv::destroyWindow(windowName); //destroy the created window
 
+      // cv::String windowName_target = "Sobel magnitude image"; //Name of the window
+      // cv::namedWindow(windowName_target); // Create a window
 
       // Calculate the feature vector
       feature_vector.clear();
@@ -176,69 +182,163 @@ int main(int argc, char *argv[]) {
 
       }else if(strcmp ("mhm", feature_set ) == 0){
         // std::cout << "Calculating Multi-Histogram Matching (HM) feature vectors using 3d RGB  histogram" << std::endl;
-        float r,g;
         int bucket_R_idx, bucket_G_idx, bucket_B_idx;
-        
-        int RGB_histogram[num_buckets][num_buckets][num_buckets];
-        // Initializing the RGB 3d histogram to zero to start the counter
+        int RGB_histogram_top[num_buckets][num_buckets][num_buckets];
+        int RGB_histogram_bottom[num_buckets][num_buckets][num_buckets];
+
+        // Initializing the RGB 3d histograms to zero to start the counter for both top and bottom 
         for(int i = 0; i < num_buckets; i++){
           for(int j = 0; j < num_buckets; j++){
             for(int k = 0; k < num_buckets; k++){
+              RGB_histogram_top[i][j][k] = 0;
+              RGB_histogram_bottom[i][j][k] = 0;
+            }
+          }
+        }
+
+        // Accessing each and every pixel for top histogram in row-major order and filling up the buckets
+        for (int i = 0; i < image.rows/2; i++){
+          cv::Vec3b *rptr = image.ptr<cv::Vec3b>(i); //Row pointer for ith row
+          //looping through pixels in the row
+          for (int j = 0; j < image.cols ; j++){
+            // Keep in mind that its stored in BGR order in OpenCV
+            bucket_R_idx = rptr[j][2]*num_buckets/256; // Bucket index for the RED value
+            bucket_G_idx = rptr[j][1]*num_buckets/256; // Bucket index for the GREEN value
+            bucket_B_idx = rptr[j][0]*num_buckets/256; // Bucket index for the BLUE value
+            // std::cout << "(r,g): " << r << " " << g << " | " << bucket_r_idx << " | " << bucket_g_idx << std::endl;
+            RGB_histogram_top[bucket_R_idx][bucket_G_idx][bucket_B_idx]++; //Increment the bucket value by one  
+          }
+        }
+
+        // RGB_histogram_top is now computed. Need to store this is feature_vector
+        for(int i = 0; i < num_buckets; i++){
+          for(int j = 0; j < num_buckets; j++){
+            for(int k = 0; k < num_buckets; k++){
+              feature_vector.push_back(RGB_histogram_top[i][j][k]/double(image.rows*image.cols/2)); //Number of pixels in top and bottom half is half the no. of pixels in whole image.
+            }
+          }
+        }
+
+        // BOTTOM HISTOGRAM
+        // Accessing each and every pixel for bottom histogram in row-major order and filling up the buckets
+        for (int i = image.rows/2; i < image.rows; i++){
+          cv::Vec3b *rptr = image.ptr<cv::Vec3b>(i); //Row pointer for ith row
+          //looping through pixels in the row
+          for (int j = 0; j < image.cols ; j++){
+            // Keep in mind that its stored in BGR order in OpenCV
+            bucket_R_idx = rptr[j][2]*num_buckets/256; // Bucket index for the RED value
+            bucket_G_idx = rptr[j][1]*num_buckets/256; // Bucket index for the GREEN value
+            bucket_B_idx = rptr[j][0]*num_buckets/256; // Bucket index for the BLUE value
+            // std::cout << "(r,g): " << r << " " << g << " | " << bucket_r_idx << " | " << bucket_g_idx << std::endl;
+            RGB_histogram_bottom[bucket_R_idx][bucket_G_idx][bucket_B_idx]++; //Increment the bucket value by one  
+          }
+        }
+
+        // RGB_histogram_top is now computed. Need to store this is feature_vector
+        for(int i = 0; i < num_buckets; i++){
+          for(int j = 0; j < num_buckets; j++){
+            for(int k = 0; k < num_buckets; k++){
+              feature_vector.push_back(RGB_histogram_bottom[i][j][k]/double(image.rows*image.cols/2)); //Number of pixels in top and bottom half is half the no. of pixels in whole image.
+            }
+          }
+        }
+      }else if(strcmp ("tc", feature_set ) == 0){
+        //Calculating the texture metric/ simply finding the texture using Sobel Magnitude Image's histogram.
+        cv::Mat temp_sx_short16s(image.rows,image.cols,CV_16SC3); //3 channel matrix of shorts for color image
+        cv::Mat temp_sy_short16s(image.rows,image.cols,CV_16SC3); //3 channel matrix of shorts for color image
+        cv::Mat short_c3_output(image.rows,image.cols,CV_16SC3); //3 channel matrix of shorts for color image
+        cv::Mat grad_mag_color_output(image.rows,image.cols,CV_8UC3); //3 channel matrix for color image
+              
+        sobelX3x3(image, temp_sx_short16s); // Computing Sobel X
+        sobelY3x3(image, temp_sy_short16s); // Computing Sobel Y
+        magnitude(temp_sx_short16s, temp_sy_short16s, short_c3_output); // Combining Sobel X and Sobel Y
+        cv::convertScaleAbs(short_c3_output, grad_mag_color_output); //Converting 16SC3 to 8UC3 to make it suitable for display
+
+        // cv::String windowName = "Image display"; //Name of the window
+        // cv::namedWindow(windowName); // Create a window
+        // cv::imshow(windowName, grad_mag_color_output); // Show our image inside the created window.
+
+        // while(cv::waitKey(0) != 113){
+        // //Wait indefinitely until 'q' is pressed. 113 is q's ASCII value  
+        // }
+        // cv::destroyWindow(windowName); //destroy the created window
+        
+        // std::cout << "This is cout: " << (int)grad_mag_color_output.at<cv::Vec3s>(0,0)[0] << std::endl;
+        // printf("0,0 element is: %d", grad_mag_color_output.at<cv::Vec3b>(0,0)[0]);
+        // sleep(10);
+
+        int bucket_R_idx, bucket_G_idx, bucket_B_idx;
+        int RGB_histogram_grad_mag_color[num_buckets][num_buckets][num_buckets]; //Texture histogrsm from Sobel Magnitude image
+        int RGB_histogram[num_buckets][num_buckets][num_buckets]; // Color histogram from original image
+
+        // Initializing the textture and color RGB 3d histograms to zero to start the counter for each bucket 
+        for(int i = 0; i < num_buckets; i++){
+          for(int j = 0; j < num_buckets; j++){
+            for(int k = 0; k < num_buckets; k++){
+              RGB_histogram_grad_mag_color[i][j][k] = 0;
               RGB_histogram[i][j][k] = 0;
             }
           }
         }
 
-        // Calculating start and end index of rows for top and bottom half of the image
-        int row_start;
-        int row_end;
-        for (int k = 0; k<2 ; k++){
-          if (k ==0){
-            row_start = 0;
-            row_end = image.rows/2;
-          }else{
-            row_start = image.rows/2;
-            row_end = image.rows;
+        // Calculating texture histogram (RGB_histogram_grad_mag_color) using Sobel Magnitude color output.
+        // Accessing each and every pixel for sobel magnitude color image in row-major order and filling up the buckets
+        for (int i = 0; i < grad_mag_color_output.rows; i++){
+          cv::Vec3b *rptr = grad_mag_color_output.ptr<cv::Vec3b>(i); //Row pointer for ith row
+          //looping through pixels in the row
+          for (int j = 0; j < grad_mag_color_output.cols ; j++){
+            // Keep in mind that its stored in BGR order in OpenCV
+            bucket_R_idx = rptr[j][2]*num_buckets/256; // Bucket index for the RED value
+            bucket_G_idx = rptr[j][1]*num_buckets/256; // Bucket index for the GREEN value
+            bucket_B_idx = rptr[j][0]*num_buckets/256; // Bucket index for the BLUE value
+            // std::cout << "(r,g): " << r << " " << g << " | " << bucket_r_idx << " | " << bucket_g_idx << std::endl;
+            RGB_histogram_grad_mag_color[bucket_R_idx][bucket_G_idx][bucket_B_idx]++; //Increment the bucket value by one  
           }
+        }
 
-          // Accessing each and every pixel in row-major order and filling up the buckets
-          for (int i = row_start; i < row_end; i++){
-            cv::Vec3b *rptr = image.ptr<cv::Vec3b>(i); //Row pointer for ith row
-            //looping through pixels in the row
-            for (int j = 0; j < image.cols ; j++){
-               // Keep in mind that its stored in BGR order in OpenCV
-                //Src: https://stackoverflow.com/questions/7571326/why-does-dividing-two-int-not-yield-the-right-value-when-assigned-to-double
-                r = rptr[j][2]/double(rptr[j][0] + rptr[j][1] + rptr[j][2]);
-                g = rptr[j][1]/double(rptr[j][0] + rptr[j][1] + rptr[j][2]);
-              
-              bucket_R_idx = rptr[j][2]*num_buckets/256; // Bucket index for the RED value
-              bucket_G_idx = rptr[j][1]*num_buckets/256; // Bucket index for the GREEN value
-              bucket_B_idx = rptr[j][0]*num_buckets/256; // Bucket index for the BLUE value
-              // std::cout << "(r,g): " << r << " " << g << " | " << bucket_r_idx << " | " << bucket_g_idx << std::endl;
-              RGB_histogram[bucket_R_idx][bucket_G_idx][bucket_B_idx]++; //Increment the bucket value by one  
-              
+        // RGB_histogram_grad_mag_color or texture histogram is now computed. Need to store this in feature_vector
+        for(int i = 0; i < num_buckets; i++){
+          for(int j = 0; j < num_buckets; j++){
+            for(int k = 0; k < num_buckets; k++){
+              feature_vector.push_back(RGB_histogram_grad_mag_color[i][j][k]/double(grad_mag_color_output.rows*grad_mag_color_output.cols)); 
             }
           }
+        }
 
-          // RGB_histogram is now computed. Need to store this is feature_vector
-          for(int i = 0; i < num_buckets; i++){
-            for(int j = 0; j < num_buckets; j++){
-              for(int k = 0; k < num_buckets; k++){
-                feature_vector.push_back(RGB_histogram[i][j][k]/double(image.rows*image.cols));
-              }
+        // Calculating Color histogram from original image i.e. image
+        // Accessing each and every pixel from the original image in row-major order and filling up the buckets
+        for (int i = 0; i < image.rows; i++){
+          cv::Vec3b *rptr = image.ptr<cv::Vec3b>(i); //Row pointer for ith row
+          //looping through pixels in the row
+          for (int j = 0; j < image.cols ; j++){
+            // Keep in mind that its stored in BGR order in OpenCV
+            bucket_R_idx = rptr[j][2]*num_buckets/256; // Bucket index for the RED value
+            bucket_G_idx = rptr[j][1]*num_buckets/256; // Bucket index for the GREEN value
+            bucket_B_idx = rptr[j][0]*num_buckets/256; // Bucket index for the BLUE value
+            // std::cout << "(r,g): " << r << " " << g << " | " << bucket_r_idx << " | " << bucket_g_idx << std::endl;
+            RGB_histogram[bucket_R_idx][bucket_G_idx][bucket_B_idx]++; //Increment the bucket value by one  
+          }
+        }
+
+        // RGB_histogram or color histogram is now computed. Need to store this is feature_vector
+        for(int i = 0; i < num_buckets; i++){
+          for(int j = 0; j < num_buckets; j++){
+            for(int k = 0; k < num_buckets; k++){
+              feature_vector.push_back(RGB_histogram[i][j][k]/double(image.rows*image.cols)); 
             }
           }
         }
       }
-    }    
-
-      // Calculate the feature vector using 9x9 square in the middle
+      
+      // After Calculate the feature vector using 9x9 square in the middle
       append_image_data_csv(csv_filename, buffer, feature_vector, reset_initially );
       // sleep(1);
       std::cout << loop_counter << std::endl;
       loop_counter++;
-      reset_initially = 0; //Don't reset the file after it has been done once. Instead start appending to it now.
-  }
+      reset_initially = 0; //Don't reset the file after it has been done once. Instead start appending to it now. 
+
+    } // Closing bracket for if file is an image in directory condition
+  }       
   printf("Terminating\n");
   return(0);
 }

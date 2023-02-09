@@ -7,7 +7,7 @@ if (${OpenCV_FOUND})
   message(FATAL_ERROR "OpenCV not found!")
 endif()
 
-set( SRC_FILES_PATH_WRITE_CSV src/write_feature_vector.cpp src/csv_util.cpp)
+set( SRC_FILES_PATH_WRITE_CSV src/write_feature_vector.cpp src/csv_util.cpp src/filter.cpp)
 set( SRC_FILES_PATH_READ_CSV src/read_feature_vector.cpp src/csv_util.cpp)
 
 message("[MY_MESSAGE] CMake reading source files from: ${SRC_FILES_PATH_IMG_DISP}")
