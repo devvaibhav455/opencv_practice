@@ -1,7 +1,7 @@
 /*Dev Vaibhav
 Spring 2023 CS 5330
 Project 2: Content-based Image Retrieval
-Code adapted from the sample code provided by Bruce A. Maxwell
+Code adapted from the sample code provided by Professor: Bruce A. Maxwell
 */
 
 /*
@@ -19,11 +19,17 @@ Code adapted from the sample code provided by Bruce A. Maxwell
 #include "csv_util.h"
 #include <opencv2/opencv.hpp>
 
+int num_buckets = 8;
+
 /*
   Given a directory on the command line, scans through the directory for image files.
 
   Prints out the full path name for each file.  This can be used as an argument to fopen or to cv::imread.
  */
+
+// How to build the project and run the executable: https://docs.opencv.org/4.x/db/df5/tutorial_linux_gcc_cmake.html
+// clear && cmake . && make #The executable gets stored into the bin folder
+
 int main(int argc, char *argv[]) {
   char dirname[256];
   char buffer[256];
@@ -38,13 +44,9 @@ int main(int argc, char *argv[]) {
   // check for sufficient arguments
   if( argc < 3) {
     printf("usage:\n %s <directory path> <feature set>\n", argv[0]);
-    printf("Valid feature sets:\nbaseline\n");
+    printf("Valid feature sets:\nbaseline | hm :stands for Histogram Matching | mhm :stands for Multi Histogram Matching\n");    
     exit(-1);
   }
-
-  // get the directory path
-  strcpy(dirname, argv[1]);
-  printf("Processing directory %s\n", dirname );
 
   // copy command line feature set name to a local variable and define the name of csv file
   char feature_set[256];
@@ -52,6 +54,17 @@ int main(int argc, char *argv[]) {
   char* result = argv[2];
   strcat(result, ".csv");; //Ref: https://www.geeksforgeeks.org/char-vs-stdstring-vs-char-c/
   const char* csv_filename = result;
+
+  // Check if the feature_set is entered correctly or not
+  if (!((strcmp("baseline", feature_set ) == 0) || (strcmp("hm", feature_set ) == 0) || (strcmp("mhm", feature_set ) == 0))){
+    printf("usage:\n %s <target image> <feature set>\n", argv[0]);
+    printf("Valid feature sets:\nbaseline | hm :stands for Histogram Matching | mhm :stands for Multi Histogram Matching\n");    
+    exit(-1);
+  }
+
+  // get the directory path
+  strcpy(dirname, argv[1]);
+  printf("Processing directory %s\n", dirname );
 
   // open the directory
   dirp = opendir( dirname );
@@ -102,9 +115,9 @@ int main(int argc, char *argv[]) {
 
       // Calculate the feature vector
       feature_vector.clear();
-      std::cout << "Stringcompare result should be zero: " << strcmp ("baseline", feature_set ) << std::endl;
+      // std::cout << "Stringcompare result should be zero: " << strcmp ("baseline", feature_set ) << std::endl;
       if (strcmp ("baseline", feature_set ) == 0){ 
-        std::cout << "Calculating feature vectors" << std::endl;
+        std::cout << "Calculating 9x9 baseline feature vectors" << std::endl;
         // Find 9x9 matrix at the center and store it in row-major order in a vector
         // Loop over src rows to access the pixel
         int center_row = image.rows/2;
@@ -117,6 +130,103 @@ int main(int argc, char *argv[]) {
             feature_vector.push_back(rptr[j][0]);
             feature_vector.push_back(rptr[j][1]);
             feature_vector.push_back(rptr[j][2]);
+          }
+        }
+      }else if(strcmp ("hm", feature_set ) == 0){
+        // std::cout << "Calculating Histogram Matching (HM) feature vectors" << std::endl;
+        float r,g;
+        int bucket_r_idx, bucket_g_idx;
+        
+        int rg_histogram[num_buckets][num_buckets];
+        // Initializing the rg 2d histogram to zero to start the counter
+        for(int i = 0; i < num_buckets; i++){
+          for(int j = 0; j < num_buckets; j++){
+              rg_histogram[i][j] = 0;
+          }
+        }
+
+        // Accessing each and every pixel in row-major order and filling up the buckets
+        for (int i = 0; i < image.rows; i++){
+          cv::Vec3b *rptr = image.ptr<cv::Vec3b>(i);
+          //looping through pixels in the row
+          for (int j = 0; j < image.cols ; j++){
+            // Handling edge cases when R,G,B are all zero.
+            if(rptr[j][0] == 0 && rptr[j][1] == 0 && rptr[j][2] == 0){
+              // std::cout << "Pixel is black" << std::endl;
+              r = 0;
+              g = 0;
+            }else{ // Keep in mind that its stored in BGR order in OpenCV
+              //Src: https://stackoverflow.com/questions/7571326/why-does-dividing-two-int-not-yield-the-right-value-when-assigned-to-double
+              r = rptr[j][2]/double(rptr[j][0] + rptr[j][1] + rptr[j][2]);
+              g = rptr[j][1]/double(rptr[j][0] + rptr[j][1] + rptr[j][2]);
+            }
+            bucket_r_idx = r*num_buckets; //Its over x-axis
+            bucket_g_idx = g*num_buckets; //Its over y-axis
+            // std::cout << "(r,g): " << r << " " << g << " | " << bucket_r_idx << " | " << bucket_g_idx << std::endl;
+            rg_histogram[bucket_r_idx][bucket_g_idx]++; //Increment the bucket value by one    
+          }
+        }
+
+        // rg_histogram is now computed. Need to normalize it store this is feature_vector
+        for(int i = 0; i < num_buckets; i++){
+          for(int j = 0; j < num_buckets; j++){
+              feature_vector.push_back(rg_histogram[i][j]/double(image.rows*image.cols));
+          }
+        }
+
+      }else if(strcmp ("mhm", feature_set ) == 0){
+        // std::cout << "Calculating Multi-Histogram Matching (HM) feature vectors using 3d RGB  histogram" << std::endl;
+        float r,g;
+        int bucket_R_idx, bucket_G_idx, bucket_B_idx;
+        
+        int RGB_histogram[num_buckets][num_buckets][num_buckets];
+        // Initializing the RGB 3d histogram to zero to start the counter
+        for(int i = 0; i < num_buckets; i++){
+          for(int j = 0; j < num_buckets; j++){
+            for(int k = 0; k < num_buckets; k++){
+              RGB_histogram[i][j][k] = 0;
+            }
+          }
+        }
+
+        // Calculating start and end index of rows for top and bottom half of the image
+        int row_start;
+        int row_end;
+        for (int k = 0; k<2 ; k++){
+          if (k ==0){
+            row_start = 0;
+            row_end = image.rows/2;
+          }else{
+            row_start = image.rows/2;
+            row_end = image.rows;
+          }
+
+          // Accessing each and every pixel in row-major order and filling up the buckets
+          for (int i = row_start; i < row_end; i++){
+            cv::Vec3b *rptr = image.ptr<cv::Vec3b>(i); //Row pointer for ith row
+            //looping through pixels in the row
+            for (int j = 0; j < image.cols ; j++){
+               // Keep in mind that its stored in BGR order in OpenCV
+                //Src: https://stackoverflow.com/questions/7571326/why-does-dividing-two-int-not-yield-the-right-value-when-assigned-to-double
+                r = rptr[j][2]/double(rptr[j][0] + rptr[j][1] + rptr[j][2]);
+                g = rptr[j][1]/double(rptr[j][0] + rptr[j][1] + rptr[j][2]);
+              
+              bucket_R_idx = rptr[j][2]*num_buckets/256; // Bucket index for the RED value
+              bucket_G_idx = rptr[j][1]*num_buckets/256; // Bucket index for the GREEN value
+              bucket_B_idx = rptr[j][0]*num_buckets/256; // Bucket index for the BLUE value
+              // std::cout << "(r,g): " << r << " " << g << " | " << bucket_r_idx << " | " << bucket_g_idx << std::endl;
+              RGB_histogram[bucket_R_idx][bucket_G_idx][bucket_B_idx]++; //Increment the bucket value by one  
+              
+            }
+          }
+
+          // RGB_histogram is now computed. Need to store this is feature_vector
+          for(int i = 0; i < num_buckets; i++){
+            for(int j = 0; j < num_buckets; j++){
+              for(int k = 0; k < num_buckets; k++){
+                feature_vector.push_back(RGB_histogram[i][j][k]/double(image.rows*image.cols));
+              }
+            }
           }
         }
       }

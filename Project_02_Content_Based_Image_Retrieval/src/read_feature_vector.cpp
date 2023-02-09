@@ -17,6 +17,10 @@ Code adapted from the sample code provided by Bruce A. Maxwell
 #include <iostream>
 #include <bits/stdc++.h>
 #include "csv_util.h"
+#include <opencv2/opencv.hpp>
+
+int num_buckets = 8;
+
 
 /*
   Given a directory on the command line, scans through the directory for image files.
@@ -34,7 +38,7 @@ int main(int argc, char *argv[]) {
   // check for sufficient arguments
   if( argc < 3) {
     printf("usage:\n %s <target image> <feature set>\n", argv[0]);
-    printf("Valid feature sets:\nbaseline\n");
+    printf("Valid feature sets:\nbaseline | hm :stands for Histogram Matching | mhm :stands for Multi Histogram Matching\n");    
     exit(-1);
   }
 
@@ -52,9 +56,9 @@ int main(int argc, char *argv[]) {
   strcpy( feature_set, argv[2] );
 
   // Check if the feature_set is entered correctly or not
-  if (strcmp ("baseline", feature_set ) != 0){
+  if (!((strcmp("baseline", feature_set ) == 0) || (strcmp("hm", feature_set ) == 0) || (strcmp("mhm", feature_set ) == 0))){
     printf("usage:\n %s <target image> <feature set>\n", argv[0]);
-    printf("Valid feature sets:\nbaseline\n");
+    printf("Valid feature sets:\nbaseline | hm :stands for Histogram Matching | mhm :stands for Multi Histogram Matching\n");    
     exit(-1);
   }
 
@@ -78,13 +82,16 @@ int main(int argc, char *argv[]) {
   const char *search_result;
   int found_in_csv = 0;
   int target_index;
+  char target_filename[256];
   for (auto it = files_in_csv.begin(); it != files_in_csv.end(); it++) {
     std::cout << *it << std::endl;
     search_result = strstr (*it,target_image); //Return Value: This function returns a pointer points to the first character of the found s2 in s1 otherwise a null pointer if s2 is not present in s1. If s2 points to an empty string, s1 is returned. Src: https://www.geeksforgeeks.org/strstr-in-ccpp/
     if(search_result) {
         found_in_csv = 1;
+        strcpy(target_filename, *it); //Storing ../images/target_image_name in target_filename in order to show it on GUI
         target_index = std::distance(files_in_csv.begin(), it);
-        printf("Target image: %s found in CSV file at index %d\n", target_image, target_index);
+        printf("Target image: %s found in CSV file at index %d\n", target_image, target_index)
+        ;
     }
   }
   if (!found_in_csv){
@@ -114,6 +121,50 @@ int main(int argc, char *argv[]) {
       }
       distance_metric_vector.push_back(std::make_pair(distance, index_image));
     }   
+  }else if(strcmp ("hm", feature_set ) == 0){
+    // Iterating through the features of all the images one by one
+    for (feature_vectors_image = feature_vectors_from_csv.begin() ; feature_vectors_image != feature_vectors_from_csv.end(); feature_vectors_image++) {
+      int index_image = feature_vectors_image - feature_vectors_from_csv.begin();
+      float distance = 0;
+      for (feature_vectors_image_data = feature_vectors_image->begin(); feature_vectors_image_data != feature_vectors_image->end(); feature_vectors_image_data++) {
+        int index = feature_vectors_image_data - feature_vectors_image->begin();
+        distance += std::min(feature_vectors_from_csv[target_index][index], feature_vectors_from_csv[index_image][index]);
+      }
+      distance_metric_vector.push_back(std::make_pair(1-distance, index_image));
+    }   
+  }else if(strcmp ("mhm", feature_set ) == 0){
+    // Iterating through the features of all the images one by one
+    for (feature_vectors_image = feature_vectors_from_csv.begin() ; feature_vectors_image != feature_vectors_from_csv.end(); feature_vectors_image++) {
+      int index_image = feature_vectors_image - feature_vectors_from_csv.begin(); //Index of the current image which is being iterated
+      //If bucket size is 8 for RGB histogram, there will be 8x8x8 = 512 elements for the top half and 512 for the bottom half. So, a total of 1024 elements
+      float distance;
+      float weight;
+      
+      std::vector<float>::iterator vector_start;
+      std::vector<float>::iterator vector_end;
+
+      for (int k = 0; k<2 ; k++){
+        if (k == 0){
+          weight = 0.5;
+          // printf("k: %d | Weight: %f", k, weight);
+          vector_start = feature_vectors_image->begin();
+          vector_end = feature_vectors_image->end()  - float(num_buckets*num_buckets*num_buckets); //This is not coverted in the loop. Infact, the value just before this iterator is used
+        }else{
+          weight = 1 - weight;
+          // printf("k: %d | Weight: %f", k, weight);
+          vector_start = feature_vectors_image->end() - float(num_buckets*num_buckets*num_buckets);
+          vector_end = feature_vectors_image->end();
+        }
+        for (feature_vectors_image_data = vector_start; feature_vectors_image_data != vector_end; feature_vectors_image_data++) {
+          // std::cout << feature_vectors_image->end() << std::endl;
+          int index = feature_vectors_image_data - feature_vectors_image->begin();
+          // std::cout << "k: " << k << " Iterated through: " << index << std::endl;
+          distance += std::min(feature_vectors_from_csv[target_index][index], feature_vectors_from_csv[index_image][index]);
+        }
+        distance = weight*(1-distance);
+      }
+      distance_metric_vector.push_back(std::make_pair(distance, index_image));
+    }   
   }
 
   //Handling boundary case. Removing the distance corresponding to the target_image for matching. Just in case, there is an exactly similar image apart from target_image in the database which has distance 0 and we want to find that.
@@ -130,10 +181,27 @@ int main(int argc, char *argv[]) {
 
   // Need to find the minimum N (say 3) distances (except 0 for the target index) because they are the closest
   int n = 3;
-  printf("The %d closest matches to %s are", n, target_image);
+  printf("The %d closest matches to %s are\n", n, target_image);
+  // Code to display the image
+  cv::Mat target_image_mat = cv::imread(target_filename,cv::ImreadModes::IMREAD_UNCHANGED); //Working
+  cv::String windowName_target = "TARGET_IMAGE: " + cv::String(target_image); //Name of the window
+  cv::namedWindow(windowName_target); // Create a window
+  cv::imshow(windowName_target, target_image_mat); // Show our image inside the created window
+  
+
   for (int i = 0; i<n ; i++){
-    printf("%s | ", files_in_csv[distance_metric_vector[i].second]);
+    // Show the target image and the closest matches
+    printf("%s\n", files_in_csv[distance_metric_vector[i].second]);
+    cv::Mat match = cv::imread(files_in_csv[distance_metric_vector[i].second],cv::ImreadModes::IMREAD_UNCHANGED); //Working
+    cv::String windowName_target = "MATCH_" + cv::String(std::to_string(i)) + ": " + cv::String(files_in_csv[distance_metric_vector[i].second]); //Name of the window
+    cv::namedWindow(windowName_target); // Create a window
+    cv::imshow(windowName_target, match); // Show our image inside the created window
   }
+
+  while(cv::waitKey(0) != 113){
+    //Wait indefinitely until 'q' is pressed. 113 is q's ASCII value  
+  }
+  // cv::destroyWindow(windowName_target); //destroy the created window
 
 
 
