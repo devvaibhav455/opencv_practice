@@ -344,8 +344,8 @@ int main(int argc, char *argv[]) {
       // For the Correlation and Intersection methods, the higher the metric, the more accurate the match.
 
       // Distance vector for correlation metric (need to sort in descending order)
-      distance_metric_vector.push_back(std::make_pair(distance_correlation, index_image));
-      sort_order = 1;
+      // distance_metric_vector.push_back(std::make_pair(distance_correlation, index_image));
+      // sort_order = 1;
 
       // Distance vector for Chi-Square metric (need to store in ascending order)
       // distance_metric_vector.push_back(std::make_pair(distance_chisquare, index_image));
@@ -355,7 +355,7 @@ int main(int argc, char *argv[]) {
       // distance_metric_vector.push_back(std::make_pair(1 - distance_intersection, index_image));
 
       // Distance vector for Bhattacharya metric (need to store in ascending order). Distance lie between 0 and 1
-      // distance_metric_vector.push_back(std::make_pair(distance_bhattacharya, index_image));
+      distance_metric_vector.push_back(std::make_pair(distance_bhattacharya, index_image));
     }   
   }
   

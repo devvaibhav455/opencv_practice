@@ -1,23 +1,46 @@
-LINK TO REPORT: https://wiki.khoury.northeastern.edu/display/~vaibhavd/Project+1%3A+Real-time+filtering
+Working alone for Project 2: Content Based Image Retrieval
+LINK TO REPORT: https://wiki.khoury.northeastern.edu/display/~vaibhavd/Project+2%3A+Content-based+Image+Retrieval
 
 I have no idea about the permission. Please let me know if you face any issue in accessing it.
 
 Email: vaibhav.d@northeastern.edu
 
-LINK TO VIDEO: https://drive.google.com/drive/folders/15UVfB0a67lCXgwwN81Pp6A3xpVwdRv1G?usp=share_link
-
-
 OS: Ubuntu 22.04
 IDE: VS Code
 OpenCV version: 4.5.4
 
+I made two programs write_csv and read_csv to speed-up the CBIR process.
+
+Instructions to execute binary
+
+usage:
+ ./write_csv <directory path> <feature set>
+Valid feature sets:
+	baseline
+	hm :stands for Histogram Matching
+	mhm :stands for Multi Histogram Matching
+	tc: stands for Texture and Color
+	cd: stands for Custom Design
+	1: Extension 1 | Gabor filters
+	2: Extension 2: L5E5 rg chromaticity + rg chromaticity of original image
+    3: Extension 3: Comparing 4 histogram distance metrics
+
+
+usage:
+ ./read_csv <target image> <feature set>
+Valid feature sets:
+	baseline
+	hm :stands for Histogram Matching
+	mhm :stands for Multi Histogram Matching
+	tc: stands for Texture and Color
+	cd: stands for Custom Design
+	1: Extension 1 | Gabor filters
+	2: Extension 2: L5E5 rg chromaticity + rg chromaticity of original image
+    3: Extension 3: Comparing 4 histogram distance metrics
+
 
 Instructions for extensions:
 
-EXTENSION 1) Increase/ decrease brightness when the user presses UP/ DOWN arrow key respectively on the keyboard
-EXTENSION 2) Sharpen the image when the user presses the key 1 on the keyboard
-EXTENSION 3) Make a pencil sketch of the image when the user presses the key 2 on the keyboard
-EXTENSION 4) Get input from the user and add a caption to the image when the user presses the key 3 on the keyboard
-EXTENSION 5) Saving any filtered video when the user presses the key 4 on the keyboard and stop when q is pressed
-
-
+EXTENSION 1)  Gabor filter
+EXTENSION 2) Collect all blue trash bins:
+EXTENSION 3) Comparing 4 distance metrics: Correlation, Chi-Square, Histogram Intersection, and Bhattacharyya distance.
