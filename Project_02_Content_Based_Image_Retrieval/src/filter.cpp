@@ -465,3 +465,50 @@ int rotate(const unsigned char* input,
         return(0);
 }
 
+// src: input image: 8UC3
+// dst: output image: 8UC3
+// input is a color image (type vec3b) and the output should is a color image (type vec3b)
+// apply a L5E5 Laws filter as separable filters ([1 4 6 4 1] horizontal and [1 2 0 -2 -1]^T vertical)
+int L5E5(cv::Mat &src, cv::Mat&dst){
+  src.copyTo(dst);
+
+  // loop over src and apply the 1x5 [1 4 6 4 1] horizontal filter
+  for(int i=2;i<src.rows-2;i++) {
+    // src pointer for the ith row
+    cv::Vec3b *rptr = src.ptr<cv::Vec3b>(i);
+    // destination pointer for the ith row
+    cv::Vec3b *dptr = dst.ptr<cv::Vec3b>(i);
+    // for each column
+    for(int j=2;j<src.cols-2;j++) {
+      // for each color channel
+      for(int c=0;c<3;c++) {
+	      dptr[j][c] = (1*rptr[j-2][c] + 4*rptr[j-1][c] + 6*rptr[j][c] + 4*rptr[j+1][c] + 1*rptr[j+2][c])/16;
+      }
+    }
+  }
+
+  cv::Mat tmp = cv::Mat(src.size(), CV_8UC3); //color image tmp matrix for intermediate calculations
+  dst.copyTo(tmp);
+
+  // loop over tmp, apply a 1x5 vertical filter [1 2 0 -2 -1]^T and store the result in dst
+  for(int i=2;i<src.rows-2;i++) {
+    // src pointer for the i-2 to i+2 rows. Now, the source is
+    cv::Vec3b *rptrm2 = tmp.ptr<cv::Vec3b>(i-2);
+    cv::Vec3b *rptrm1 = tmp.ptr<cv::Vec3b>(i-1);
+    cv::Vec3b *rptr = tmp.ptr<cv::Vec3b>(i);
+    cv::Vec3b *rptrp1 = tmp.ptr<cv::Vec3b>(i+1);
+    cv::Vec3b *rptrp2 = tmp.ptr<cv::Vec3b>(i+2);
+    // destination pointer for the ith row
+    cv::Vec3b *dptr = dst.ptr<cv::Vec3b>(i);
+    // for each column
+    for(int j=2;j<src.cols-2;j++) {
+      // for each color channel
+      for(int c=0;c<3;c++) {
+	      dptr[j][c] = 1*rptrm2[j][c] + 2*rptrm1[j][c] + 0*rptr[j][c] - 2*rptrp1[j][c] - 1*rptrp2[j][c];
+      }
+    }
+  }
+
+  // return
+  return(0);
+}

@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
   if( argc < 3) {
     printf("Please enter sufficient arguments\n");
     printf("usage:\n %s <directory path> <feature set>\n", argv[0]);
-    printf("Valid feature sets:\n\tbaseline\n\thm :stands for Histogram Matching\n\tmhm :stands for Multi Histogram Matching\n\ttc: stands for Texture and Color");    
+    printf("Valid feature sets:\n\tbaseline\n\thm :stands for Histogram Matching\n\tmhm :stands for Multi Histogram Matching\n\ttc: stands for Texture and Color\n\tcd: stands for Custom Design\n\t1: Extension 1 | Gabor filters\n\t2: Extension 2: L5E5 rg chromaticity + rg chromaticity of original image");    
     exit(-1);
   }
 
@@ -59,10 +59,10 @@ int main(int argc, char *argv[]) {
   const char* csv_filename = result;
 
   // Check if the feature_set is entered correctly or not
-  if (!((strcmp("baseline", feature_set ) == 0) || (strcmp("hm", feature_set ) == 0) || (strcmp("mhm", feature_set ) == 0) || (strcmp("tc", feature_set ) == 0))){
+  if (!((strcmp("baseline", feature_set ) == 0) || (strcmp("hm", feature_set ) == 0) || (strcmp("mhm", feature_set ) == 0) || (strcmp("tc", feature_set ) == 0) || (strcmp("cd", feature_set ) == 0) || (strcmp("1", feature_set ) == 0) || (strcmp("2", feature_set ) == 0))){
     printf("Please enter correct feature_set\n");
     printf("usage:\n %s <target image> <feature set>\n", argv[0]);
-    printf("Valid feature sets:\n\tbaseline\n\thm :stands for Histogram Matching\n\tmhm :stands for Multi Histogram Matching\n\ttc: stands for Texture and Color");    
+    printf("Valid feature sets:\n\tbaseline\n\thm :stands for Histogram Matching\n\tmhm :stands for Multi Histogram Matching\n\ttc: stands for Texture and Color\n\tcd: stands for Custom Design\n\t1: Extension 1 | Gabor filters\n\t2: Extension 2: L5E5 rg chromaticity + rg chromaticity of original image");    
     exit(-1);
   }
 
@@ -328,6 +328,214 @@ int main(int argc, char *argv[]) {
             }
           }
         }
+      }else if(strcmp ("cd", feature_set ) == 0){
+        cv::Mat l5e5_output(image.rows,image.cols,CV_8UC3); //3 channel matrix for color image
+        L5E5(image, l5e5_output);
+
+        // Generate 2D rg chromaticity histogram from l5e5_output
+        float r,g;
+        int bucket_r_idx, bucket_g_idx;
+        
+        int rg_histogram[num_buckets][num_buckets];
+        // Initializing the rg 2d histogram to zero to start the counter
+        for(int i = 0; i < num_buckets; i++){
+          for(int j = 0; j < num_buckets; j++){
+              rg_histogram[i][j] = 0;
+          }
+        }
+
+        // Accessing each and every pixel in row-major order and filling up the buckets
+        for (int i = 0; i < l5e5_output.rows; i++){
+          cv::Vec3b *rptr = l5e5_output.ptr<cv::Vec3b>(i);
+          //looping through pixels in the row
+          for (int j = 0; j < l5e5_output.cols ; j++){
+            // Handling edge cases when R,G,B are all zero.
+            if(rptr[j][0] == 0 && rptr[j][1] == 0 && rptr[j][2] == 0){
+              // std::cout << "Pixel is black" << std::endl;
+              r = 0;
+              g = 0;
+            }else{ // Keep in mind that its stored in BGR order in OpenCV
+              //Src: https://stackoverflow.com/questions/7571326/why-does-dividing-two-int-not-yield-the-right-value-when-assigned-to-double
+              r = rptr[j][2]/double(rptr[j][0] + rptr[j][1] + rptr[j][2]);
+              g = rptr[j][1]/double(rptr[j][0] + rptr[j][1] + rptr[j][2]);
+            }
+            bucket_r_idx = r*num_buckets; //Its over x-axis
+            bucket_g_idx = g*num_buckets; //Its over y-axis
+            // std::cout << "(r,g): " << r << " " << g << " | " << bucket_r_idx << " | " << bucket_g_idx << std::endl;
+            rg_histogram[bucket_r_idx][bucket_g_idx]++; //Increment the bucket value by one    
+          }
+        }
+
+        // rg_histogram is now computed. Need to normalize it and store this in feature_vector
+        for(int i = 0; i < num_buckets; i++){
+          for(int j = 0; j < num_buckets; j++){
+              feature_vector.push_back(rg_histogram[i][j]/double(image.rows*image.cols));
+          }
+        }
+
+        // #######################################################################//
+        // Generating 3D RGB histogram of the original image
+
+        int bucket_R_idx, bucket_G_idx, bucket_B_idx;
+        int RGB_histogram[num_buckets][num_buckets][num_buckets];
+
+        // Initializing the RGB 3d histograms to zero to start the counter 
+        for(int i = 0; i < num_buckets; i++){
+          for(int j = 0; j < num_buckets; j++){
+            for(int k = 0; k < num_buckets; k++){
+              RGB_histogram[i][j][k] = 0;
+            }
+          }
+        }
+
+        // Accessing each and every pixel for top histogram in row-major order and filling up the buckets
+        for (int i = 0; i < image.rows; i++){
+          cv::Vec3b *rptr = image.ptr<cv::Vec3b>(i); //Row pointer for ith row
+          //looping through pixels in the row
+          for (int j = 0; j < image.cols ; j++){
+            // Keep in mind that its stored in BGR order in OpenCV
+            bucket_R_idx = rptr[j][2]*num_buckets/256; // Bucket index for the RED value
+            bucket_G_idx = rptr[j][1]*num_buckets/256; // Bucket index for the GREEN value
+            bucket_B_idx = rptr[j][0]*num_buckets/256; // Bucket index for the BLUE value
+            // std::cout << "(r,g): " << r << " " << g << " | " << bucket_r_idx << " | " << bucket_g_idx << std::endl;
+            RGB_histogram[bucket_R_idx][bucket_G_idx][bucket_B_idx]++; //Increment the bucket value by one  
+          }
+        }
+
+        // RGB_histogram is now computed. Need to store this is feature_vector
+        for(int i = 0; i < num_buckets; i++){
+          for(int j = 0; j < num_buckets; j++){
+            for(int k = 0; k < num_buckets; k++){
+              feature_vector.push_back(RGB_histogram[i][j][k]/double(image.rows*image.cols)); //Normalizing while storing the feature vector
+            }
+          }
+        }
+
+
+      }else if(strcmp ("1", feature_set ) == 0){
+        // Implementing Extension 1: Using Gabor filters
+        // Src: https://stackoverflow.com/questions/26948110/gabor-kernel-parameters-in-opencv; https://cvtuts.wordpress.com/2014/04/27/gabor-filters-a-practical-overview/
+
+        cv::Mat grey_output(image.rows,image.cols,CV_8UC1); //Single channel matrix for greyscale image
+        cv::Mat gabor_input; //3 channel matrix for color image
+        
+        cv::cvtColor(image, grey_output, cv::COLOR_BGR2GRAY);
+        image.convertTo(gabor_input, CV_32F);
+
+        cv::Mat temp; //3 channel matrix for color image
+        
+        cv::Size KernelSize(31,31); // sumegha 9,9
+        double Sigma = 2; //5
+        double Lambda = 4; //4
+        double Theta = 0*CV_PI/180;
+        double psi = 1*CV_PI/180; // pi/4
+        double Gamma = 0.02; // 0.04
+        cv::Mat gabor_kernel = cv::getGaborKernel(KernelSize, Sigma, Theta, Lambda,Gamma,psi);
+
+        // cv::Mat gabor_kernel_resized;
+
+        // std::cout << gabor_kernel << std::endl;
+
+        // cv::resize(gabor_kernel, gabor_kernel_resized, cv::Size(500,500), cv::INTER_LINEAR);
+        cv::filter2D(gabor_input, temp, CV_32F, gabor_kernel);
+        // cv::convertScaleAbs(temp, gabor_input); //Converting 16SC3 to 8UC3 to make it suitable for display
+        temp.convertTo(gabor_input, CV_8U,1.0/255.0);
+        cv::String windowName = "Gabor output"; //Name of the window
+        cv::namedWindow(windowName); // Create a window
+        cv::imshow(windowName, gabor_input);
+      // cv::imshow(windowName, image); // Show our image inside the created window.
+
+        while(cv::waitKey(0) != 113){
+          //Wait indefinitely until 'q' is pressed. 113 is q's ASCII value  
+        }
+        cv::destroyWindow(windowName); //destroy the created window
+      }else if(strcmp ("2", feature_set ) == 0){
+        //Collect all blue trash bins, Laws L5E5 filter with the combination + rg chromaticity histogram for the original. 
+        cv::Mat l5e5_output(image.rows,image.cols,CV_8UC3); //3 channel matrix for color image
+        L5E5(image, l5e5_output);
+
+        // Generate 2D rg chromaticity histogram from l5e5_output
+        float r,g;
+        int bucket_r_idx, bucket_g_idx;
+        
+        int rg_histogram[num_buckets][num_buckets];
+        // Initializing the rg 2d histogram to zero to start the counter
+        for(int i = 0; i < num_buckets; i++){
+          for(int j = 0; j < num_buckets; j++){
+              rg_histogram[i][j] = 0;
+          }
+        }
+
+        // Accessing each and every pixel in row-major order and filling up the buckets
+        for (int i = 0; i < l5e5_output.rows; i++){
+          cv::Vec3b *rptr = l5e5_output.ptr<cv::Vec3b>(i);
+          //looping through pixels in the row
+          for (int j = 0; j < l5e5_output.cols ; j++){
+            // Handling edge cases when R,G,B are all zero.
+            if(rptr[j][0] == 0 && rptr[j][1] == 0 && rptr[j][2] == 0){
+              // std::cout << "Pixel is black" << std::endl;
+              r = 0;
+              g = 0;
+            }else{ // Keep in mind that its stored in BGR order in OpenCV
+              //Src: https://stackoverflow.com/questions/7571326/why-does-dividing-two-int-not-yield-the-right-value-when-assigned-to-double
+              r = rptr[j][2]/double(rptr[j][0] + rptr[j][1] + rptr[j][2]);
+              g = rptr[j][1]/double(rptr[j][0] + rptr[j][1] + rptr[j][2]);
+            }
+            bucket_r_idx = r*num_buckets; //Its over x-axis
+            bucket_g_idx = g*num_buckets; //Its over y-axis
+            // std::cout << "(r,g): " << r << " " << g << " | " << bucket_r_idx << " | " << bucket_g_idx << std::endl;
+            rg_histogram[bucket_r_idx][bucket_g_idx]++; //Increment the bucket value by one    
+          }
+        }
+
+        // rg_histogram is now computed. Need to normalize it store this is feature_vector
+        for(int i = 0; i < num_buckets; i++){
+          for(int j = 0; j < num_buckets; j++){
+              feature_vector.push_back(rg_histogram[i][j]/double(image.rows*image.cols));
+          }
+        }
+
+        // #######################################################################//
+        // Generating 2D rg histogram of the original image
+        
+        // Initializing the rg 2d histogram to zero to start the counter
+        for(int i = 0; i < num_buckets; i++){
+          for(int j = 0; j < num_buckets; j++){
+              rg_histogram[i][j] = 0;
+          }
+        }
+
+        // Accessing each and every pixel in row-major order and filling up the buckets
+        for (int i = 0; i < image.rows; i++){
+          cv::Vec3b *rptr = image.ptr<cv::Vec3b>(i);
+          //looping through pixels in the row
+          for (int j = 0; j < image.cols ; j++){
+            // Handling edge cases when R,G,B are all zero.
+            if(rptr[j][0] == 0 && rptr[j][1] == 0 && rptr[j][2] == 0){
+              // std::cout << "Pixel is black" << std::endl;
+              r = 0;
+              g = 0;
+            }else{ // Keep in mind that its stored in BGR order in OpenCV
+              //Src: https://stackoverflow.com/questions/7571326/why-does-dividing-two-int-not-yield-the-right-value-when-assigned-to-double
+              r = rptr[j][2]/double(rptr[j][0] + rptr[j][1] + rptr[j][2]);
+              g = rptr[j][1]/double(rptr[j][0] + rptr[j][1] + rptr[j][2]);
+            }
+            bucket_r_idx = r*num_buckets; //Its over x-axis
+            bucket_g_idx = g*num_buckets; //Its over y-axis
+            // std::cout << "(r,g): " << r << " " << g << " | " << bucket_r_idx << " | " << bucket_g_idx << std::endl;
+            rg_histogram[bucket_r_idx][bucket_g_idx]++; //Increment the bucket value by one    
+          }
+        }
+
+        // rg_histogram is now computed. Need to normalize it store this is feature_vector
+        for(int i = 0; i < num_buckets; i++){
+          for(int j = 0; j < num_buckets; j++){
+              feature_vector.push_back(rg_histogram[i][j]/double(image.rows*image.cols));
+          }
+        }
+      }else if(strcmp ("3", feature_set ) == 0){
+        //Implementing distance using various distance metric
+        // Nothing to compute here. We will use hm.csv file which is already generated in other binary
       }
       
       // After Calculate the feature vector using 9x9 square in the middle

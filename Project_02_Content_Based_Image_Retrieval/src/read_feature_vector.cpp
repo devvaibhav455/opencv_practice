@@ -20,7 +20,8 @@ Code adapted from the sample code provided by Bruce A. Maxwell
 #include <opencv2/opencv.hpp>
 
 int num_buckets = 8;
-
+int num_matches_to_show = 3;
+int sort_order = 0; // 0 means ascending; 1 means descending
 
 /*
   Given a directory on the command line, scans through the directory for image files.
@@ -28,7 +29,7 @@ int num_buckets = 8;
   Prints out the full path name for each file.  This can be used as an argument to fopen or to cv::imread.
  */
 int main(int argc, char *argv[]) {
-  char dirname[256];
+  // char dirname[256];
   char buffer[256];
   FILE *fp;
   DIR *dirp;
@@ -38,14 +39,14 @@ int main(int argc, char *argv[]) {
   // check for sufficient arguments
   if( argc < 3) {
     printf("usage:\n %s <target image> <feature set>\n", argv[0]);
-    printf("Valid feature sets:\n\tbaseline\n\thm :stands for Histogram Matching\n\tmhm :stands for Multi Histogram Matching\n\ttc: stands for Texture and Color");    
+    printf("Valid feature sets:\n\tbaseline\n\thm :stands for Histogram Matching\n\tmhm :stands for Multi Histogram Matching\n\ttc: stands for Texture and Color\n\tcd: stands for Custom Design\n\t1: Extension 1 | Gabor filters\n\t2: Extension 2: L5E5 rg chromaticity + rg chromaticity of original image\n\t3: Extension 3: Histogram matching for different distance metrics");    
     exit(-1);
   }
 
   //Get the target image file name
   char target_image[256];
   strcpy(target_image, argv[1]);
-  printf("Processing directory %s\n", dirname );
+  // printf("Processing directory %s\n", dirname );
 
   // // get the directory path
   // strcpy(dirname, argv[1]);
@@ -56,14 +57,18 @@ int main(int argc, char *argv[]) {
   strcpy( feature_set, argv[2] );
 
   // Check if the feature_set is entered correctly or not
-  if (!((strcmp("baseline", feature_set ) == 0) || (strcmp("hm", feature_set ) == 0) || (strcmp("mhm", feature_set ) == 0) || (strcmp("tc", feature_set ) == 0))){
+  if (!((strcmp("baseline", feature_set ) == 0) || (strcmp("hm", feature_set ) == 0) || (strcmp("mhm", feature_set ) == 0) || (strcmp("tc", feature_set ) == 0) || (strcmp("cd", feature_set ) == 0) || (strcmp("1", feature_set ) == 0) || (strcmp("2", feature_set ) == 0) || (strcmp("3", feature_set ) == 0))){
     printf("usage:\n %s <target image> <feature set>\n", argv[0]);
-    printf("Valid feature sets:\n\tbaseline\n\thm :stands for Histogram Matching\n\tmhm :stands for Multi Histogram Matching\n\ttc: stands for Texture and Color");    
+    printf("Valid feature sets:\n\tbaseline\n\thm :stands for Histogram Matching\n\tmhm :stands for Multi Histogram Matching\n\ttc: stands for Texture and Color\n\tcd: stands for Custom Design\n\t1: Extension 1 | Gabor filters\n\t2: Extension 2: L5E5 rg chromaticity + rg chromaticity of original image\n\t3: Extension 3: Histogram matching for different distance metrics");    
     exit(-1);
   }
 
   char* result = argv[2];
-  strcat(result, ".csv");; //Ref: https://www.geeksforgeeks.org/char-vs-stdstring-vs-char-c/
+  if ((strcmp("3", feature_set ) == 0)){
+    strcpy(result,"hm");
+  }
+    strcat(result, ".csv"); //Ref: https://www.geeksforgeeks.org/char-vs-stdstring-vs-char-c/
+  
   const char* csv_filename = result;
 
   // open the directory
@@ -210,14 +215,162 @@ int main(int argc, char *argv[]) {
       distance = distance_grad_mag + distance_color;
       distance_metric_vector.push_back(std::make_pair(distance, index_image));
     }   
-  }// tc elseif end
+  }else if (strcmp ("cd", feature_set ) == 0){
+    // Iterating through the features of all the images one by one
+    num_matches_to_show = 10;
+    for (feature_vectors_image = feature_vectors_from_csv.begin() ; feature_vectors_image != feature_vectors_from_csv.end(); feature_vectors_image++) {
+      int index_image = feature_vectors_image - feature_vectors_from_csv.begin(); //Index of the current image which is being iterated
+      //If bucket size is 8 for rg histogram, there will be 8x8 = 64 elements for the rg chromaticity histogram and 8x8x8 = 512 for the RGB 3D histogram. So, a total of 64 + 512 = 576 elements
+      float distance, distance_l5e5, distance_color;
+      float weight;
+      
+      std::vector<float>::iterator vector_start;
+      std::vector<float>::iterator vector_end;
 
-  //Handling boundary case. Removing the distance corresponding to the target_image for matching. Just in case, there is an exactly similar image apart from target_image in the database which has distance 0 (very close to zero since the result if floating point) and we want to find that.
+      for (int k = 0; k<2 ; k++){
+        if (k == 0){
+          weight = 0.6;
+          // printf("k: %d | Weight: %f", k, weight);
+          vector_start = feature_vectors_image->begin();
+          vector_end = feature_vectors_image->end()  - float(num_buckets*num_buckets); //This is not covered in the loop. Infact, the value just before this iterator is used
+        }else{
+          weight = 1 - weight;
+          // printf("k: %d | Weight: %f", k, weight);
+          vector_start = feature_vectors_image->end() - float(num_buckets*num_buckets);
+          vector_end = feature_vectors_image->end();
+        }
+        distance = 0;
+        for (feature_vectors_image_data = vector_start; feature_vectors_image_data != vector_end; feature_vectors_image_data++) {
+          // std::cout << feature_vectors_image->end() << std::endl;
+          int index = feature_vectors_image_data - feature_vectors_image->begin();
+          // std::cout << "k: " << k << " Iterated through: " << index << std::endl;
+          distance += std::min(feature_vectors_from_csv[target_index][index], feature_vectors_from_csv[index_image][index]);
+        }
+        if (k == 0){
+          distance_l5e5 = weight*(1-distance);
+        }else{
+          distance_color = weight*(1-distance);
+        }
+      }
+      distance = distance_l5e5 + distance_color;
+      distance_metric_vector.push_back(std::make_pair(distance, index_image));
+    }   
+  }else if (strcmp ("1", feature_set ) == 0){
+    // Need to implement histogram comparison for gabor filters
+  }else if (strcmp ("2", feature_set ) == 0){
+    // L5E5 rg + rg of original image
+    // Iterating through the features of all the images one by one
+    num_matches_to_show = 10;
+    for (feature_vectors_image = feature_vectors_from_csv.begin() ; feature_vectors_image != feature_vectors_from_csv.end(); feature_vectors_image++) {
+      int index_image = feature_vectors_image - feature_vectors_from_csv.begin(); //Index of the current image which is being iterated
+      //If bucket size is 8 for rg histogram, there will be 8x8 = 64 elements for the rg chromaticity histogram and 8x8x8 = 512 for the RGB 3D histogram. So, a total of 64 + 512 = 576 elements
+      float distance, distance_l5e5, distance_color;
+      float weight;
+      
+      std::vector<float>::iterator vector_start;
+      std::vector<float>::iterator vector_end;
+
+      for (int k = 0; k<2 ; k++){
+        if (k == 0){
+          weight = 0.4;
+          // printf("k: %d | Weight: %f", k, weight);
+          vector_start = feature_vectors_image->begin();
+          vector_end = feature_vectors_image->end()  - float(num_buckets*num_buckets); //This is not covered in the loop. Infact, the value just before this iterator is used
+        }else{
+          weight = 1 - weight;
+          // printf("k: %d | Weight: %f", k, weight);
+          vector_start = feature_vectors_image->end() - float(num_buckets*num_buckets);
+          vector_end = feature_vectors_image->end();
+        }
+        distance = 0;
+        for (feature_vectors_image_data = vector_start; feature_vectors_image_data != vector_end; feature_vectors_image_data++) {
+          // std::cout << feature_vectors_image->end() << std::endl;
+          int index = feature_vectors_image_data - feature_vectors_image->begin();
+          // std::cout << "k: " << k << " Iterated through: " << index << std::endl;
+          distance += std::min(feature_vectors_from_csv[target_index][index], feature_vectors_from_csv[index_image][index]);
+        }
+        if (k == 0){
+          distance_l5e5 = weight*(1-distance);
+        }else{
+          distance_color = weight*(1-distance);
+        }
+      }
+      distance = distance_l5e5 + distance_color;
+      distance_metric_vector.push_back(std::make_pair(distance, index_image));
+    }   
+  }else if(strcmp ("3", feature_set ) == 0){
+    //Implementing distance using various distance metric
+    // We will use hm.csv file which is already generated
+    // Iterating through the features of all the images one by one
+
+    // For the Correlation and Intersection methods, the higher the metric, the more accurate the match.
+    for (feature_vectors_image = feature_vectors_from_csv.begin() ; feature_vectors_image != feature_vectors_from_csv.end(); feature_vectors_image++) {
+      int index_image = feature_vectors_image - feature_vectors_from_csv.begin();
+      float distance_correlation = 0 , H1_minus_H1_bar = 0, H2_minus_H2_bar = 0;
+      float distance_chisquare = 0;
+      float distance_intersection = 0;
+      float distance_bhattacharya = 0;
+      float correlation_num = 0;
+      float correlation_den1 = 0;
+      float correlation_den2 = 0;
+
+      auto const count = static_cast<float>(feature_vectors_from_csv[target_index].size());
+      float H1_mean = std::reduce(feature_vectors_from_csv[target_index].begin(), feature_vectors_from_csv[target_index].end()) / count;
+      float H2_mean = 0;
+      
+      for (feature_vectors_image_data = feature_vectors_image->begin(); feature_vectors_image_data != feature_vectors_image->end(); feature_vectors_image_data++) {
+        int index = feature_vectors_image_data - feature_vectors_image->begin();
+        H2_mean = std::reduce(feature_vectors_from_csv[index].begin(), feature_vectors_from_csv[index].end()) / count;
+        // std::cout << "Mean of H2: " << H2_mean << std::endl;
+        float H1_I = feature_vectors_from_csv[target_index][index];
+        float H2_I = feature_vectors_from_csv[index_image][index];
+
+        // Calculations for the Correlation distance metric
+        H1_minus_H1_bar = H1_I - H1_mean;
+        H2_minus_H2_bar = H2_I - H2_mean;
+        correlation_num += H1_minus_H1_bar*H2_minus_H2_bar;
+        correlation_den1 += pow(H1_minus_H1_bar,2);
+        correlation_den2 += pow(H2_minus_H2_bar,2);
+
+        if (H1_I != 0){
+          distance_chisquare += pow(H1_I - H2_I, 2)/H1_I; 
+        }
+        distance_intersection += std::min(H1_I, H2_I);
+        distance_bhattacharya += sqrt(H1_I*H2_I); 
+      }
+      distance_correlation = correlation_num/sqrt(correlation_den1*correlation_den2); 
+      distance_bhattacharya = sqrt(1 - (1/sqrt(H1_mean*H2_mean*count*count))*distance_bhattacharya);
+      
+      // For the Correlation and Intersection methods, the higher the metric, the more accurate the match.
+
+      // Distance vector for correlation metric (need to sort in descending order)
+      distance_metric_vector.push_back(std::make_pair(distance_correlation, index_image));
+      sort_order = 1;
+
+      // Distance vector for Chi-Square metric (need to store in ascending order)
+      // distance_metric_vector.push_back(std::make_pair(distance_chisquare, index_image));
+
+      
+      // Distance vector for Intersection metric (need to store in ascending order)
+      // distance_metric_vector.push_back(std::make_pair(1 - distance_intersection, index_image));
+
+      // Distance vector for Bhattacharya metric (need to store in ascending order). Distance lie between 0 and 1
+      // distance_metric_vector.push_back(std::make_pair(distance_bhattacharya, index_image));
+    }   
+  }
+  
+
+  //Handling boundary case. Removing the distance corresponding to the target_image for matching. Just in case, there is an exactly similar image apart from target_image in the database which has distance 0 (very close to zero since the result is floating point) and we want to find that.
 
   distance_metric_vector.erase(distance_metric_vector.begin() + target_index);
 
-  // Sorting pair vector in ascending order: Src: https://www.geeksforgeeks.org/keep-track-of-previous-indexes-after-sorting-a-vector-in-c-stl/
-  std::sort(distance_metric_vector.begin(), distance_metric_vector.end());
+  if (sort_order == 0){
+    // Sorting pair vector in ascending order: Src: https://www.geeksforgeeks.org/keep-track-of-previous-indexes-after-sorting-a-vector-in-c-stl/
+    std::sort(distance_metric_vector.begin(), distance_metric_vector.end());
+  }else{
+    // Sort is descending order for Correlation metric
+    std::sort(distance_metric_vector.begin(), distance_metric_vector.end(), std::greater());
+  }
   
   // Printing the distance_metric_vector for confirmation
   for (int i = 0; i <distance_metric_vector.size(); i++){
@@ -225,8 +378,8 @@ int main(int argc, char *argv[]) {
   }  
 
   // Need to find the minimum N (say 3) distances (except 0 for the target index) because they are the closest
-  int n = 3;
-  printf("The %d closest matches to %s are\n", n, target_image);
+  
+  printf("The %d closest matches to %s are\n", num_matches_to_show, target_image);
   // Code to display the image
   cv::Mat target_image_mat = cv::imread(target_filename,cv::ImreadModes::IMREAD_UNCHANGED); //Working
   cv::String windowName_target = "TARGET_IMAGE: " + cv::String(target_image); //Name of the window
@@ -234,11 +387,11 @@ int main(int argc, char *argv[]) {
   cv::imshow(windowName_target, target_image_mat); // Show our image inside the created window
   
 
-  for (int i = 0; i<n ; i++){
+  for (int i = 0; i<num_matches_to_show ; i++){
     // Show the target image and the closest matches
     printf("%s | Distance: %f\n", files_in_csv[distance_metric_vector[i].second], distance_metric_vector[i].first );
     cv::Mat match = cv::imread(files_in_csv[distance_metric_vector[i].second],cv::ImreadModes::IMREAD_UNCHANGED); //Working
-    cv::String windowName_target = "MATCH_" + cv::String(std::to_string(i)) + ": " + cv::String(files_in_csv[distance_metric_vector[i].second]); //Name of the window
+    cv::String windowName_target = "MATCH_" + cv::String(std::to_string(i+1)) + ": " + cv::String(files_in_csv[distance_metric_vector[i].second]); //Name of the window
     cv::namedWindow(windowName_target); // Create a window
     cv::imshow(windowName_target, match); // Show our image inside the created window
   }

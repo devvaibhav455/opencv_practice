@@ -36,3 +36,6 @@ int caption(cv::Mat &src, cv::Mat&dst, std::string text);
 
 // Rotating the image
 int rotate(cv::Mat &src, cv::Mat&dst);
+
+// L5E5 filter
+int L5E5(cv::Mat &src, cv::Mat&dst);
