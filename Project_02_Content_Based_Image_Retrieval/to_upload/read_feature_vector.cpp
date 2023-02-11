@@ -22,6 +22,11 @@ Code adapted from the sample code provided by Bruce A. Maxwell
 int num_buckets = 8;
 int num_matches_to_show = 3;
 int sort_order = 0; // 0 means ascending; 1 means descending
+int num_gabor_filters = 4;
+char distance_metric[256];
+
+
+
 
 /*
   Given a directory on the command line, scans through the directory for image files.
@@ -38,10 +43,13 @@ int main(int argc, char *argv[]) {
 
   // check for sufficient arguments
   if( argc < 3) {
-    printf("usage:\n %s <target image> <feature set>\n", argv[0]);
-    printf("Valid feature sets:\n\tbaseline\n\thm :stands for Histogram Matching\n\tmhm :stands for Multi Histogram Matching\n\ttc: stands for Texture and Color\n\tcd: stands for Custom Design\n\t1: Extension 1 | Gabor filters\n\t2: Extension 2: L5E5 rg chromaticity + rg chromaticity of original image\n\t3: Extension 3: Histogram matching for different distance metrics");    
+    printf("usage:\n %s <directory path> <feature set> <distance_metric>(optional)\n", argv[0]);
+    printf("Valid feature sets:\n\tbaseline\n\thm :stands for Histogram Matching\n\tmhm :stands for Multi Histogram Matching\n\ttc: stands for Texture and Color\n\tcd: stands for Custom Design\n\t1: Extension 1: Gabor filters\n\t2: Extension 2: L5E5 rg chromaticity + rg chromaticity of original image\n\t3: Extension 3: Histogram matching for different distance metrics. Distance_metric is required for extension 3\nValid distance metric\n\tcorrelation/ chisquare/ intersection/ bhattacharyya\n");    
     exit(-1);
   }
+  strcpy(distance_metric, argv[3] );
+  
+
 
   //Get the target image file name
   char target_image[256];
@@ -59,7 +67,7 @@ int main(int argc, char *argv[]) {
   // Check if the feature_set is entered correctly or not
   if (!((strcmp("baseline", feature_set ) == 0) || (strcmp("hm", feature_set ) == 0) || (strcmp("mhm", feature_set ) == 0) || (strcmp("tc", feature_set ) == 0) || (strcmp("cd", feature_set ) == 0) || (strcmp("1", feature_set ) == 0) || (strcmp("2", feature_set ) == 0) || (strcmp("3", feature_set ) == 0))){
     printf("usage:\n %s <target image> <feature set>\n", argv[0]);
-    printf("Valid feature sets:\n\tbaseline\n\thm :stands for Histogram Matching\n\tmhm :stands for Multi Histogram Matching\n\ttc: stands for Texture and Color\n\tcd: stands for Custom Design\n\t1: Extension 1 | Gabor filters\n\t2: Extension 2: L5E5 rg chromaticity + rg chromaticity of original image\n\t3: Extension 3: Histogram matching for different distance metrics");    
+    printf("Valid feature sets:\n\tbaseline\n\thm :stands for Histogram Matching\n\tmhm :stands for Multi Histogram Matching\n\ttc: stands for Texture and Color\n\tcd: stands for Custom Design\n\t1: Extension 1: Gabor filters\n\t2: Extension 2: L5E5 rg chromaticity + rg chromaticity of original image\n\t3: Extension 3: Histogram matching for different distance metrics. Distance_metric is required for extension 3\nValid distance metric\n\tcorrelation/ chisquare/ intersection/ bhattacharyya\n");    
     exit(-1);
   }
 
@@ -67,9 +75,10 @@ int main(int argc, char *argv[]) {
   if ((strcmp("3", feature_set ) == 0)){
     strcpy(result,"hm");
   }
-    strcat(result, ".csv"); //Ref: https://www.geeksforgeeks.org/char-vs-stdstring-vs-char-c/
+  strcat(result, ".csv"); //Ref: https://www.geeksforgeeks.org/char-vs-stdstring-vs-char-c/
   
   const char* csv_filename = result;
+  // std::cout << "Argument 3 is: " << distance_metric << std::endl;
 
   // open the directory
   // dirp = opendir( dirname );
@@ -257,6 +266,50 @@ int main(int argc, char *argv[]) {
     }   
   }else if (strcmp ("1", feature_set ) == 0){
     // Need to implement histogram comparison for gabor filters
+    // std::cout << "Entered 1" << std::endl;
+    num_matches_to_show = 5;
+    for (feature_vectors_image = feature_vectors_from_csv.begin() ; feature_vectors_image != feature_vectors_from_csv.end(); feature_vectors_image++) {
+      int index_image = feature_vectors_image - feature_vectors_from_csv.begin(); //Index of the current image which is being iterated
+      //If bucket size is 8 for rg histogram, there will be 8x8 = 64 elements for the rg chromaticity histogram for gabor filter 1 and so on.
+      float distance, distance_gabors[num_gabor_filters], distance_total = 0;
+      float weight;
+      
+      std::vector<float>::iterator vector_start;
+      std::vector<float>::iterator vector_end;
+
+      for (int k = 0; k<num_gabor_filters ; k++){
+        if (k == 0){
+          weight = 0.25;
+          vector_start = feature_vectors_image->begin();
+          vector_end = feature_vectors_image->begin()  + float((k+1)*num_buckets*num_buckets); //This is not covered in the loop. Infact, the value just before this iterator is used
+        }else if (k == 1){
+          weight = 0.25;
+          vector_start = feature_vectors_image->begin() + float(k*num_buckets*num_buckets);
+          vector_end = feature_vectors_image->begin() + float((k+1)*num_buckets*num_buckets);
+        }else if (k == 2){
+          weight = 0.25;
+          vector_start = feature_vectors_image->begin() + float(k*num_buckets*num_buckets);
+          vector_end = feature_vectors_image->begin() + float((k+1)*num_buckets*num_buckets);
+        }else if (k == 3){
+          weight = 0.25;
+          vector_start = feature_vectors_image->begin() + float(k*num_buckets*num_buckets);
+          vector_end = feature_vectors_image->end();
+        }
+
+        distance = 0;
+        for (feature_vectors_image_data = vector_start; feature_vectors_image_data != vector_end; feature_vectors_image_data++) {
+          // std::cout << feature_vectors_image->end() << std::endl;
+          int index = feature_vectors_image_data - feature_vectors_image->begin();
+          // std::cout << "k: " << k << " Iterated through: " << index << std::endl;
+          distance += std::min(feature_vectors_from_csv[target_index][index], feature_vectors_from_csv[index_image][index]);
+        }
+
+          distance_gabors[k] = weight*(1-distance);
+          distance_total += distance_gabors[k];
+      }
+      distance_metric_vector.push_back(std::make_pair(distance_total, index_image));
+    }   
+
   }else if (strcmp ("2", feature_set ) == 0){
     // L5E5 rg + rg of original image
     // Iterating through the features of all the images one by one
@@ -302,7 +355,14 @@ int main(int argc, char *argv[]) {
     //Implementing distance using various distance metric
     // We will use hm.csv file which is already generated
     // Iterating through the features of all the images one by one
+    if (argc < 4){
+    printf("usage:\n %s <directory path> <feature set> <distance_metric>(required for extension 3)\n", argv[0]);
+      printf("Valid feature sets:\n\tbaseline\n\thm :stands for Histogram Matching\n\tmhm :stands for Multi Histogram Matching\n\ttc: stands for Texture and Color\n\tcd: stands for Custom Design\n\t1: Extension 1: Gabor filters\n\t2: Extension 2: L5E5 rg chromaticity + rg chromaticity of original image\n\t3: Extension 3: Histogram matching for different distance metrics. Distance_metric is required for extension 3\nValid distance metric\n\tcorrelation/ chisquare/ intersection/ bhattacharyya\n");    
+      exit(-1);
+    }
+    
 
+    
     // For the Correlation and Intersection methods, the higher the metric, the more accurate the match.
     for (feature_vectors_image = feature_vectors_from_csv.begin() ; feature_vectors_image != feature_vectors_from_csv.end(); feature_vectors_image++) {
       int index_image = feature_vectors_image - feature_vectors_from_csv.begin();
@@ -341,21 +401,27 @@ int main(int argc, char *argv[]) {
       distance_correlation = correlation_num/sqrt(correlation_den1*correlation_den2); 
       distance_bhattacharya = sqrt(1 - (1/sqrt(H1_mean*H2_mean*count*count))*distance_bhattacharya);
       
-      // For the Correlation and Intersection methods, the higher the metric, the more accurate the match.
-
-      // Distance vector for correlation metric (need to sort in descending order)
-      // distance_metric_vector.push_back(std::make_pair(distance_correlation, index_image));
-      // sort_order = 1;
-
-      // Distance vector for Chi-Square metric (need to store in ascending order)
-      // distance_metric_vector.push_back(std::make_pair(distance_chisquare, index_image));
-
+      // For the Correlation and Intersection methods, the higher the metric, the more accurate the match.    
       
-      // Distance vector for Intersection metric (need to store in ascending order)
-      // distance_metric_vector.push_back(std::make_pair(1 - distance_intersection, index_image));
-
-      // Distance vector for Bhattacharya metric (need to store in ascending order). Distance lie between 0 and 1
-      distance_metric_vector.push_back(std::make_pair(distance_bhattacharya, index_image));
+      if (strcmp("correlation", distance_metric ) == 0){
+        // Distance vector for correlation metric (need to sort in descending order)
+        distance_metric_vector.push_back(std::make_pair(distance_correlation, index_image));
+        sort_order = 1;
+      }else if(strcmp("chisquare", distance_metric ) == 0){
+        // Distance vector for Chi-Square metric (need to store in ascending order)
+        distance_metric_vector.push_back(std::make_pair(distance_chisquare, index_image));
+      }else if(strcmp("intersection", distance_metric ) == 0){
+        // Distance vector for Intersection metric (need to store in ascending order)
+        distance_metric_vector.push_back(std::make_pair(1 - distance_intersection, index_image));
+      }else if(strcmp("bhattacharyya", distance_metric ) == 0){
+        // Distance vector for Bhattacharya metric (need to store in ascending order). Distance lie between 0 and 1
+        distance_metric_vector.push_back(std::make_pair(distance_bhattacharya, index_image));
+      }else{
+        printf("usage:\n %s <directory path> <feature set> <distance_metric>(optional)\n", argv[0]);
+        printf("usage:\n %s <target image> <feature set>\n", argv[0]);
+        printf("Valid feature sets:\n\tbaseline\n\thm :stands for Histogram Matching\n\tmhm :stands for Multi Histogram Matching\n\ttc: stands for Texture and Color\n\tcd: stands for Custom Design\n\t1: Extension 1: Gabor filters\n\t2: Extension 2: L5E5 rg chromaticity + rg chromaticity of original image\n\t3: Extension 3: Histogram matching for different distance metrics. Distance_metric is required for extension 3\nValid distance metric\n\tcorrelation/ chisquare/ intersection/ bhattacharyya\n");    
+        exit(-1);
+      }  
     }   
   }
   
@@ -402,14 +468,6 @@ int main(int argc, char *argv[]) {
   // cv::destroyWindow(windowName_target); //destroy the created window
 
 
-
-
-
-
-  
-      
-    
-
   // auto it = std::find_if(std::begin(files_in_csv), std::end(files_in_csv), [&](const char * j){return j == "Hello"; });
   // int index = std::distance(files_in_csv.begin(), it); // Ref: https://www.techiedelight.com/find-index-element-vector-cpp/
 
@@ -436,15 +494,6 @@ int main(int argc, char *argv[]) {
       // strcpy(buffer, dirname);
       // strcat(buffer, "/"); //This is where the second / gets added in csv file
       // strcat(buffer, dp->d_name);
-
-
-
-
-
-
-  
-  
-  
   printf("Terminating\n");
 
   return(0);
