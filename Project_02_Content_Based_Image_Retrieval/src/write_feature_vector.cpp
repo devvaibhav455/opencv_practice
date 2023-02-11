@@ -22,6 +22,7 @@ Code adapted from the sample code provided by Professor: Bruce A. Maxwell
 #include "filter.h" // To use Sobel Magnitude Image
 
 int num_buckets = 8;
+int num_gabor_filters = 4;
 
 /*
   Given a directory on the command line, scans through the directory for image files.
@@ -46,8 +47,8 @@ int main(int argc, char *argv[]) {
   // check for sufficient arguments
   if( argc < 3) {
     printf("Please enter sufficient arguments\n");
-    printf("usage:\n %s <directory path> <feature set>\n", argv[0]);
-    printf("Valid feature sets:\n\tbaseline\n\thm :stands for Histogram Matching\n\tmhm :stands for Multi Histogram Matching\n\ttc: stands for Texture and Color\n\tcd: stands for Custom Design\n\t1: Extension 1 | Gabor filters\n\t2: Extension 2: L5E5 rg chromaticity + rg chromaticity of original image");    
+    printf("usage:\n %s <directory path> <feature set> <distance_metric>(optional)\n", argv[0]);
+    printf("Valid feature sets:\n\tbaseline\n\thm :stands for Histogram Matching\n\tmhm :stands for Multi Histogram Matching\n\ttc: stands for Texture and Color\n\tcd: stands for Custom Design\n\t1: Extension 1: Gabor filters\n\t2: Extension 2: L5E5 rg chromaticity + rg chromaticity of original image\n\t3: Extension 3: Histogram matching for different distance metrics. Distance_metric is required for extension 3\nValid distance metric\n\tcorrelation/ chisquare/ intersection/ bhattacharyya\n");    
     exit(-1);
   }
 
@@ -61,8 +62,8 @@ int main(int argc, char *argv[]) {
   // Check if the feature_set is entered correctly or not
   if (!((strcmp("baseline", feature_set ) == 0) || (strcmp("hm", feature_set ) == 0) || (strcmp("mhm", feature_set ) == 0) || (strcmp("tc", feature_set ) == 0) || (strcmp("cd", feature_set ) == 0) || (strcmp("1", feature_set ) == 0) || (strcmp("2", feature_set ) == 0))){
     printf("Please enter correct feature_set\n");
-    printf("usage:\n %s <target image> <feature set>\n", argv[0]);
-    printf("Valid feature sets:\n\tbaseline\n\thm :stands for Histogram Matching\n\tmhm :stands for Multi Histogram Matching\n\ttc: stands for Texture and Color\n\tcd: stands for Custom Design\n\t1: Extension 1 | Gabor filters\n\t2: Extension 2: L5E5 rg chromaticity + rg chromaticity of original image");    
+    printf("usage:\n %s <directory path> <feature set> <distance_metric>(optional)\n", argv[0]);
+    printf("Valid feature sets:\n\tbaseline\n\thm :stands for Histogram Matching\n\tmhm :stands for Multi Histogram Matching\n\ttc: stands for Texture and Color\n\tcd: stands for Custom Design\n\t1: Extension 1: Gabor filters\n\t2: Extension 2: L5E5 rg chromaticity + rg chromaticity of original image\n\t3: Extension 3: Histogram matching for different distance metrics. Distance_metric is required for extension 3\nValid distance metric\n\tcorrelation/ chisquare/ intersection/ bhattacharyya\n");    
     exit(-1);
   }
 
@@ -416,39 +417,112 @@ int main(int argc, char *argv[]) {
         // Implementing Extension 1: Using Gabor filters
         // Src: https://stackoverflow.com/questions/26948110/gabor-kernel-parameters-in-opencv; https://cvtuts.wordpress.com/2014/04/27/gabor-filters-a-practical-overview/
 
-        cv::Mat grey_output(image.rows,image.cols,CV_8UC1); //Single channel matrix for greyscale image
-        cv::Mat gabor_input; //3 channel matrix for color image
-        
-        cv::cvtColor(image, grey_output, cv::COLOR_BGR2GRAY);
+        // cv::Mat grey_output(image.rows,image.cols,CV_8UC1); //Single channel matrix for greyscale image
+        // cv::cvtColor(image, grey_output, cv::COLOR_BGR2GRAY);
+        // image = cv::imread("../gabor_sample.png",cv::ImreadModes::IMREAD_UNCHANGED); //Working
+        cv::Mat gabor_input, gabor_output, gabor_kernel_resized; //3 channel matrix for color image
         image.convertTo(gabor_input, CV_32F);
 
         cv::Mat temp; //3 channel matrix for color image
         
+        // Ravina params double sig = 1, th = 0, lm = 1.0, gm = 0.02, ps = 0; double th1 = M_PI/2;
+        // cv::Mat kernel = cv::getGaborKernel(cv::Size(kernel_size,kernel_size), sig, (i*th1), lm, gm, ps);
         cv::Size KernelSize(31,31); // sumegha 9,9
-        double Sigma = 2; //5
-        double Lambda = 4; //4
-        double Theta = 0*CV_PI/180;
-        double psi = 1*CV_PI/180; // pi/4
-        double Gamma = 0.02; // 0.04
-        cv::Mat gabor_kernel = cv::getGaborKernel(KernelSize, Sigma, Theta, Lambda,Gamma,psi);
+        double Sigma = 2; //5 
+        double Lambda = 45*CV_PI/180; //4
+        // double Lambda = 1.0;
+        // double psi = 1*CV_PI/180; // pi/4
+        double Gamma = 0.5; // 0.04
+        // double Gamma = 0.02; // 0.04
+        double psi = 0; // pi/4
+        
+        for (int i = 0; i < num_gabor_filters ; i++){
+          double Theta = i*(360/num_gabor_filters)*CV_PI/180;
+          cv::Mat gabor_kernel = cv::getGaborKernel(KernelSize, Sigma, Theta, Lambda,Gamma,psi);
+          cv::resize(gabor_kernel, gabor_kernel_resized, cv::Size(500,500), cv::INTER_LINEAR);
+          cv::filter2D(gabor_input, temp, CV_32F, gabor_kernel);
+          temp.convertTo(gabor_output, CV_8UC3);//,1.0/255.0);
+
+          // Visualize gabor kernel
+          // cv::String windowName0 = "Gabor kernel " + cv::String(std::to_string(i+1)) + ": Angle: " + cv::String(std::to_string(i*360/num_gabor_filters)) + " degrees"; //Name of the window
+          // cv::namedWindow(windowName0); // Create a window
+          // cv::imshow(windowName0, gabor_kernel_resized);
+
+          // while(cv::waitKey(0) != 113){
+          // //Wait indefinitely until 'q' is pressed. 113 is q's ASCII value  
+          // }
+          // cv::destroyWindow(windowName0); //destroy the created window
+
+          // std::cout << "Gabor output is: " << gabor_output.size << std::endl;
+          
+          // Calculating the histogram for gabor filter
+          float r,g;
+          int bucket_r_idx, bucket_g_idx;
+          
+          int rg_histogram[num_buckets][num_buckets];
+          // Initializing the rg 2d histogram to zero to start the counter
+          for(int i = 0; i < num_buckets; i++){
+            for(int j = 0; j < num_buckets; j++){
+                rg_histogram[i][j] = 0;
+            }
+          }
+
+          // Accessing each and every pixel in row-major order and filling up the buckets
+          for (int i = 0; i < gabor_output.rows; i++){
+            cv::Vec3b *rptr = gabor_output.ptr<cv::Vec3b>(i);
+            //looping through pixels in the row
+            for (int j = 0; j < gabor_output.cols ; j++){
+              // Handling edge cases when R,G,B are all zero.
+              if(rptr[j][0] == 0 && rptr[j][1] == 0 && rptr[j][2] == 0){
+                // std::cout << "Pixel is black" << std::endl;
+                r = 0;
+                g = 0;
+              }else{ // Keep in mind that its stored in BGR order in OpenCV
+                //Src: https://stackoverflow.com/questions/7571326/why-does-dividing-two-int-not-yield-the-right-value-when-assigned-to-double
+                r = rptr[j][2]/double(rptr[j][0] + rptr[j][1] + rptr[j][2]);
+                g = rptr[j][1]/double(rptr[j][0] + rptr[j][1] + rptr[j][2]);
+              }
+              bucket_r_idx = r*num_buckets; //Its over x-axis
+              bucket_g_idx = g*num_buckets; //Its over y-axis
+              // std::cout << "(r,g): " << r << " " << g << " | " << bucket_r_idx << " | " << bucket_g_idx << std::endl;
+              rg_histogram[bucket_r_idx][bucket_g_idx]++; //Increment the bucket value by one    
+            }
+          }
+
+          // rg_histogram is now computed. Need to normalize it store this is feature_vector
+          for(int i = 0; i < num_buckets; i++){
+            for(int j = 0; j < num_buckets; j++){
+                feature_vector.push_back(rg_histogram[i][j]/double(image.rows*image.cols));
+            }
+          }       
+          
+        }
 
         // cv::Mat gabor_kernel_resized;
 
         // std::cout << gabor_kernel << std::endl;
 
-        // cv::resize(gabor_kernel, gabor_kernel_resized, cv::Size(500,500), cv::INTER_LINEAR);
-        cv::filter2D(gabor_input, temp, CV_32F, gabor_kernel);
+        // max of filter2d output and original image (in 32F)..convert to 8uc3 take this image for 2d histogram calculation
         // cv::convertScaleAbs(temp, gabor_input); //Converting 16SC3 to 8UC3 to make it suitable for display
-        temp.convertTo(gabor_input, CV_8U,1.0/255.0);
-        cv::String windowName = "Gabor output"; //Name of the window
-        cv::namedWindow(windowName); // Create a window
-        cv::imshow(windowName, gabor_input);
-      // cv::imshow(windowName, image); // Show our image inside the created window.
+        // gabor_kernel_resized.convertTo(temp, CV_8UC3,1.0/255.0);
 
-        while(cv::waitKey(0) != 113){
-          //Wait indefinitely until 'q' is pressed. 113 is q's ASCII value  
-        }
-        cv::destroyWindow(windowName); //destroy the created window
+        // Create histogram from gabor_input
+
+        //Showing Original image
+
+        
+
+
+        // cv::String windowName1 = "Original image"; //Name of the window
+        // cv::namedWindow(windowName1); // Create a window
+        // cv::imshow(windowName1, image);
+        
+        // cv::String windowName = "Gabor output"; //Name of the window
+        // cv::namedWindow(windowName); // Create a window
+        // cv::imshow(windowName, gabor_input);
+        
+
+
       }else if(strcmp ("2", feature_set ) == 0){
         //Collect all blue trash bins, Laws L5E5 filter with the combination + rg chromaticity histogram for the original. 
         cv::Mat l5e5_output(image.rows,image.cols,CV_8UC3); //3 channel matrix for color image
