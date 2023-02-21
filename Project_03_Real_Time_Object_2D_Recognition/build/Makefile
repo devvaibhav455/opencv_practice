@@ -155,6 +155,19 @@ binProcess/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/binProcess.dir/build.make CMakeFiles/binProcess.dir/build
 .PHONY : binProcess/fast
 
+#=============================================================================
+# Target rules for targets named sample_code
+
+# Build rule for target.
+sample_code: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 sample_code
+.PHONY : sample_code
+
+# fast build rule for target.
+sample_code/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sample_code.dir/build.make CMakeFiles/sample_code.dir/build
+.PHONY : sample_code/fast
+
 src/binProcess.o: src/binProcess.cpp.o
 .PHONY : src/binProcess.o
 
@@ -257,6 +270,30 @@ src/read_feature_vector.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/read_csv.dir/build.make CMakeFiles/read_csv.dir/src/read_feature_vector.cpp.s
 .PHONY : src/read_feature_vector.cpp.s
 
+src/sample_code.o: src/sample_code.cpp.o
+.PHONY : src/sample_code.o
+
+# target to build an object file
+src/sample_code.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sample_code.dir/build.make CMakeFiles/sample_code.dir/src/sample_code.cpp.o
+.PHONY : src/sample_code.cpp.o
+
+src/sample_code.i: src/sample_code.cpp.i
+.PHONY : src/sample_code.i
+
+# target to preprocess a source file
+src/sample_code.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sample_code.dir/build.make CMakeFiles/sample_code.dir/src/sample_code.cpp.i
+.PHONY : src/sample_code.cpp.i
+
+src/sample_code.s: src/sample_code.cpp.s
+.PHONY : src/sample_code.s
+
+# target to generate assembly for a file
+src/sample_code.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sample_code.dir/build.make CMakeFiles/sample_code.dir/src/sample_code.cpp.s
+.PHONY : src/sample_code.cpp.s
+
 src/write_feature_vector.o: src/write_feature_vector.cpp.o
 .PHONY : src/write_feature_vector.o
 
@@ -291,6 +328,7 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... binProcess"
 	@echo "... read_csv"
+	@echo "... sample_code"
 	@echo "... write_csv"
 	@echo "... src/binProcess.o"
 	@echo "... src/binProcess.i"
@@ -304,6 +342,9 @@ help:
 	@echo "... src/read_feature_vector.o"
 	@echo "... src/read_feature_vector.i"
 	@echo "... src/read_feature_vector.s"
+	@echo "... src/sample_code.o"
+	@echo "... src/sample_code.i"
+	@echo "... src/sample_code.s"
 	@echo "... src/write_feature_vector.o"
 	@echo "... src/write_feature_vector.i"
 	@echo "... src/write_feature_vector.s"

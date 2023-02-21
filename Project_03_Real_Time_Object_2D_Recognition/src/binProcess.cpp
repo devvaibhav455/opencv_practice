@@ -8,10 +8,61 @@ Notes: Some code adapted from Project 1
 #include <iostream>
 #include <unistd.h> // To use sleep functionality
 #include <filter.h>
+#include "opencv2/imgproc.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/videoio.hpp"
 
 
 // How to build the project and run the executable: https://docs.opencv.org/4.x/db/df5/tutorial_linux_gcc_cmake.html
 // clear && cmake . && make #The executable gets stored into the bin folder
+
+// Some parameters to display the trackbar to find the threshold using GUI for HSV image
+// Src: https://docs.opencv.org/3.4/da/d97/tutorial_threshold_inRange.html
+const int max_value_H = 360/2;
+const int max_value = 255;
+const cv::String window_detection_name = "HSV Thresholded";
+const cv::String window_grey_masked = "Grey Masked";
+int low_H = 0, low_S = 0, low_V = 0, Grey = 0;
+int high_H = max_value_H, high_S = max_value, high_V = max_value;
+
+static void on_low_H_thresh_trackbar(int, void *)
+{
+    low_H = cv::min(high_H-1, low_H);
+    cv::setTrackbarPos("Low H", window_detection_name, low_H);
+}
+static void on_high_H_thresh_trackbar(int, void *)
+{
+    high_H = cv::max(high_H, low_H+1);
+    cv::setTrackbarPos("High H", window_detection_name, high_H);
+}
+static void on_low_S_thresh_trackbar(int, void *)
+{
+    low_S = cv::min(high_S-1, low_S);
+    cv::setTrackbarPos("Low S", window_detection_name, low_S);
+}
+static void on_high_S_thresh_trackbar(int, void *)
+{
+    high_S = cv::max(high_S, low_S+1);
+    cv::setTrackbarPos("High S", window_detection_name, high_S);
+}
+static void on_low_V_thresh_trackbar(int, void *)
+{
+    low_V = cv::min(high_V-1, low_V);
+    cv::setTrackbarPos("Low V", window_detection_name, low_V);
+}
+static void on_high_V_thresh_trackbar(int, void *)
+{
+    high_V = cv::max(high_V, low_V+1);
+    cv::setTrackbarPos("High V", window_detection_name, high_V);
+}
+static void on_Grey_thresh_trackbar(int, void *)
+{
+    Grey = 0;
+    cv::setTrackbarPos("Grey", window_grey_masked, Grey);
+}
+
+
+
 
 int main(int argc, char** argv)
 {
@@ -59,14 +110,14 @@ int main(int argc, char** argv)
     printf("Resizing image to %dx%d\n", res_width, res_height);
 
     // Usage of cv::Mat(int rows, int cols, int type)
-    cv::Mat output(res_height,res_width,CV_8UC1); //Single channel matrix for greyscale image
+    cv::Mat grey_output(res_height,res_width,CV_8UC1); //Single channel matrix for greyscale image
     cv::Mat rgb_output(res_height,res_width,CV_8UC3); //3 channel matrix for color image
     cv::Mat short_c3_output(res_height,res_width,CV_16SC3); //3 channel matrix of shorts for color image
     cv::Mat filtered_output, hsv_frame, hsv_frame_opencv;
 
 
     std::string desired_filter;
-    cv::namedWindow("Color_Image");
+    cv::namedWindow("Oiginal_Image");
     int change_brightness_level = 0;
     std::string user_caption;
     
@@ -79,6 +130,19 @@ int main(int argc, char** argv)
     int save_video = 0;
     int save_video_grey = 0;
     // cv::namedWindow("Window");
+
+    cv::namedWindow(window_detection_name);
+    // Trackbars to set thresholds for HSV values
+    cv::createTrackbar("Low H", window_detection_name, &low_H, max_value_H, on_low_H_thresh_trackbar);
+    cv::createTrackbar("High H", window_detection_name, &high_H, max_value_H, on_high_H_thresh_trackbar);
+    cv::createTrackbar("Low S", window_detection_name, &low_S, max_value, on_low_S_thresh_trackbar);
+    cv::createTrackbar("High S", window_detection_name, &high_S, max_value, on_high_S_thresh_trackbar);
+    cv::createTrackbar("Low V", window_detection_name, &low_V, max_value, on_low_V_thresh_trackbar);
+    cv::createTrackbar("High V", window_detection_name, &high_V, max_value, on_high_V_thresh_trackbar);
+    cv::createTrackbar("Grey", window_grey_masked, &Grey, max_value, on_Grey_thresh_trackbar);
+
+    cv::Mat hsv_thresholded;
+
     while (true) {
         // std::cout << "Frame before input from camera = " << std::endl << " " << frame << std::endl << std::endl;
         if( argc == 1){
@@ -86,11 +150,12 @@ int main(int argc, char** argv)
         }
         // cv::Mat image = cv::imread(filename,cv::ImreadModes::IMREAD_UNCHANGED);~/Pictures/Screenshots
         cv::resize(frame, frame, cv::Size(res_width, res_height));
+        // std::cout << "Resized size is:" << frame.size() << std::endl; //Prints columnsxrows
         
         // std::cout << "Frame after input from camera = " << std::endl << " " << frame.at<cv::Vec3b>(0,0) << std::endl; 
         // std::cout << "Frame after input from camera = " << std::endl << " " << frame << std::endl << std::endl;
         
-        cv::imshow("Color_Image", frame);
+        cv::imshow("Oiginal_Image", frame);
         
         int key_pressed = cv::waitKey(1); //Gets key input from user. Returns -1 if key is not pressed within the given time. Here, 1 ms.
         // std::cout << "Pressed key is: " << key_pressed << std::endl;
@@ -102,73 +167,9 @@ int main(int argc, char** argv)
             video_original.release();
             video_color.release();
             video_grey.release();
-            cv::destroyWindow("Color_Image"); //destroy the created window
+            cv::destroyWindow("Oiginal_Image"); //destroy the created window
             return 0;
-        }else if (key_pressed == 'h'){
-            // Show greyscale image using user defined function if 'h' is pressed. 104 is h's ASCII value
-            desired_filter = "GREYSCALE_USER_FUNC";
-            save_video_grey = 1;
-            cv::namedWindow(desired_filter);
-            std::cout << "Showing greyscale output using user defined function" << std::endl;
-        }else if (key_pressed == 'b'){
-            //Show blurred version of the image using separable Gaussian filter if b (ASCII = 98) is pressed
-            desired_filter = "BLURRED_GAUSSIAN_FILTER";
-            cv::namedWindow(desired_filter);
-            std::cout << "Showing blurred version of the image using Separable Gaussian Filter [1 2 4 2 1] vertical and horizontal" << std::endl;
-        }else if (key_pressed == 'x'){
-            //Show Sobel X version of the image using separable Sobel X 3x3 filter if x is pressed. 120 is x's ASCII value.
-            desired_filter = "SOBEL_X";
-            cv::namedWindow(desired_filter);
-            std::cout << "Showing Sobel X version of the image using Separable filters [1 2 1]^T vertical and [-1 0 1] horizontal" << std::endl;
-        }else if (key_pressed == 'y'){
-            //Show Sobel Y version of the image using separable Sobel Y 3x3 filter if y is pressed. 121 is x's ASCII value.
-            desired_filter = "SOBEL_Y";
-            cv::namedWindow(desired_filter);
-            std::cout << "Showing Sobel Y version of the image using Separable filters [1 0 -1]^T vertical and [1 2 1] horizontal" << std::endl;
-        }else if (key_pressed == 'm'){
-            //Show Gradient Magnitude image if m is pressed. 109 is m's ASCII value.
-            desired_filter = "GRADIENT_MAGNITUDE";
-            cv::namedWindow(desired_filter);
-            std::cout << "Showing Gradient Magnitude version of the image" << std::endl;
-        }else if (key_pressed == 'l'){
-            //Show blur quantized image if l (ASCII = 108) is pressed.
-            desired_filter = "BLUR_QUANTIZE";
-            cv::namedWindow(desired_filter);
-            std::cout << "Showing blur quantized version of the image" << std::endl;
-        }else if (key_pressed == 'c'){
-            //Show live video cartoonization function using the gradient magnitude and blur/quantize filters if c (ASCII = 99) is pressed.
-            desired_filter = "LIVE_CARTOONIZATION";
-            cv::namedWindow(desired_filter);
-            std::cout << "live video cartoonization function using the gradient magnitude and blur/quantize filters" << std::endl;
-        }else if (key_pressed == 'n'){
-            //Show negative image if n (ASCII = 110) is pressed.
-            desired_filter = "NEGATIVE";
-            cv::namedWindow(desired_filter);
-            std::cout << "Showing the image negative" << std::endl;
-        }else if (key_pressed == 82 || key_pressed == 84){//Change brightness when up/ down arrow is pressed
-            desired_filter = "CHANGE_BRIGHTNESS";
-            if (key_pressed == 82){change_brightness_level += 10;} //Increase brightness if up arrow key is pressed
-            else {change_brightness_level -= 10;} //Decrease brightness if down arrow key is pressed
-            cv::namedWindow(desired_filter);
-        }else if (key_pressed == 49){//Sharpen the image when 1 is pressed
-            desired_filter = "SHARPEN";
-            cv::namedWindow(desired_filter);
-            std::cout << "Showing sharpened image" << std::endl;
-        }else if (key_pressed == 50){//Sketch the image when 2 is pressed
-            desired_filter = "SKETCH";
-            cv::namedWindow(desired_filter);
-            std::cout << "Showing sketched image" << std::endl;
-        }else if (key_pressed == 51){//Add captions to the image when 3 is pressed
-            desired_filter = "CAPTION";
-            cv::namedWindow(desired_filter);
-            std::cout << "Please enter the caption:" << std::endl;
-            std::cin >> user_caption;
-            std::cout << "Showing image with caption" << std::endl;
-        }else if (key_pressed == 52){//Let the user save the video with special effect when 4 is pressed
-            save_video = 1;
-            std::cout << "Saving video with special effects!" << std::endl;
         }
-
         // Need to fix user implementation of bgr to hsv converter not working
         // bgr_to_hsv(frame,hsv_frame);
         // cv::convertScaleAbs(hsv_frame, rgb_output); //Converting 16SC3 to 8UC3
@@ -178,139 +179,128 @@ int main(int argc, char** argv)
 
         //Convert image to BW and calculate histogram
 
-        cv::cvtColor(frame, output, cv::COLOR_BGR2GRAY);
-        cv::Mat thresholded_image;
-        // Src: https://techtutorialsx.com/2019/04/13/python-opencv-converting-image-to-black-and-white/; https://docs.opencv.org/3.4/d7/d1b/group__imgproc__misc.html#gaa9e58d2860d4afa658ef70a9b1115576
-        cv::threshold(output, thresholded_image, 140, 255, cv::THRESH_BINARY_INV );
-        cv::namedWindow("BW OpenCV function");
-        cv::imshow("BW OpenCV function", thresholded_image);
+        // cv::cvtColor(frame, grey_output, cv::COLOR_BGR2GRAY);
+        
 
 
         cv::cvtColor(frame, hsv_frame_opencv, cv::COLOR_BGR2HSV);
         cv::namedWindow("HSV Image OpenCV function");
         cv::imshow("HSV Image OpenCV function", hsv_frame_opencv);
+        hsv_frame_opencv = hsv_frame_opencv + cv::Scalar(0,20,0); //Increasing Saturation value for all the pixels.
 
-        // // Quantize the hue to 30 levels
-        // // and the saturation to 32 levels
-        // int hbins = 30, sbins = 32;
-        // // int histSize[] = {hbins, sbins};
-        // int histSize[] = {hbins};
-        // // hue varies from 0 to 179, see cvtColor
-        // float hranges[] = { 0, 256 };
-        // // saturation varies from 0 (black-gray-white) to
-        // // 255 (pure spectrum color)
-        // float sranges[] = { 0, 256 };
-        // // const float* ranges[] = { hranges, sranges };
-        // const float* ranges[] = { hranges};
-        // cv::MatND hist_mat;
-        // // we compute the histogram from the 0-th and 1-st channels
-        // // int channels[] = {0, 1};
-        // int channels[] = {0};
-        // cv::calcHist( &output, 1, channels, cv::Mat(), // do not use mask
-        //      hist_mat, 1, histSize, ranges,
-        //      true, // the histogram is uniform
-        //      false );
+        // Detect the object based on HSV Range Values
+        // More info: https://docs.opencv.org/3.4/d2/de8/group__core__array.html#ga48af0ab51e36436c5d04340e036ce981
+        // That is, dst (I) is set to 255 (all 1 -bits) if src (I) is within the specified 1D, 2D, 3D, ... box and 0 otherwise. It outputs a binary image
+        // cv::inRange(hsv_frame_opencv, cv::Scalar(low_H, low_S, low_V), cv::Scalar(high_H, high_S, high_V), hsv_thresholded);
+        cv::inRange(hsv_frame_opencv, cv::Scalar(0, 29, 0), cv::Scalar(37, 255, 255), hsv_thresholded);
+        // Show the frames
+        imshow(window_detection_name, hsv_thresholded);
+
+        // Convert the hsv_thresholded pixels to greyscale image by creating a mask
         
+        //Implementing mask for thresholded HSV. Src: https://stackoverflow.com/questions/14582082/merging-channels-in-opencv
 
-        // double maxVal=0;
-        // cv::minMaxLoc(hist_mat, 0, &maxVal, 0, 0);
-        // int scale = 10;
-        // cv::Mat histImg = cv::Mat::zeros(sbins*scale, hbins*10, CV_8UC3);
-        // for( int h = 0; h < hbins; h++ )
-        //     for( int s = 0; s < sbins; s++ )
-        //     {
-        //         float binVal = hist_mat.at<float>(h, s);
-        //         int intensity = cvRound(binVal*255/maxVal);
-        //         cv::rectangle( histImg, cv::Point(h*scale, s*scale),
-        //                     cv::Point( (h+1)*scale - 1, (s+1)*scale - 1),
-        //                     cv::Scalar::all(intensity),
-        //                     -1 );
-        //     }
+        cv::Mat mask_3c(frame.size(), CV_8UC3, cv::Scalar(0,0,0)), mask_1c(frame.size(), CV_8UC1, cv::Scalar(0));;
+        std::vector<cv::Mat> channels;
+        mask_1c = hsv_thresholded != 0;
+        channels.push_back(mask_1c);
+        channels.push_back(mask_1c);
+        channels.push_back(mask_1c);
+        cv::merge(channels, mask_3c);
+        cv::Mat color_masked = mask_3c & frame;
+        
+        cv::cvtColor(color_masked, grey_output, cv::COLOR_BGR2GRAY);
+        cv::imshow(window_grey_masked, color_masked);
 
-        // cv::namedWindow( "H-S Histogram", 1 );
-        // cv::imshow( "H-S Histogram", histImg );
+        // Applying thresholding to the masked greyscale image
 
+        cv::Mat thresholded_image;
+        // Src: https://techtutorialsx.com/2019/04/13/python-opencv-converting-image-to-black-and-white/; https://docs.opencv.org/3.4/d7/d1b/group__imgproc__misc.html#gaa9e58d2860d4afa658ef70a9b1115576
+        cv::threshold(grey_output, thresholded_image, 135, 255, cv::THRESH_BINARY_INV );
+        // cv::threshold(grey_output, thresholded_image, Grey, 255, cv::THRESH_BINARY_INV );
+        cv::String window_binary_masked = "Binary masked";
+        cv::namedWindow(window_binary_masked);
+        cv::imshow(window_binary_masked, thresholded_image);
+
+
+
+
+        const int histSize = 256;
+        // A vector for storing individual channels of HSV image
+        std::vector<cv::Mat> hsv_planes;
+        // Split the channels of hsv and store it in the vector
+        cv::split(hsv_frame_opencv, hsv_planes);
+        float range[] = {0, 256};
+        const float *histRange = {range};
+        bool uniform = true;
+        bool accumulate = false;
+        cv::Mat h_hist, s_hist, v_hist;
+        cv::calcHist(&hsv_planes[0], 1, 0, cv::Mat(), h_hist, 1, &histSize,
+                    &histRange, uniform, accumulate);
+        cv::calcHist(&hsv_planes[1], 1, 0, cv::Mat(), s_hist, 1, &histSize,
+                    &histRange, uniform, accumulate);
+        cv::calcHist(&hsv_planes[2], 1, 0, cv::Mat(), v_hist, 1, &histSize,
+                    &histRange, uniform, accumulate);
+        drawHistogram(h_hist,s_hist,v_hist);
+
+
+
+        
         // Step 2: Clean up the binary image
         cv::Mat cleaned_image(frame.size(), CV_8UC1), temp_cleaned(frame.size(), CV_8UC1);
-        grassfire_tf(thresholded_image,temp_cleaned, 4, 0, 4);
-        std::cout << "Back to main fn" << std::endl;
+        grassfire_tf(hsv_thresholded,cleaned_image, 8, 0, 20);
+        // std::cout << "Back to main fn" << std::endl;
         cv::namedWindow("Cleaned Image");
-        cv::imshow("Cleaned Image", temp_cleaned);
+        cv::imshow("Cleaned Image", cleaned_image);
         // grassfire_tf(temp_cleaned,cleaned_image, 8, 1, 4);
 
-        
-        if (desired_filter == "GREYSCALE_OPENCV_FUNC"){
-            // Explanation for the math part: https://docs.opencv.org/3.4/de/d25/imgproc_color_conversions.html
-            cv::cvtColor(frame, output, cv::COLOR_BGR2GRAY);
-            output.copyTo(filtered_output);
-            cv::imshow(desired_filter, output);
-        }else if (desired_filter == "GREYSCALE_USER_FUNC"){
-            greyscale(frame, output);
-            output.copyTo(filtered_output);
-            cv::imshow(desired_filter, output);
-        }else if (desired_filter == "BLURRED_GAUSSIAN_FILTER"){
-            blur5x5(frame, rgb_output);
-            rgb_output.copyTo(filtered_output);
-            cv::imshow(desired_filter, rgb_output);
-        }else if (desired_filter == "SOBEL_X"){
-            sobelX3x3(frame, short_c3_output);
-            cv::convertScaleAbs(short_c3_output, rgb_output); //Converting 16SC3 to 8UC3
-            rgb_output.copyTo(filtered_output);
-            cv::imshow(desired_filter, rgb_output);
-        }else if (desired_filter == "SOBEL_Y"){
-            sobelY3x3(frame, short_c3_output);
-            cv::convertScaleAbs(short_c3_output, rgb_output); //Converting 16SC3 to 8UC3
-            rgb_output.copyTo(filtered_output);
-            cv::imshow(desired_filter , rgb_output);
-        }else if (desired_filter == "GRADIENT_MAGNITUDE"){
-            cv::Mat temp_sx_short16s(res_height,res_width,CV_16SC3); //3 channel matrix of shorts for color image
-            cv::Mat temp_sy_short16s(res_height,res_width,CV_16SC3); //3 channel matrix of shorts for color image
-            sobelX3x3(frame, temp_sx_short16s); // Computing Sobel X
-            sobelY3x3(frame, temp_sy_short16s); // Computing Sobel Y
-            magnitude(temp_sx_short16s, temp_sy_short16s, short_c3_output); // Combining Sobel X and Sobel Y
-            cv::convertScaleAbs(short_c3_output, rgb_output); //Converting 16SC3 to 8UC3 to make it suitable for display
-            rgb_output.copyTo(filtered_output);
-            cv::imshow(desired_filter , rgb_output);
-        }else if (desired_filter == "BLUR_QUANTIZE"){
-            blurQuantize(frame, rgb_output, 15);
-            rgb_output.copyTo(filtered_output);
-            cv::imshow(desired_filter , rgb_output);
-        }else if (desired_filter == "LIVE_CARTOONIZATION"){
-            cartoon(frame, rgb_output, 15, 20);
-            cv::imshow(desired_filter , rgb_output);
-            rgb_output.copyTo(filtered_output);
-        }else if (desired_filter == "NEGATIVE"){
-            negative(frame, rgb_output);
-            cv::imshow(desired_filter , rgb_output);
-            rgb_output.copyTo(filtered_output);
-        }else if (desired_filter == "CHANGE_BRIGHTNESS"){
-            // Changing the brightness level by change_brightness_level in percentage
-            rgb_output = frame + cv::Scalar(change_brightness_level,change_brightness_level,change_brightness_level)*2.55;
-            rgb_output.copyTo(filtered_output);
-            cv::imshow(desired_filter , rgb_output);
-        }else if (desired_filter == "SHARPEN"){
-            cv::Mat temp_sx_short16s(res_height,res_width,CV_16SC3); //3 channel matrix of shorts for color image
-            sharpen(frame, temp_sx_short16s);
-            cv::convertScaleAbs(temp_sx_short16s, rgb_output); //Converting 16SC3 to 8UC3 to make it suitable for 
-            rgb_output.copyTo(filtered_output);
-            cv::imshow(desired_filter , rgb_output);
-        }else if (desired_filter == "SKETCH"){
-            sketch(frame, output);
-            output.copyTo(filtered_output);
-            cv::imshow(desired_filter , output);
-        }else if (desired_filter == "CAPTION"){
-            caption(frame, output, user_caption);
-            output.copyTo(filtered_output);
-            cv::imshow(desired_filter , output);
-        }
+        // while(cv::waitKey(0) != 113){
+        // //Wait indefinitely until 'q' is pressed. 113 is q's ASCII value  
+        // }
+        // cv::destroyWindow("Cleaned Image"); //destroy the created window
 
-        if (save_video_grey == 1){
-            video_original.write(frame);
-            video_grey.write(filtered_output);
-        }else {
-            video_original.write(frame);
-            video_color.write(filtered_output);
+        // Step 3: Segment the image into regions 
+        // Src: https://answers.opencv.org/question/120698/drawning-labeling-components-in-a-image-opencv-c/; https://docs.opencv.org/3.4/d3/dc0/group__imgproc__shape.html#ga107a78bf7cd25dec05fb4dfc5c9e765f
+
+        // stats: size is 5(cols) x nLabels(rows). i.e. 5 is column,  stats for each label (row). Different stats type: https://docs.opencv.org/3.4/d3/dc0/group__imgproc__shape.html#gac7099124c0390051c6970a987e7dc5c5
+        // labelImage : Stores the labelID/ region ID for each pixel. 0 means it is a background
+        // CV_32S: output image label type. Currently CV_32S and CV_16U are supported. 
+        cv::Mat stats, centroids, labelImage;
+        int nLabels = connectedComponentsWithStats(cleaned_image, labelImage, stats, centroids, 8, CV_32S);
+        std::cout << "Number of labels: " << nLabels << std::endl;
+        std::cout << "Stats image size: " << stats.size() << std::endl;
+        // std::cout << stats << std::endl;
+        cv::Mat mask(labelImage.size(), CV_8UC1, cv::Scalar(0)); //Creates a mat of single channel with each pixel containing zero value
+        cv::Mat surfSup = stats.col(4) > 500;// & stats.col(4) < 2000; // It will store 255 in surfSup if the condition is met for that label, otherwise zero
+        
+        // Que: How to use binary and in opencv mat?
+        // Ans: https://stackoverflow.com/questions/17961092/how-do-i-do-boolean-operation-on-mat-such-as-mat3-mat1-mat2
+
+        // cv::Mat surfSup2 = stats.col(4) < 2000;
+        // cv::Mat surfSup = surfSup1 | surfSup2;
+        // std::cout << surfSup << std::endl;
+        // std::cout << surfSup2 << std::endl;
+        // sleep(10);
+        int num_filtered_regions = 0;
+        // Ignore the background pixel. That's why, starting the counter from 1.
+        for (int i = 1; i < nLabels; i++){
+            if (surfSup.at<uchar>(i, 0)){
+                //All the pixels with label id i will be set to 255/ 1 with this operation
+                // Src: Observation and https://stackoverflow.com/questions/26776045/compare-opencv-mat-with-scalar-elementwise
+                mask = mask | (labelImage==i); // (labelImage==i) will return a mat with the pixel having i as 255 and rest zero. After ORing with mask and doing it repeatedly for all the labels, mask will have 255 for all the clusters and 0 elsewhere.
+                num_filtered_regions++;
+            }
         }
+        std::cout << "Filtered regions are: " << num_filtered_regions << std::endl;
+        // sleep(10);
+        cv::Mat r(frame.size(), CV_8UC1, cv::Scalar(0));
+        frame.copyTo(r,mask);
+        cv::imshow("Segmentation", r);
+
+
+        
+        
+
     }
     return 0;
 }

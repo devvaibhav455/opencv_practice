@@ -33,5 +33,10 @@
   "directory": "/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/build",
   "command": "/usr/bin/c++  -I/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/include -isystem /usr/include/opencv4 -g -o CMakeFiles/binProcess.dir/src/filter.cpp.o -c /home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/filter.cpp",
   "file": "/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/filter.cpp"
+},
+{
+  "directory": "/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/build",
+  "command": "/usr/bin/c++  -I/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/include -isystem /usr/include/opencv4 -g -o CMakeFiles/sample_code.dir/src/sample_code.cpp.o -c /home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/sample_code.cpp",
+  "file": "/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/sample_code.cpp"
 }
 ]

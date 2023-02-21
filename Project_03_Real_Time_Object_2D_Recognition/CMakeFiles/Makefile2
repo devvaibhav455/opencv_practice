@@ -66,6 +66,7 @@ CMAKE_BINARY_DIR = /home/dev/Documents/opencv_practice/Project_03_Real_Time_Obje
 all: CMakeFiles/write_csv.dir/all
 all: CMakeFiles/read_csv.dir/all
 all: CMakeFiles/binProcess.dir/all
+all: CMakeFiles/sample_code.dir/all
 .PHONY : all
 
 # The main recursive "preinstall" target.
@@ -76,6 +77,7 @@ preinstall:
 clean: CMakeFiles/write_csv.dir/clean
 clean: CMakeFiles/read_csv.dir/clean
 clean: CMakeFiles/binProcess.dir/clean
+clean: CMakeFiles/sample_code.dir/clean
 .PHONY : clean
 
 #=============================================================================
@@ -85,7 +87,7 @@ clean: CMakeFiles/binProcess.dir/clean
 CMakeFiles/write_csv.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/write_csv.dir/build.make CMakeFiles/write_csv.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/write_csv.dir/build.make CMakeFiles/write_csv.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/CMakeFiles --progress-num=7,8,9,10 "Built target write_csv"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/CMakeFiles --progress-num=9,10,11,12 "Built target write_csv"
 .PHONY : CMakeFiles/write_csv.dir/all
 
 # Build rule for subdir invocation for target.
@@ -155,6 +157,32 @@ binProcess: CMakeFiles/binProcess.dir/rule
 CMakeFiles/binProcess.dir/clean:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/binProcess.dir/build.make CMakeFiles/binProcess.dir/clean
 .PHONY : CMakeFiles/binProcess.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/sample_code.dir
+
+# All Build rule for target.
+CMakeFiles/sample_code.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sample_code.dir/build.make CMakeFiles/sample_code.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sample_code.dir/build.make CMakeFiles/sample_code.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/CMakeFiles --progress-num=7,8 "Built target sample_code"
+.PHONY : CMakeFiles/sample_code.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/sample_code.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/sample_code.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/CMakeFiles 0
+.PHONY : CMakeFiles/sample_code.dir/rule
+
+# Convenience name for target.
+sample_code: CMakeFiles/sample_code.dir/rule
+.PHONY : sample_code
+
+# clean rule for target.
+CMakeFiles/sample_code.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sample_code.dir/build.make CMakeFiles/sample_code.dir/clean
+.PHONY : CMakeFiles/sample_code.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

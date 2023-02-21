@@ -10,6 +10,7 @@ endif()
 set( SRC_FILES_PATH_WRITE_CSV src/write_feature_vector.cpp src/csv_util.cpp src/filter.cpp)
 set( SRC_FILES_PATH_READ_CSV src/read_feature_vector.cpp src/csv_util.cpp)
 set( SRC_FILES_PATH_BINARY_PROCESSOR src/binProcess.cpp src/filter.cpp)
+set( SRC_FILES_PATH_SAMPLE_CODE src/sample_code.cpp)
 
 # Debug using VSCode: https://code.visualstudio.com/docs/cpp/cmake-linux
 # message("[MY_MESSAGE] CMake reading source files from: ${SRC_FILES_PATH_IMG_DISP}")
@@ -38,6 +39,10 @@ target_link_libraries( ${p03_read_csv} ${OpenCV_LIBS} )
 set(p03_binProcess binProcess)
 add_executable( ${p03_binProcess} ${SRC_FILES_PATH_BINARY_PROCESSOR} )
 target_link_libraries( ${p03_binProcess} ${OpenCV_LIBS} )
+
+set(p03_sample_code sample_code)
+add_executable( ${p03_sample_code} ${SRC_FILES_PATH_SAMPLE_CODE} )
+target_link_libraries( ${p03_sample_code} ${OpenCV_LIBS} )
 
 
 

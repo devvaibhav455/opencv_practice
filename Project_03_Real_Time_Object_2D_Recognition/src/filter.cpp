@@ -531,9 +531,9 @@ int bgr_to_hsv(cv::Mat &src, cv::Mat&dst){
     // for each column
     for(int j=0;j<src.cols;j++) {
       // for each color channel
-        r_dash = rptr[j][2]/float(255);
-        g_dash = rptr[j][1]/float(255);
-        b_dash = rptr[j][0]/float(255);
+        r_dash = (int)rptr[j][2]/float(255);
+        g_dash = (int)rptr[j][1]/float(255);
+        b_dash = (int)rptr[j][0]/float(255);
         cmax = std::max({r_dash, g_dash, b_dash});
         cmin = std::min({r_dash, g_dash, b_dash});
         delta = cmax - cmin;
@@ -549,8 +549,8 @@ int bgr_to_hsv(cv::Mat &src, cv::Mat&dst){
           dptr[j][0] = 60*((r_dash-g_dash)/delta + 4);
         }
 
-        if (dptr[j][0] < 0){
-          dptr[j][0] = 360 + dptr[j][0];
+        if ((int)dptr[j][0] < 0){
+          dptr[j][0] = 360 + (int)dptr[j][0];
         }
 
         // Saturation calculation
@@ -600,28 +600,31 @@ int grassfire_tf(cv::Mat &src, cv::Mat&dst, int connectedness, int operation, in
     uchar *dptr = temp.ptr<uchar>(i);
     // for each column
     for(int j=0;j<src.cols;j++) {
-        if (sptr[j] != pixel_under_check){
+      // std::cout << (int)sptr[j] << " | " << pixel_under_check << std::endl;
+        if ((int)sptr[j] != pixel_under_check){
           dptr[j] = 0;
-          // std::cout << "Reached here" << std::endl;
+          // std::cout << "Setting pixel to zero " << (int)dptr[j] << std::endl;
         }else{
           // std::cout << "Reached here in else" << std::endl;
           // Identify the min value as per connectedness
           if (connectedness == 4){
             // Find minimum from top and left pixel
             if (i != 0 && j!= 0){min = std::min((int)dptrm1[j], (int)dptr[j-1]);} //Both top and left exist
-            if(i == 0 && j!= 0){ min = dptr[j-1];} // Top row does not exist but left exist
-            if(i != 0 && j== 0){ min = dptrm1[j];} // Top row exist but left does not exist
+            if(i == 0 && j!= 0){ min = (int)dptr[j-1];} // Top row does not exist but left exist
+            if(i != 0 && j== 0){ min = (int)dptrm1[j];} // Top row exist but left does not exist
             if(i != 0 && j== 0){ min = 0;} // Neither top row nor left exist. i.e. Top left pixel
           }else if (connectedness == 8){
             // Find minimum from top, left, top left, top right pixel
             if (i != 0 && j != 0 && j != src.cols){min = std::min({(int)dptrm1[j], (int)dptr[j-1], (int)(int)dptrm1[j-1], (int)dptrm1[j+1]});} // All neighbors exist
-            if (i == 0 && j != 0){min = dptr[j-1];} // Top row does not exist, left exist
+            if (i == 0 && j != 0){min = (int)dptr[j-1];} // Top row does not exist, left exist
             if (i == 0 && j == 0){min = 0;} // Top row does not exist, left does not exist. i.e. corner pixel
             if (i != 0 && j == 0 && j != src.cols){min = std::min({(int)dptrm1[j], (int)dptrm1[j+1]});} // Top row exist, left does not exist, right exist
             if (i != 0 && j != 0 && j == src.cols){min = std::min({(int)dptrm1[j], (int)dptrm1[j-1]});} // Top row exist, left  exist, right does not exist
-
           }
+          // std::cout << "Min is " << min << std::endl;
           dptr[j] = min + 1;
+          // std::cout << "Setting pixel to " << (int)dptr[j] << std::endl;
+
         }
     }
   }
@@ -643,9 +646,9 @@ int grassfire_tf(cv::Mat &src, cv::Mat&dst, int connectedness, int operation, in
           // Identify the min value as per connectedness
           if (connectedness == 4){
             // Find minimum from bottom and right pixel
-            if (i != (src.rows-1) && j!= (src.cols-1)){min = std::min(dptrp1[j], dptr[j+1]);} //Both bottom  and right exist
-            if(i == (src.rows-1) && j!= (src.cols-1)){ min = dptr[j+1];} // Bottom does not exist but right exist
-            if(i != (src.rows-1) && j== (src.cols-1)){ min = dptrp1[j];} // Bottom exist but right does not exist
+            if (i != (src.rows-1) && j!= (src.cols-1)){min = std::min((int)dptrp1[j], (int)dptr[j+1]);} //Both bottom  and right exist
+            if(i == (src.rows-1) && j!= (src.cols-1)){ min = (int)dptr[j+1];} // Bottom does not exist but right exist
+            if(i != (src.rows-1) && j== (src.cols-1)){ min = (int)dptrp1[j];} // Bottom exist but right does not exist
             if(i == (src.rows-1) && j== (src.cols-1)){ min = 0;} // Neither bottom nor right exist. i.e. bottom right pixel
           }else if (connectedness == 8){
             // Find minimum from bottom, right, bottom left, bottom right pixel
@@ -659,7 +662,7 @@ int grassfire_tf(cv::Mat &src, cv::Mat&dst, int connectedness, int operation, in
     }
   }
 
-  std::cout << "Reached here" << std::endl;
+  // std::cout << "Reached here" << std::endl;
 
   // PASS 3
   // Once grassfire transfor is calculated, need to perform either dilation or erosion as defined by operation
@@ -673,12 +676,13 @@ int grassfire_tf(cv::Mat &src, cv::Mat&dst, int connectedness, int operation, in
     uchar *dptr = dst.ptr<uchar>(i);
     // for each column
     for(int j=0;j<src.cols;j++) {
-      if (sptr[j] != 0 && sptr[j] <= max_num_operations){
+      if ((int)sptr[j] != 0 && (int)sptr[j] <= max_num_operations){
         if (operation == 0){
           //Perform erosion
           dptr[j] = 0;
         }else if(operation == 1){
-          dptr[j] == 255;
+          // Perform dilation
+          dptr[j] = 255;
         }
       }
     }
@@ -689,5 +693,45 @@ int grassfire_tf(cv::Mat &src, cv::Mat&dst, int connectedness, int operation, in
 // std::cout << "Reached end" << std::endl;
 return(0);
 
+
+}
+
+
+// Src: https://anothertechs.com/programming/cpp/opencv/calculate-histogram/; https://www.december.com/html/spec/colorhsltable10.html
+void drawHistogram(cv::Mat& b_hist,cv::Mat& g_hist,cv::Mat& r_hist) {
+    const int histSize = 256;
+    int hist_w = 512;
+    int hist_h = 400;
+    int bin_w = cvRound((double)hist_w / histSize);
+
+    cv::Mat histImage(hist_h, hist_w, CV_8UC3, cv::Scalar(0, 0, 0));
+
+    cv::normalize(b_hist, b_hist, 0, histImage.rows, cv::NORM_MINMAX, -1,
+                  cv::Mat());
+    cv::normalize(g_hist, g_hist, 0, histImage.rows, cv::NORM_MINMAX, -1,
+                  cv::Mat());
+    cv::normalize(r_hist, r_hist, 0, histImage.rows, cv::NORM_MINMAX, -1,
+                  cv::Mat());
+
+    for (int i = 1; i < histSize; i++) {
+      cv::line(
+          histImage,
+          cv::Point(bin_w * (i - 1), hist_h - cvRound(b_hist.at<float>(i - 1))),
+          cv::Point(bin_w * (i), hist_h - cvRound(b_hist.at<float>(i))),
+          cv::Scalar(255, 0, 0), 2, 8, 0);
+      cv::line(
+          histImage,
+          cv::Point(bin_w * (i - 1), hist_h - cvRound(g_hist.at<float>(i - 1))),
+          cv::Point(bin_w * (i), hist_h - cvRound(g_hist.at<float>(i))),
+          cv::Scalar(0, 255, 0), 2, 8, 0);
+      cv::line(
+          histImage,
+          cv::Point(bin_w * (i - 1), hist_h - cvRound(r_hist.at<float>(i - 1))),
+          cv::Point(bin_w * (i), hist_h - cvRound(r_hist.at<float>(i))),
+          cv::Scalar(0, 0, 255), 2, 8, 0);
+    }
+
+    cv::namedWindow("calcHist Demo", cv::WINDOW_AUTOSIZE);
+    cv::imshow("calcHist Demo", histImage);
 
 }

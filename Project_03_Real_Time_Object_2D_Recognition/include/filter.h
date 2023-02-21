@@ -45,3 +45,6 @@ int bgr_to_hsv(cv::Mat &src, cv::Mat&dst);
 
 // Grassfire transform
 int grassfire_tf(cv::Mat &src, cv::Mat&dst, int connectedness, int operation, int max_num_operations);
+
+void drawHistogram(cv::Mat& b_hist,cv::Mat& g_hist,cv::Mat& r_hist);
+
