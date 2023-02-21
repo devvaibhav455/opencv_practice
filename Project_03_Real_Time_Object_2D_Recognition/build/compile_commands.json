@@ -1,0 +1,37 @@
+[
+{
+  "directory": "/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/build",
+  "command": "/usr/bin/c++  -I/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/include -isystem /usr/include/opencv4 -g -o CMakeFiles/write_csv.dir/src/write_feature_vector.cpp.o -c /home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/write_feature_vector.cpp",
+  "file": "/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/write_feature_vector.cpp"
+},
+{
+  "directory": "/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/build",
+  "command": "/usr/bin/c++  -I/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/include -isystem /usr/include/opencv4 -g -o CMakeFiles/write_csv.dir/src/csv_util.cpp.o -c /home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/csv_util.cpp",
+  "file": "/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/csv_util.cpp"
+},
+{
+  "directory": "/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/build",
+  "command": "/usr/bin/c++  -I/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/include -isystem /usr/include/opencv4 -g -o CMakeFiles/write_csv.dir/src/filter.cpp.o -c /home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/filter.cpp",
+  "file": "/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/filter.cpp"
+},
+{
+  "directory": "/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/build",
+  "command": "/usr/bin/c++  -I/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/include -isystem /usr/include/opencv4 -g -o CMakeFiles/read_csv.dir/src/read_feature_vector.cpp.o -c /home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/read_feature_vector.cpp",
+  "file": "/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/read_feature_vector.cpp"
+},
+{
+  "directory": "/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/build",
+  "command": "/usr/bin/c++  -I/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/include -isystem /usr/include/opencv4 -g -o CMakeFiles/read_csv.dir/src/csv_util.cpp.o -c /home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/csv_util.cpp",
+  "file": "/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/csv_util.cpp"
+},
+{
+  "directory": "/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/build",
+  "command": "/usr/bin/c++  -I/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/include -isystem /usr/include/opencv4 -g -o CMakeFiles/binProcess.dir/src/binProcess.cpp.o -c /home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/binProcess.cpp",
+  "file": "/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/binProcess.cpp"
+},
+{
+  "directory": "/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/build",
+  "command": "/usr/bin/c++  -I/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/include -isystem /usr/include/opencv4 -g -o CMakeFiles/binProcess.dir/src/filter.cpp.o -c /home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/filter.cpp",
+  "file": "/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/filter.cpp"
+}
+]

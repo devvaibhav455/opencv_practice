@@ -1,0 +1,5 @@
+/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/CMakeFiles/write_csv.dir
+/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/CMakeFiles/read_csv.dir
+/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/CMakeFiles/binProcess.dir
+/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/CMakeFiles/edit_cache.dir
+/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/CMakeFiles/rebuild_cache.dir

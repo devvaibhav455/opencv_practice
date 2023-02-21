@@ -1,0 +1,78 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Debug-f5ebdc15457944623624.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "my_opencv_package",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "binProcess::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-binProcess-Debug-13d293e390ebcbfcbf51.json",
+					"name" : "binProcess",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "read_csv::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-read_csv-Debug-1b865c785c84f878eac3.json",
+					"name" : "read_csv",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "write_csv::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-write_csv-Debug-46516bcf54aa116ff467.json",
+					"name" : "write_csv",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/build",
+		"source" : "/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 3
+	}
+}
