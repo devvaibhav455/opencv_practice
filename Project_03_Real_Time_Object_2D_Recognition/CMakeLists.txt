@@ -9,7 +9,7 @@ endif()
 
 set( SRC_FILES_PATH_WRITE_CSV src/write_feature_vector.cpp src/csv_util.cpp src/filter.cpp)
 set( SRC_FILES_PATH_READ_CSV src/read_feature_vector.cpp src/csv_util.cpp)
-set( SRC_FILES_PATH_BINARY_PROCESSOR src/binProcess.cpp src/filter.cpp)
+set( SRC_FILES_PATH_BINARY_PROCESSOR src/binProcess.cpp src/filter.cpp src/helper_functions.cpp)
 set( SRC_FILES_PATH_SAMPLE_CODE src/sample_code.cpp)
 
 # Debug using VSCode: https://code.visualstudio.com/docs/cpp/cmake-linux

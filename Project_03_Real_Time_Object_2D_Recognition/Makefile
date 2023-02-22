@@ -246,6 +246,30 @@ src/filter.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/binProcess.dir/build.make CMakeFiles/binProcess.dir/src/filter.cpp.s
 .PHONY : src/filter.cpp.s
 
+src/helper_functions.o: src/helper_functions.cpp.o
+.PHONY : src/helper_functions.o
+
+# target to build an object file
+src/helper_functions.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/binProcess.dir/build.make CMakeFiles/binProcess.dir/src/helper_functions.cpp.o
+.PHONY : src/helper_functions.cpp.o
+
+src/helper_functions.i: src/helper_functions.cpp.i
+.PHONY : src/helper_functions.i
+
+# target to preprocess a source file
+src/helper_functions.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/binProcess.dir/build.make CMakeFiles/binProcess.dir/src/helper_functions.cpp.i
+.PHONY : src/helper_functions.cpp.i
+
+src/helper_functions.s: src/helper_functions.cpp.s
+.PHONY : src/helper_functions.s
+
+# target to generate assembly for a file
+src/helper_functions.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/binProcess.dir/build.make CMakeFiles/binProcess.dir/src/helper_functions.cpp.s
+.PHONY : src/helper_functions.cpp.s
+
 src/read_feature_vector.o: src/read_feature_vector.cpp.o
 .PHONY : src/read_feature_vector.o
 
@@ -339,6 +363,9 @@ help:
 	@echo "... src/filter.o"
 	@echo "... src/filter.i"
 	@echo "... src/filter.s"
+	@echo "... src/helper_functions.o"
+	@echo "... src/helper_functions.i"
+	@echo "... src/helper_functions.s"
 	@echo "... src/read_feature_vector.o"
 	@echo "... src/read_feature_vector.i"
 	@echo "... src/read_feature_vector.s"

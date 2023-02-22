@@ -1,6 +1,6 @@
 CMakeFiles/sample_code.dir/src/sample_code.cpp.o: \
  /home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/sample_code.cpp \
- /usr/include/stdc-predef.h /usr/include/opencv4/opencv2/imgproc.hpp \
+ /usr/include/stdc-predef.h /usr/include/opencv4/opencv2/imgcodecs.hpp \
  /usr/include/opencv4/opencv2/core.hpp \
  /usr/include/opencv4/opencv2/core/cvdef.h \
  /usr/include/opencv4/opencv2/core/version.hpp /usr/include/c++/11/limits \
@@ -253,7 +253,5 @@ CMakeFiles/sample_code.dir/src/sample_code.cpp.o: \
  /usr/include/opencv4/opencv2/core/optim.hpp \
  /usr/include/opencv4/opencv2/core/ovx.hpp \
  /usr/include/opencv4/opencv2/core/cvdef.h \
- /usr/include/opencv4/opencv2/imgproc/segmentation.hpp \
  /usr/include/opencv4/opencv2/highgui.hpp \
- /usr/include/opencv4/opencv2/imgcodecs.hpp \
  /usr/include/opencv4/opencv2/videoio.hpp /usr/include/c++/11/iostream
