@@ -154,7 +154,7 @@ int main(int argc, char** argv)
 
     cv::Mat hsv_thresholded;
     // threshold_grey = 0;
-    frame = cv::imread("../sample_set/img2P3.png"); //USED FOR TESTING/ DEBUGGING ONLY
+    // frame = cv::imread("../sample_set/img2P3.png"); //USED FOR TESTING/ DEBUGGING ONLY
     while (true) {
         // std::cout << "Frame before input from camera = " << std::endl << " " << frame << std::endl << std::endl;
         if( argc == 1){
@@ -321,9 +321,7 @@ int main(int argc, char** argv)
         // mask_3c contains the required segmented foreground pixels
         // cv::Moments m = cv::moments(mask_1c, true);
         
-        // float alpha = 0.5*atan(2*m.m11/double(m.m20 - m.m02));
-        // float alpha = 0.5*atan2(2*m.m11, m.m20 - m.m02);
-        // float beta = alpha + M_PI/2;
+      
         
         // Idea: Try to use findContours then pass the findContours result into boundingRect
         std::vector<std::vector<cv::Point> > contours;
@@ -331,6 +329,7 @@ int main(int argc, char** argv)
         // cv::Mat contourOutput = frame.clone();
         cv::findContours( mask_1c, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE ); //Input should be single channel binary image
         std::cout << "Number of countours: " << hierarchy.size() << std::endl;
+        
         //Draw the contours: Src: https://stackoverflow.com/questions/8449378/finding-contours-in-opencv, https://docs.opencv.org/4.x/d9/d8b/tutorial_py_contours_hierarchy.html, https://learnopencv.com/contour-detection-using-opencv-python-c/
         cv::Mat contourImage(frame.size(), CV_8UC3, cv::Scalar(0,0,0));
         cv::Scalar colors[3];
@@ -343,112 +342,49 @@ int main(int argc, char** argv)
         cv::imshow("Contours", contourImage);
         cv::moveWindow("Contours", 200, 0);
         
-        // Find the oriented bounding box from the outermost countor | Src: https://docs.opencv.org/3.4/df/dee/samples_2cpp_2minarea_8cpp-example.html
+        // Find the oriented bounding box from the outermost contors | Src: https://docs.opencv.org/3.4/df/dee/samples_2cpp_2minarea_8cpp-example.html
         cv::Point2f vtx[4];
-        std::vector<cv::Moments> mu(contours.size() );
+        std::vector<cv::Moments> all_mu(contours.size());
         std::vector<cv::Point2f> all_vtx_vec, valid_vtx_vec, all_centroid_vec, valid_centroid_vec;
-        std::vector<cv::Point2f> mc( contours.size() );
-        find_obb_vertices_and_centroid(labelImage, contours, all_vtx_vec, all_centroid_vec);
-        cv::Mat frame_copy;
-        frame.copyTo(frame_copy);
-        plot_obb_on_image(frame_copy,all_vtx_vec, all_centroid_vec);
+        std::vector<cv::Point2f> mc(contours.size() );
+        std::vector<float> all_alpha_vec, valid_alpha_vec;
+        
+        find_obb_vertices_and_centroid(labelImage, contours, all_vtx_vec, all_centroid_vec, all_alpha_vec);
+        std::cout << "Num obb are: " << all_alpha_vec.size() << std::endl;
+        cv::Mat frame_copy_all_boxes;
+        frame.copyTo(frame_copy_all_boxes);
+        plot_obb_on_image(frame_copy_all_boxes,all_vtx_vec, all_centroid_vec, all_alpha_vec);
+        cv::String windowName_all_obb = "All OBB"; //Name of the window
+        cv::namedWindow(windowName_all_obb); // Create a window
+        cv::imshow(windowName_all_obb,frame_copy_all_boxes);
+        
+        cv::Mat frame_copy_valid_boxes;
+        frame.copyTo(frame_copy_valid_boxes);
+
+        std::vector<std::vector<double>> hu_moment_feature_vec;
+        find_valid_obb_vertices_and_centroid(labelImage, contours, valid_vtx_vec, valid_centroid_vec, valid_alpha_vec,hu_moment_feature_vec, 15);
+        std::cout << "Valid obb are: " << valid_alpha_vec.size() << std::endl;
+
+        plot_obb_on_image(frame_copy_valid_boxes,valid_vtx_vec, valid_centroid_vec, valid_alpha_vec);
+        cv::String windowName_valid_obb = "Valid OBB"; //Name of the window
+        cv::namedWindow(windowName_valid_obb); // Create a window
+        cv::imshow(windowName_valid_obb,frame_copy_valid_boxes);
+
         
 
-        // Ignore the bounding box for contors which are close to the edges
-        
-        // for (int i=0; i < contours.size(); i++){
+        // Axis Aligned Bounding Box (AABB) | NOT USED
+        // cv::rectangle(frame_copy,Min_Rect.tl(),Min_Rect.br(),cv::Scalar(0,255,0),2); 
 
-        //     /// Get the moments
-        //     mu[i] = moments( contours[i], true );
-
-        //     //  Get the mass centers:
-        //     mc[i] = cv::Point2f( mu[i].m10/mu[i].m00 , mu[i].m01/mu[i].m00 );
-        //     std::cout << "Centroid x: " << mc[i].x << " | Centroid y: " << mc[i].y << std::endl;
-
-        //     // Get the oriented bounding box for the ith contour
-        //     cv::RotatedRect box = cv::minAreaRect(contours[i]);
-        //     box.points(vtx);
-        //     int is_rect_valid = 0;
-
-        //     // Check if centroid is valid or not
-        //     if(mc[i].x < 15 || mc[i].x > frame.cols - 15 || mc[i].y < 15 || mc[i].y > frame.rows - 15){
-        //         is_rect_valid = 0;
-        //     }else {
-        //         is_rect_valid = 1;
-        //         for(int j=0; j<4 ; j++){
-        //             if (vtx[j].x < 15 || vtx[j].x > frame.cols - 15 || vtx[j].y < 15 || vtx[j].y > frame.rows - 15){
-        //                 is_rect_valid = 0;
-        //                 break;
-        //             }
-        //         }
-        //         std::cout << "Break executed" << std::endl;
-        //     }
-
-        //     if (is_rect_valid == 1){
-        //         valid_vtx_vec.push_back(vtx[0]);
-        //         valid_vtx_vec.push_back(vtx[1]);
-        //         valid_vtx_vec.push_back(vtx[2]);
-        //         valid_vtx_vec.push_back(vtx[3]);
-        //         std::cout << "Pushing Valid Centroid x: " << mc[i].x << " | Pushing Valid Centroid y: " << mc[i].y << std::endl;
-        //         valid_centroid_vec.push_back(mc[i]);
-        //     }
-        // }
-        // std::cout << "Valid bounding boxes: " << valid_centroid_vec.size() << std::endl;
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //                  Step 4: Compute features for each major region                                                              //
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        
+        if (hu_moment_feature_vec.size() == 1){
+            // Start writing all the feature vectors to CSV file
+        }
+    
         
         
-        
-        
-            // Axis Aligned Bounding Box (AABB) | NOT USED
-            // cv::rectangle(frame_copy,Min_Rect.tl(),Min_Rect.br(),cv::Scalar(0,255,0),2); 
-        
-        // int dist, dx, dy, short_index = 0, short_dist, long_dist;
-        // // Draw the oriented bounding box
-        // for(int k=0; k<valid_vtx_vec.size()/4; k++){
-        //     vtx[0] = valid_vtx_vec[4*k];
-        //     vtx[1] = valid_vtx_vec[4*k + 1];
-        //     vtx[2] = valid_vtx_vec[4*k + 2];
-        //     vtx[3] = valid_vtx_vec[4*k + 3];
-        //     cv::Point2f centroid_pt = cv::Point2f(valid_centroid_vec[k]);
-        //     std::cout << "Valid Centroid x: " << centroid_pt.x << " | Valid Centroid y: " << centroid_pt.y << std::endl;
-        //     for( int i = 0; i < 4; i++ ){
-        //         cv::line(frame_copy, vtx[i], vtx[(i+1)%4], cv::Scalar(0, 255, 0), 1, cv::LINE_AA);
-                
-        //         cv::circle(frame_copy,centroid_pt, 4, cv::Scalar(0,0,255), -1);
-        //         // cv::line(frame_copy, [centroids.at<double>(i,0),centroids.at<double>(i,0)], vtx[(i+1)%4], cv::Scalar(0, 255, 0), 1, cv::LINE_AA);
-        //         dx = vtx[i].x - vtx[(i+1)%4].x;
-        //         dy = vtx[i].y - vtx[(i+1)%4].y;
-        //         dist = sqrt(dx*dx + dy*dy);
-        //         if (i == 0){
-        //             short_dist = dist;
-        //         }
-        //         if (dist < short_dist){
-        //             short_dist = dist;
-        //             short_index = i;
-        //         }else{
-        //             long_dist = dist;
-        //         }
-        //         std::cout << "Distance between " << i << " and " << i+1 << " is: " << dist << std::endl;
-        // }
-        // }
-        
-        // std::cout << "Short dist and its index" << short_dist << " and " << short_index << " is: " << " long dist" << long_dist<< std::endl;
-        
-        // Finding points on the line of least central moment. i.e. line with slope alpha. i.e. midpoint of points at short_index and short_index + 1
-        cv::Point2f llcm[2];
-        // llcm[0].x = (vtx[short_index].x + vtx[short_index+1].y)/2;
-        // llcm[0].y = (vtx[short_index].y + vtx[short_index+1].y)/2;
-        // llcm[1].x = (vtx[short_index+2].x + vtx[short_index+3].y)/2;
-        // llcm[1].y = (vtx[short_index+2].y + vtx[short_index+3].y)/2;
-        
-        // llcm[0].x = centroids.at<double>(0,0) + 0.5*long_dist*cos(alpha);
-        // llcm[0].y = centroids.at<double>(0,1) + 0.5*long_dist*sin(alpha);       
-        // llcm[1].x = centroids.at<double>(1,0) - 0.5*long_dist*cos(alpha);
-        // llcm[1].y = centroids.at<double>(1,1) - 0.5*long_dist*sin(alpha);
-        // cv::line(frame_copy, llcm[0], llcm[1], cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
-
-        cv::imshow("Result",frame_copy);
-        
-        // mu_22_alpha can be used as a feature vector
         
 
             // sleep(10);
