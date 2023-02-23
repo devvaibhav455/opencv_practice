@@ -31,41 +31,41 @@ const int threshold_slider_max = 255;
 int threshold_grey = 0;
 
 
-static void on_low_H_thresh_trackbar(int, void *)
-{
-    low_H = cv::min(high_H-1, low_H);
-    cv::setTrackbarPos("Low H", window_hsv_thresholded, low_H);
-}
-static void on_high_H_thresh_trackbar(int, void *)
-{
-    high_H = cv::max(high_H, low_H+1);
-    cv::setTrackbarPos("High H", window_hsv_thresholded, high_H);
-}
-static void on_low_S_thresh_trackbar(int, void *)
-{
-    low_S = cv::min(high_S-1, low_S);
-    cv::setTrackbarPos("Low S", window_hsv_thresholded, low_S);
-}
-static void on_high_S_thresh_trackbar(int, void *)
-{
-    high_S = cv::max(high_S, low_S+1);
-    cv::setTrackbarPos("High S", window_hsv_thresholded, high_S);
-}
-static void on_low_V_thresh_trackbar(int, void *)
-{
-    low_V = cv::min(high_V-1, low_V);
-    cv::setTrackbarPos("Low V", window_hsv_thresholded, low_V);
-}
-static void on_high_V_thresh_trackbar(int, void *)
-{
-    high_V = cv::max(high_V, low_V+1);
-    cv::setTrackbarPos("High V", window_hsv_thresholded, high_V);
-}
-static void on_threshold_grey_trackbar( int, void* )
-{
-    threshold_grey = threshold_grey;
-    cv::setTrackbarPos("Grey Threshold", window_grey_masked, threshold_grey);
-}
+// static void on_low_H_thresh_trackbar(int, void *)
+// {
+//     low_H = cv::min(high_H-1, low_H);
+//     cv::setTrackbarPos("Low H", window_hsv_thresholded, low_H);
+// }
+// static void on_high_H_thresh_trackbar(int, void *)
+// {
+//     high_H = cv::max(high_H, low_H+1);
+//     cv::setTrackbarPos("High H", window_hsv_thresholded, high_H);
+// }
+// static void on_low_S_thresh_trackbar(int, void *)
+// {
+//     low_S = cv::min(high_S-1, low_S);
+//     cv::setTrackbarPos("Low S", window_hsv_thresholded, low_S);
+// }
+// static void on_high_S_thresh_trackbar(int, void *)
+// {
+//     high_S = cv::max(high_S, low_S+1);
+//     cv::setTrackbarPos("High S", window_hsv_thresholded, high_S);
+// }
+// static void on_low_V_thresh_trackbar(int, void *)
+// {
+//     low_V = cv::min(high_V-1, low_V);
+//     cv::setTrackbarPos("Low V", window_hsv_thresholded, low_V);
+// }
+// static void on_high_V_thresh_trackbar(int, void *)
+// {
+//     high_V = cv::max(high_V, low_V+1);
+//     cv::setTrackbarPos("High V", window_hsv_thresholded, high_V);
+// }
+// static void on_threshold_grey_trackbar( int, void* )
+// {
+//     threshold_grey = threshold_grey;
+//     cv::setTrackbarPos("Grey Threshold", window_grey_masked, threshold_grey);
+// }
 
 
 
@@ -143,22 +143,25 @@ int main(int argc, char** argv)
     cv::namedWindow(window_hsv_thresholded);
     cv::namedWindow(window_grey_masked);
     // Trackbars to set thresholds for HSV values
-    cv::createTrackbar("Low H", window_hsv_thresholded, &low_H, max_value_H, on_low_H_thresh_trackbar);
-    cv::createTrackbar("High H", window_hsv_thresholded, &high_H, max_value_H, on_high_H_thresh_trackbar);
-    cv::createTrackbar("Low S", window_hsv_thresholded, &low_S, max_value, on_low_S_thresh_trackbar);
-    cv::createTrackbar("High S", window_hsv_thresholded, &high_S, max_value, on_high_S_thresh_trackbar);
-    cv::createTrackbar("Low V", window_hsv_thresholded, &low_V, max_value, on_low_V_thresh_trackbar);
-    cv::createTrackbar("High V", window_hsv_thresholded, &high_V, max_value, on_high_V_thresh_trackbar);
-    cv::createTrackbar("Grey Threshold", window_grey_masked, &threshold_grey, threshold_slider_max, on_threshold_grey_trackbar);
+    // cv::createTrackbar("Low H", window_hsv_thresholded, &low_H, max_value_H, on_low_H_thresh_trackbar);
+    // cv::createTrackbar("High H", window_hsv_thresholded, &high_H, max_value_H, on_high_H_thresh_trackbar);
+    // cv::createTrackbar("Low S", window_hsv_thresholded, &low_S, max_value, on_low_S_thresh_trackbar);
+    // cv::createTrackbar("High S", window_hsv_thresholded, &high_S, max_value, on_high_S_thresh_trackbar);
+    // cv::createTrackbar("Low V", window_hsv_thresholded, &low_V, max_value, on_low_V_thresh_trackbar);
+    // cv::createTrackbar("High V", window_hsv_thresholded, &high_V, max_value, on_high_V_thresh_trackbar);
+    // cv::createTrackbar("Grey Threshold", window_grey_masked, &threshold_grey, threshold_slider_max, on_threshold_grey_trackbar);
     // on_threshold_grey_trackbar(threshold_grey, 0);
 
     cv::Mat hsv_thresholded;
     // threshold_grey = 0;
+    frame = cv::imread("../sample_set/img2P3.png"); //USED FOR TESTING/ DEBUGGING ONLY
     while (true) {
         // std::cout << "Frame before input from camera = " << std::endl << " " << frame << std::endl << std::endl;
         if( argc == 1){
             *capdev >> frame; //frame.type() is 16 viz. 8UC3
         }
+        
+        
         cv::resize(frame, frame, cv::Size(res_width, res_height));
         
         // std::cout << "Resized size is:" << frame.size() << std::endl; //Prints columnsxrows
@@ -190,32 +193,32 @@ int main(int argc, char** argv)
         //Convert image to BW and calculate histogram
         // cv::cvtColor(frame, grey_output, cv::COLOR_BGR2GRAY);
         
-        cv::cvtColor(frame, hsv_frame_opencv, cv::COLOR_BGR2HSV);
-        cv::namedWindow("2: HSV Image OpenCV function");
-        cv::imshow("2: HSV Image OpenCV function", hsv_frame_opencv);
-        hsv_frame_opencv = hsv_frame_opencv + cv::Scalar(0,20,0); //Increasing Saturation value for all the pixels.
+        // cv::cvtColor(frame, hsv_frame_opencv, cv::COLOR_BGR2HSV);
+        // cv::namedWindow("2: HSV Image OpenCV function");
+        // cv::imshow("2: HSV Image OpenCV function", hsv_frame_opencv);
+        // hsv_frame_opencv = hsv_frame_opencv + cv::Scalar(0,-20,0); //Making pixels dark
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //                  Histogram calculation for the HSV Image                                                                     //
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        const int histSize = 256;
-        // A vector for storing individual channels of HSV image
-        std::vector<cv::Mat> hsv_planes;
-        // Split the channels of hsv and store it in the vector
-        cv::split(hsv_frame_opencv, hsv_planes);
-        float range[] = {0, 256};
-        const float *histRange = {range};
-        bool uniform = true;
-        bool accumulate = false;
-        cv::Mat h_hist, s_hist, v_hist;
-        cv::calcHist(&hsv_planes[0], 1, 0, cv::Mat(), h_hist, 1, &histSize,
-                    &histRange, uniform, accumulate);
-        cv::calcHist(&hsv_planes[1], 1, 0, cv::Mat(), s_hist, 1, &histSize,
-                    &histRange, uniform, accumulate);
-        cv::calcHist(&hsv_planes[2], 1, 0, cv::Mat(), v_hist, 1, &histSize,
-                    &histRange, uniform, accumulate);
-        drawHistogram(h_hist,s_hist,v_hist);
+        // const int histSize = 256;
+        // // A vector for storing individual channels of HSV image
+        // std::vector<cv::Mat> hsv_planes;
+        // // Split the channels of hsv and store it in the vector
+        // cv::split(hsv_frame_opencv, hsv_planes);
+        // float range[] = {0, 256};
+        // const float *histRange = {range};
+        // bool uniform = true;
+        // bool accumulate = false;
+        // cv::Mat h_hist, s_hist, v_hist;
+        // cv::calcHist(&hsv_planes[0], 1, 0, cv::Mat(), h_hist, 1, &histSize,
+        //             &histRange, uniform, accumulate);
+        // cv::calcHist(&hsv_planes[1], 1, 0, cv::Mat(), s_hist, 1, &histSize,
+        //             &histRange, uniform, accumulate);
+        // cv::calcHist(&hsv_planes[2], 1, 0, cv::Mat(), v_hist, 1, &histSize,
+        //             &histRange, uniform, accumulate);
+        // drawHistogram(h_hist,s_hist,v_hist);
         
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -226,10 +229,10 @@ int main(int argc, char** argv)
         // More info: https://docs.opencv.org/3.4/d2/de8/group__core__array.html#ga48af0ab51e36436c5d04340e036ce981
         // That is, dst (I) is set to 255 (all 1 -bits) if src (I) is within the specified 1D, 2D, 3D, ... box and 0 otherwise. It outputs a binary image
         
-        cv::inRange(hsv_frame_opencv, cv::Scalar(low_H, low_S, low_V), cv::Scalar(high_H, high_S, high_V), hsv_thresholded);
+        // cv::inRange(hsv_frame_opencv, cv::Scalar(low_H, low_S, low_V), cv::Scalar(high_H, high_S, high_V), hsv_thresholded);
         // cv::inRange(hsv_frame_opencv, cv::Scalar(0, 29, 0), cv::Scalar(37, 255, 255), hsv_thresholded); // Values found after changing the slider
         // Show the frames
-        imshow(window_hsv_thresholded, hsv_thresholded);
+        // imshow(window_hsv_thresholded, hsv_thresholded);
 
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -238,11 +241,11 @@ int main(int argc, char** argv)
     
         //Implementing mask for thresholded HSV using. Src: https://stackoverflow.com/questions/14582082/merging-channels-in-opencv
         cv::Mat mask_3c(frame.size(), CV_8UC3, cv::Scalar(0,0,0)), mask_1c(frame.size(), CV_8UC1, cv::Scalar(0));
-        hsv_thresholded.copyTo(mask_1c);
-        mask_1c_to_3c(mask_1c, mask_3c);
-        cv::Mat color_masked = mask_3c & frame;
-        cv::cvtColor(color_masked, grey_output, cv::COLOR_BGR2GRAY);
-        cv::imshow(window_grey_masked, color_masked);
+        // hsv_thresholded.copyTo(mask_1c);
+        // mask_1c_to_3c(mask_1c, mask_3c);
+        // cv::Mat color_masked = mask_3c & frame;
+        // cv::cvtColor(color_masked, grey_output, cv::COLOR_BGR2GRAY);
+        // cv::imshow(window_grey_masked, color_masked);
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //                  Applying thresholding to the masked greyscale image                                                         //
@@ -250,8 +253,10 @@ int main(int argc, char** argv)
 
         cv::Mat thresholded_image;
         // Src: https://techtutorialsx.com/2019/04/13/python-opencv-converting-image-to-black-and-white/; https://docs.opencv.org/3.4/d7/d1b/group__imgproc__misc.html#gaa9e58d2860d4afa658ef70a9b1115576
-        cv::threshold(grey_output, thresholded_image, threshold_grey, 255, cv::THRESH_BINARY ); //THRESH_BINARY_INV
+        // cv::threshold(grey_output, thresholded_image, threshold_grey, 255, cv::THRESH_BINARY ); //THRESH_BINARY_INV
         // cv::threshold(grey_output, thresholded_image, 22, 255, cv::THRESH_BINARY);
+
+        thresholding(frame, thresholded_image);
         cv::String window_binary_masked = "4: Binary masked";
         cv::namedWindow(window_binary_masked);
         cv::imshow(window_binary_masked, thresholded_image);
@@ -262,9 +267,10 @@ int main(int argc, char** argv)
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         
         cv::Mat cleaned_image(frame.size(), CV_8UC1), temp_cleaned(frame.size(), CV_8UC1);
-        grassfire_tf(hsv_thresholded,cleaned_image, 8, 0, 20); // Perform erosion with 8 connectedness for at most 20 times
+        grassfire_tf(thresholded_image,cleaned_image, 8, 0, 20); // Perform erosion with 8 connectedness for at most 20 times
         cv::namedWindow("5: Cleaned Image");
         cv::imshow("5: Cleaned Image", cleaned_image);
+        std::cout << "################### Reached here ###################" << std::endl;
         // grassfire_tf(temp_cleaned,cleaned_image, 8, 1, 4);
 
         // while(cv::waitKey(0) != 113){
@@ -288,7 +294,7 @@ int main(int argc, char** argv)
         std::cout << "Stats image size: " << stats.size() << std::endl;
         std::cout << "Centroids size is: " << centroids.size() << std::endl;
         mask_1c = cv::Mat::zeros(labelImage.size(), CV_8UC1); //Creates a mat of single channel with each pixel containing zero value
-        cv::Mat surfSup = stats.col(4) > 0;// & stats.col(4) < 2000; // It will store 255 in surfSup if the condition is met for that label, otherwise zero
+        cv::Mat surfSup = stats.col(4) > 600;// & stats.col(4) < 2000; // It will store 255 in surfSup if the condition is met for that label, otherwise zero
         
             // Que: How to use binary "and" in opencv mat?
             // Ans: https://stackoverflow.com/questions/17961092/how-do-i-do-boolean-operation-on-mat-such-as-mat3-mat1-mat2
@@ -313,11 +319,11 @@ int main(int argc, char** argv)
         
         mask_1c_to_3c(mask_1c, mask_3c);
         // mask_3c contains the required segmented foreground pixels
-        cv::Moments m = cv::moments(mask_1c, true);
+        // cv::Moments m = cv::moments(mask_1c, true);
         
         // float alpha = 0.5*atan(2*m.m11/double(m.m20 - m.m02));
-        float alpha = 0.5*atan2(2*m.m11, m.m20 - m.m02);
-        float beta = alpha + M_PI/2;
+        // float alpha = 0.5*atan2(2*m.m11, m.m20 - m.m02);
+        // float beta = alpha + M_PI/2;
         
         // Idea: Try to use findContours then pass the findContours result into boundingRect
         std::vector<std::vector<cv::Point> > contours;
@@ -339,35 +345,93 @@ int main(int argc, char** argv)
         
         // Find the oriented bounding box from the outermost countor | Src: https://docs.opencv.org/3.4/df/dee/samples_2cpp_2minarea_8cpp-example.html
         cv::Point2f vtx[4];
-        cv::RotatedRect box = cv::minAreaRect(contours[0]);
-        // std::cout << " ############### Reached here ############### " << std::endl;
-        box.points(vtx);
+        std::vector<cv::Moments> mu(contours.size() );
+        std::vector<cv::Point2f> all_vtx_vec, valid_vtx_vec, all_centroid_vec, valid_centroid_vec;
+        std::vector<cv::Point2f> mc( contours.size() );
+        find_obb_vertices_and_centroid(labelImage, contours, all_vtx_vec, all_centroid_vec);
         cv::Mat frame_copy;
         frame.copyTo(frame_copy);
+        plot_obb_on_image(frame_copy,all_vtx_vec, all_centroid_vec);
+        
+
+        // Ignore the bounding box for contors which are close to the edges
+        
+        // for (int i=0; i < contours.size(); i++){
+
+        //     /// Get the moments
+        //     mu[i] = moments( contours[i], true );
+
+        //     //  Get the mass centers:
+        //     mc[i] = cv::Point2f( mu[i].m10/mu[i].m00 , mu[i].m01/mu[i].m00 );
+        //     std::cout << "Centroid x: " << mc[i].x << " | Centroid y: " << mc[i].y << std::endl;
+
+        //     // Get the oriented bounding box for the ith contour
+        //     cv::RotatedRect box = cv::minAreaRect(contours[i]);
+        //     box.points(vtx);
+        //     int is_rect_valid = 0;
+
+        //     // Check if centroid is valid or not
+        //     if(mc[i].x < 15 || mc[i].x > frame.cols - 15 || mc[i].y < 15 || mc[i].y > frame.rows - 15){
+        //         is_rect_valid = 0;
+        //     }else {
+        //         is_rect_valid = 1;
+        //         for(int j=0; j<4 ; j++){
+        //             if (vtx[j].x < 15 || vtx[j].x > frame.cols - 15 || vtx[j].y < 15 || vtx[j].y > frame.rows - 15){
+        //                 is_rect_valid = 0;
+        //                 break;
+        //             }
+        //         }
+        //         std::cout << "Break executed" << std::endl;
+        //     }
+
+        //     if (is_rect_valid == 1){
+        //         valid_vtx_vec.push_back(vtx[0]);
+        //         valid_vtx_vec.push_back(vtx[1]);
+        //         valid_vtx_vec.push_back(vtx[2]);
+        //         valid_vtx_vec.push_back(vtx[3]);
+        //         std::cout << "Pushing Valid Centroid x: " << mc[i].x << " | Pushing Valid Centroid y: " << mc[i].y << std::endl;
+        //         valid_centroid_vec.push_back(mc[i]);
+        //     }
+        // }
+        // std::cout << "Valid bounding boxes: " << valid_centroid_vec.size() << std::endl;
+        
+        
+        
         
             // Axis Aligned Bounding Box (AABB) | NOT USED
             // cv::rectangle(frame_copy,Min_Rect.tl(),Min_Rect.br(),cv::Scalar(0,255,0),2); 
         
-        int dist, dx, dy, short_index = 0, short_dist, long_dist;
-        // Draw the oriented bounding box
-        for( int i = 0; i < 4; i++ ){
-            cv::line(frame_copy, vtx[i], vtx[(i+1)%4], cv::Scalar(0, 255, 0), 1, cv::LINE_AA);
-            dx = vtx[i].x - vtx[(i+1)%4].x;
-            dy = vtx[i].y - vtx[(i+1)%4].y;
-            dist = sqrt(dx*dx + dy*dy);
-            if (i == 0){
-                short_dist = dist;
-            }
-            if (dist < short_dist){
-                short_dist = dist;
-                short_index = i;
-            }else{
-                long_dist = dist;
-            }
-            std::cout << "Distance between " << i << " and " << i+1 << " is: " << dist << std::endl;
-
-        }
-        std::cout << "Short dist and its index" << short_dist << " and " << short_index << " is: " << " long dist" << long_dist<< std::endl;
+        // int dist, dx, dy, short_index = 0, short_dist, long_dist;
+        // // Draw the oriented bounding box
+        // for(int k=0; k<valid_vtx_vec.size()/4; k++){
+        //     vtx[0] = valid_vtx_vec[4*k];
+        //     vtx[1] = valid_vtx_vec[4*k + 1];
+        //     vtx[2] = valid_vtx_vec[4*k + 2];
+        //     vtx[3] = valid_vtx_vec[4*k + 3];
+        //     cv::Point2f centroid_pt = cv::Point2f(valid_centroid_vec[k]);
+        //     std::cout << "Valid Centroid x: " << centroid_pt.x << " | Valid Centroid y: " << centroid_pt.y << std::endl;
+        //     for( int i = 0; i < 4; i++ ){
+        //         cv::line(frame_copy, vtx[i], vtx[(i+1)%4], cv::Scalar(0, 255, 0), 1, cv::LINE_AA);
+                
+        //         cv::circle(frame_copy,centroid_pt, 4, cv::Scalar(0,0,255), -1);
+        //         // cv::line(frame_copy, [centroids.at<double>(i,0),centroids.at<double>(i,0)], vtx[(i+1)%4], cv::Scalar(0, 255, 0), 1, cv::LINE_AA);
+        //         dx = vtx[i].x - vtx[(i+1)%4].x;
+        //         dy = vtx[i].y - vtx[(i+1)%4].y;
+        //         dist = sqrt(dx*dx + dy*dy);
+        //         if (i == 0){
+        //             short_dist = dist;
+        //         }
+        //         if (dist < short_dist){
+        //             short_dist = dist;
+        //             short_index = i;
+        //         }else{
+        //             long_dist = dist;
+        //         }
+        //         std::cout << "Distance between " << i << " and " << i+1 << " is: " << dist << std::endl;
+        // }
+        // }
+        
+        // std::cout << "Short dist and its index" << short_dist << " and " << short_index << " is: " << " long dist" << long_dist<< std::endl;
         
         // Finding points on the line of least central moment. i.e. line with slope alpha. i.e. midpoint of points at short_index and short_index + 1
         cv::Point2f llcm[2];
@@ -376,11 +440,11 @@ int main(int argc, char** argv)
         // llcm[1].x = (vtx[short_index+2].x + vtx[short_index+3].y)/2;
         // llcm[1].y = (vtx[short_index+2].y + vtx[short_index+3].y)/2;
         
-        llcm[0].x = centroids.at<double>(0,0) + 0.5*long_dist*cos(alpha);
-        llcm[0].y = centroids.at<double>(0,1) + 0.5*long_dist*sin(alpha);       
-        llcm[1].x = centroids.at<double>(1,0) - 0.5*long_dist*cos(alpha);
-        llcm[1].y = centroids.at<double>(1,1) - 0.5*long_dist*sin(alpha);
-        cv::line(frame_copy, llcm[0], llcm[1], cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
+        // llcm[0].x = centroids.at<double>(0,0) + 0.5*long_dist*cos(alpha);
+        // llcm[0].y = centroids.at<double>(0,1) + 0.5*long_dist*sin(alpha);       
+        // llcm[1].x = centroids.at<double>(1,0) - 0.5*long_dist*cos(alpha);
+        // llcm[1].y = centroids.at<double>(1,1) - 0.5*long_dist*sin(alpha);
+        // cv::line(frame_copy, llcm[0], llcm[1], cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
 
         cv::imshow("Result",frame_copy);
         
