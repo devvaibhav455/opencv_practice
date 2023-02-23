@@ -226,10 +226,11 @@ int main(int argc, char** argv)
         // More info: https://docs.opencv.org/3.4/d2/de8/group__core__array.html#ga48af0ab51e36436c5d04340e036ce981
         // That is, dst (I) is set to 255 (all 1 -bits) if src (I) is within the specified 1D, 2D, 3D, ... box and 0 otherwise. It outputs a binary image
         
-        // cv::inRange(hsv_frame_opencv, cv::Scalar(low_H, low_S, low_V), cv::Scalar(high_H, high_S, high_V), hsv_thresholded);
-        cv::inRange(hsv_frame_opencv, cv::Scalar(0, 29, 0), cv::Scalar(37, 255, 255), hsv_thresholded); // Values found after changing the slider
+        cv::inRange(hsv_frame_opencv, cv::Scalar(low_H, low_S, low_V), cv::Scalar(high_H, high_S, high_V), hsv_thresholded);
+        // cv::inRange(hsv_frame_opencv, cv::Scalar(0, 29, 0), cv::Scalar(37, 255, 255), hsv_thresholded); // Values found after changing the slider
         // Show the frames
         imshow(window_hsv_thresholded, hsv_thresholded);
+
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //           Convert the hsv_thresholded pixels to greyscale image by creating a mask (3 channel mask                           //
@@ -249,8 +250,8 @@ int main(int argc, char** argv)
 
         cv::Mat thresholded_image;
         // Src: https://techtutorialsx.com/2019/04/13/python-opencv-converting-image-to-black-and-white/; https://docs.opencv.org/3.4/d7/d1b/group__imgproc__misc.html#gaa9e58d2860d4afa658ef70a9b1115576
-        // cv::threshold(grey_output, thresholded_image, threshold_grey, 255, cv::THRESH_BINARY ); //THRESH_BINARY_INV
-        cv::threshold(grey_output, thresholded_image, 22, 255, cv::THRESH_BINARY);
+        cv::threshold(grey_output, thresholded_image, threshold_grey, 255, cv::THRESH_BINARY ); //THRESH_BINARY_INV
+        // cv::threshold(grey_output, thresholded_image, 22, 255, cv::THRESH_BINARY);
         cv::String window_binary_masked = "4: Binary masked";
         cv::namedWindow(window_binary_masked);
         cv::imshow(window_binary_masked, thresholded_image);
@@ -276,17 +277,18 @@ int main(int argc, char** argv)
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             // Src: https://answers.opencv.org/question/120698/drawning-labeling-components-in-a-image-opencv-c/; https://docs.opencv.org/3.4/d3/dc0/group__imgproc__shape.html#ga107a78bf7cd25dec05fb4dfc5c9e765f
 
-            // stats: size is 5(cols) x nLabels(rows). i.e. 5 is column,  stats for each label (row). Different stats type: https://docs.opencv.org/3.4/d3/dc0/group__imgproc__shape.html#gac7099124c0390051c6970a987e7dc5c5
-            // labelImage : Stores the labelID/ region ID for each pixel. 0 means it is a background
-            // CV_32S: output image label type. Currently CV_32S and CV_16U are supported.
+        // stats: size is 5(cols) x nLabels(rows). i.e. 5 is column,  stats for each label (row). Different stats type: https://docs.opencv.org/3.4/d3/dc0/group__imgproc__shape.html#gac7099124c0390051c6970a987e7dc5c5
+        // labelImage : Stores the labelID/ region ID for each pixel. 0 means it is a background
+        // CV_32S: output image label type. Currently CV_32S and CV_16U are supported.
+        /// centroids:
 
         cv::Mat stats, centroids, labelImage;
         int nLabels = connectedComponentsWithStats(cleaned_image, labelImage, stats, centroids, 8, CV_32S);
         std::cout << "Number of labels: " << nLabels << std::endl;
         std::cout << "Stats image size: " << stats.size() << std::endl;
-        // std::cout << stats << std::endl;
+        std::cout << "Centroids size is: " << centroids.size() << std::endl;
         mask_1c = cv::Mat::zeros(labelImage.size(), CV_8UC1); //Creates a mat of single channel with each pixel containing zero value
-        cv::Mat surfSup = stats.col(4) > 500;// & stats.col(4) < 2000; // It will store 255 in surfSup if the condition is met for that label, otherwise zero
+        cv::Mat surfSup = stats.col(4) > 0;// & stats.col(4) < 2000; // It will store 255 in surfSup if the condition is met for that label, otherwise zero
         
             // Que: How to use binary "and" in opencv mat?
             // Ans: https://stackoverflow.com/questions/17961092/how-do-i-do-boolean-operation-on-mat-such-as-mat3-mat1-mat2
@@ -303,81 +305,94 @@ int main(int argc, char** argv)
         }
         std::cout << "Filtered regions are: " << num_filtered_regions << std::endl;
         
-        if (num_filtered_regions == 1){
-            // Src: https://answers.opencv.org/question/4183/what-is-the-best-way-to-find-bounding-box-for-binary-mask/
-            cv::Mat Points;
-            cv::findNonZero(mask_1c, Points);
-            cv::Rect Min_Rect=boundingRect(Points);
-
-            cv::Mat frame_copy;
-            frame.copyTo(frame_copy);
-            // 
-            cv::rectangle(frame_copy,Min_Rect.tl(),Min_Rect.br(),cv::Scalar(0,255,0),2);
-            cv::imshow("Result",frame_copy);
-
-            mask_1c_to_3c(mask_1c, mask_3c);
-
-            // mask_3c contains the required segmented foreground pixels
-            cv::Moments m = cv::moments(mask_1c, true);
-            float alpha = 0.5*atan(2*m.m11/(m.m20 - m.m02));
-            float beta = alpha + M_PI/2;
-
-            // Idea: Try to use findContours then pass the findContours result into boundingRect
-            std::vector<std::vector<cv::Point> > contours;
-            std::vector<cv::Vec4i> hierarchy;
-            // cv::Mat contourOutput = frame.clone();
-            cv::findContours( mask_1c, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE ); //Input should be single channel binary image
-
-            std::cout << " ################### Reached here ###################" << std::endl;
-
-            //Draw the contours: Src: https://stackoverflow.com/questions/8449378/finding-contours-in-opencv, https://docs.opencv.org/4.x/d9/d8b/tutorial_py_contours_hierarchy.html, https://learnopencv.com/contour-detection-using-opencv-python-c/
-            cv::Mat contourImage(frame.size(), CV_8UC3, cv::Scalar(0,0,0));
-            cv::Scalar colors[3];
-            colors[0] = cv::Scalar(255, 0, 0);
-            colors[1] = cv::Scalar(0, 255, 0);
-            colors[2] = cv::Scalar(0, 0, 255);
-            for (size_t idx = 0; idx < contours.size(); idx++) {
-                cv::drawContours(contourImage, contours, idx, colors[idx % 3]);
+        // if (num_filtered_regions == 1){
+        // Src: https://answers.opencv.org/question/4183/what-is-the-best-way-to-find-bounding-box-for-binary-mask/
+        cv::Mat Points;
+        cv::findNonZero(mask_1c, Points);
+        cv::Rect Min_Rect=boundingRect(Points);
+        
+        mask_1c_to_3c(mask_1c, mask_3c);
+        // mask_3c contains the required segmented foreground pixels
+        cv::Moments m = cv::moments(mask_1c, true);
+        
+        // float alpha = 0.5*atan(2*m.m11/double(m.m20 - m.m02));
+        float alpha = 0.5*atan2(2*m.m11, m.m20 - m.m02);
+        float beta = alpha + M_PI/2;
+        
+        // Idea: Try to use findContours then pass the findContours result into boundingRect
+        std::vector<std::vector<cv::Point> > contours;
+        std::vector<cv::Vec4i> hierarchy;
+        // cv::Mat contourOutput = frame.clone();
+        cv::findContours( mask_1c, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE ); //Input should be single channel binary image
+        std::cout << "Number of countours: " << hierarchy.size() << std::endl;
+        //Draw the contours: Src: https://stackoverflow.com/questions/8449378/finding-contours-in-opencv, https://docs.opencv.org/4.x/d9/d8b/tutorial_py_contours_hierarchy.html, https://learnopencv.com/contour-detection-using-opencv-python-c/
+        cv::Mat contourImage(frame.size(), CV_8UC3, cv::Scalar(0,0,0));
+        cv::Scalar colors[3];
+        colors[0] = cv::Scalar(255, 0, 0);
+        colors[1] = cv::Scalar(0, 255, 0);
+        colors[2] = cv::Scalar(0, 0, 255);
+        for (size_t idx = 0; idx < contours.size(); idx++) {
+            cv::drawContours(contourImage, contours, idx, colors[idx % 3]);
+        }
+        cv::imshow("Contours", contourImage);
+        cv::moveWindow("Contours", 200, 0);
+        
+        // Find the oriented bounding box from the outermost countor | Src: https://docs.opencv.org/3.4/df/dee/samples_2cpp_2minarea_8cpp-example.html
+        cv::Point2f vtx[4];
+        cv::RotatedRect box = cv::minAreaRect(contours[0]);
+        // std::cout << " ############### Reached here ############### " << std::endl;
+        box.points(vtx);
+        cv::Mat frame_copy;
+        frame.copyTo(frame_copy);
+        
+            // Axis Aligned Bounding Box (AABB) | NOT USED
+            // cv::rectangle(frame_copy,Min_Rect.tl(),Min_Rect.br(),cv::Scalar(0,255,0),2); 
+        
+        int dist, dx, dy, short_index = 0, short_dist, long_dist;
+        // Draw the oriented bounding box
+        for( int i = 0; i < 4; i++ ){
+            cv::line(frame_copy, vtx[i], vtx[(i+1)%4], cv::Scalar(0, 255, 0), 1, cv::LINE_AA);
+            dx = vtx[i].x - vtx[(i+1)%4].x;
+            dy = vtx[i].y - vtx[(i+1)%4].y;
+            dist = sqrt(dx*dx + dy*dy);
+            if (i == 0){
+                short_dist = dist;
             }
+            if (dist < short_dist){
+                short_dist = dist;
+                short_index = i;
+            }else{
+                long_dist = dist;
+            }
+            std::cout << "Distance between " << i << " and " << i+1 << " is: " << dist << std::endl;
 
-            cv::imshow("Contours", contourImage);
-            cv::moveWindow("Contours", 200, 0);
+        }
+        std::cout << "Short dist and its index" << short_dist << " and " << short_index << " is: " << " long dist" << long_dist<< std::endl;
+        
+        // Finding points on the line of least central moment. i.e. line with slope alpha. i.e. midpoint of points at short_index and short_index + 1
+        cv::Point2f llcm[2];
+        // llcm[0].x = (vtx[short_index].x + vtx[short_index+1].y)/2;
+        // llcm[0].y = (vtx[short_index].y + vtx[short_index+1].y)/2;
+        // llcm[1].x = (vtx[short_index+2].x + vtx[short_index+3].y)/2;
+        // llcm[1].y = (vtx[short_index+2].y + vtx[short_index+3].y)/2;
+        
+        llcm[0].x = centroids.at<double>(0,0) + 0.5*long_dist*cos(alpha);
+        llcm[0].y = centroids.at<double>(0,1) + 0.5*long_dist*sin(alpha);       
+        llcm[1].x = centroids.at<double>(1,0) - 0.5*long_dist*cos(alpha);
+        llcm[1].y = centroids.at<double>(1,1) - 0.5*long_dist*sin(alpha);
+        cv::line(frame_copy, llcm[0], llcm[1], cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
 
-            // mu_22_alpha can be used as a feature vector
-            // std::vector<std::vector<cv::Point>> contours;
-            // std::vector<cv::Vec4i> hierarchy;
-            // cv::findContours(mask_1c, contours, 1,1);
-            // // cv::namedWindow("Countours");
-            // // cv::imshow("Countours", contours);
-
-            // if( contours.size() == 0 ){
-            //     return(0);
-            // }
-            // // iterate through all the top-level contours,
-            // // draw each connected component with its own random color
-            // int idx = 0, largestComp = 0;
-            // double maxArea = 0;
-            // for( ; idx >= 0; idx = hierarchy[idx][0] )
-            // {
-            //     const std::vector<cv::Point>& c = contours[idx];
-            //     double area = fabs(cv::contourArea(cv::Mat(c)));
-            //     if( area > maxArea )
-            //     {
-            //         maxArea = area;
-            //         largestComp = idx;
-            //     }
-            // }
-            // cv::Scalar color( 0, 0, 255 );
-            // drawContours( frame, contours, largestComp, color, cv::FILLED, cv::LINE_8, hierarchy );
-
-
+        cv::imshow("Result",frame_copy);
+        
+        // mu_22_alpha can be used as a feature vector
+        
 
             // sleep(10);
             cv::Mat color_segmented(frame.size(), CV_8UC3, cv::Scalar(0));
             frame.copyTo(color_segmented,mask_3c);
             cv::namedWindow("6: Segmentation");
             cv::imshow("6: Segmentation", color_segmented);
-        }
+        // }
         
 
 
