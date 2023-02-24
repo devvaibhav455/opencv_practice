@@ -111,11 +111,41 @@ CMakeFiles/binProcess.dir/src/helper_functions.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/binProcess.dir/src/helper_functions.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/helper_functions.cpp -o CMakeFiles/binProcess.dir/src/helper_functions.cpp.s
 
+CMakeFiles/binProcess.dir/src/csv_util.cpp.o: CMakeFiles/binProcess.dir/flags.make
+CMakeFiles/binProcess.dir/src/csv_util.cpp.o: ../src/csv_util.cpp
+CMakeFiles/binProcess.dir/src/csv_util.cpp.o: CMakeFiles/binProcess.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/binProcess.dir/src/csv_util.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/binProcess.dir/src/csv_util.cpp.o -MF CMakeFiles/binProcess.dir/src/csv_util.cpp.o.d -o CMakeFiles/binProcess.dir/src/csv_util.cpp.o -c /home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/csv_util.cpp
+
+CMakeFiles/binProcess.dir/src/csv_util.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/binProcess.dir/src/csv_util.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/csv_util.cpp > CMakeFiles/binProcess.dir/src/csv_util.cpp.i
+
+CMakeFiles/binProcess.dir/src/csv_util.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/binProcess.dir/src/csv_util.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/csv_util.cpp -o CMakeFiles/binProcess.dir/src/csv_util.cpp.s
+
+CMakeFiles/binProcess.dir/src/modes.cpp.o: CMakeFiles/binProcess.dir/flags.make
+CMakeFiles/binProcess.dir/src/modes.cpp.o: ../src/modes.cpp
+CMakeFiles/binProcess.dir/src/modes.cpp.o: CMakeFiles/binProcess.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/binProcess.dir/src/modes.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/binProcess.dir/src/modes.cpp.o -MF CMakeFiles/binProcess.dir/src/modes.cpp.o.d -o CMakeFiles/binProcess.dir/src/modes.cpp.o -c /home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/modes.cpp
+
+CMakeFiles/binProcess.dir/src/modes.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/binProcess.dir/src/modes.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/modes.cpp > CMakeFiles/binProcess.dir/src/modes.cpp.i
+
+CMakeFiles/binProcess.dir/src/modes.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/binProcess.dir/src/modes.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/src/modes.cpp -o CMakeFiles/binProcess.dir/src/modes.cpp.s
+
 # Object files for target binProcess
 binProcess_OBJECTS = \
 "CMakeFiles/binProcess.dir/src/binProcess.cpp.o" \
 "CMakeFiles/binProcess.dir/src/filter.cpp.o" \
-"CMakeFiles/binProcess.dir/src/helper_functions.cpp.o"
+"CMakeFiles/binProcess.dir/src/helper_functions.cpp.o" \
+"CMakeFiles/binProcess.dir/src/csv_util.cpp.o" \
+"CMakeFiles/binProcess.dir/src/modes.cpp.o"
 
 # External object files for target binProcess
 binProcess_EXTERNAL_OBJECTS =
@@ -123,6 +153,8 @@ binProcess_EXTERNAL_OBJECTS =
 bin/binProcess: CMakeFiles/binProcess.dir/src/binProcess.cpp.o
 bin/binProcess: CMakeFiles/binProcess.dir/src/filter.cpp.o
 bin/binProcess: CMakeFiles/binProcess.dir/src/helper_functions.cpp.o
+bin/binProcess: CMakeFiles/binProcess.dir/src/csv_util.cpp.o
+bin/binProcess: CMakeFiles/binProcess.dir/src/modes.cpp.o
 bin/binProcess: CMakeFiles/binProcess.dir/build.make
 bin/binProcess: /usr/lib/x86_64-linux-gnu/libopencv_stitching.so.4.5.4d
 bin/binProcess: /usr/lib/x86_64-linux-gnu/libopencv_alphamat.so.4.5.4d
@@ -179,7 +211,7 @@ bin/binProcess: /usr/lib/x86_64-linux-gnu/libopencv_photo.so.4.5.4d
 bin/binProcess: /usr/lib/x86_64-linux-gnu/libopencv_imgproc.so.4.5.4d
 bin/binProcess: /usr/lib/x86_64-linux-gnu/libopencv_core.so.4.5.4d
 bin/binProcess: CMakeFiles/binProcess.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX executable bin/binProcess"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/dev/Documents/opencv_practice/Project_03_Real_Time_Object_2D_Recognition/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking CXX executable bin/binProcess"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/binProcess.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

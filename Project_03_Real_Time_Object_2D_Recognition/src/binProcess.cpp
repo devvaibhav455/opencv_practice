@@ -12,6 +12,12 @@ Notes: Some code adapted from Project 1/2
 #include "opencv2/imgproc.hpp"
 #include "opencv2/highgui.hpp"
 #include "opencv2/videoio.hpp"
+#include "csv_util.h"
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <dirent.h>
+#include <modes.h>
 
 
 // How to build the project and run the executable: https://docs.opencv.org/4.x/db/df5/tutorial_linux_gcc_cmake.html
@@ -71,7 +77,18 @@ int threshold_grey = 0;
 
 
 int main(int argc, char** argv)
-{
+{   
+    int reset_initially = 1;
+    char mode;
+    std::cin >> mode;
+
+    if (mode == 'b'){
+        //Read images from directory
+        basic_training_mode_from_directory();
+        return 0;
+    }
+    
+
     // Step 1 | Displaying live video
     // CV_[The number of bits per item][Signed or Unsigned][Type Prefix]C[The channel number]
     // For instance, CV_8UC3 means we use unsigned char types that are 8 bit long and each pixel has three of these to form the three channels. There are types predefined for up to four channels. https://docs.opencv.org/3.4/d6/d6d/tutorial_mat_the_basic_image_container.html
@@ -82,7 +99,7 @@ int main(int argc, char** argv)
     // Use image as input if it is passed as a CLI, otherwise use video input from webcam.
 
     if( argc == 2) {
-        std::cout << "Reading image from CLI" << std::endl;
+        std::cout << "Reading images from directory" << std::endl;
         char filename[256]; //To take user's desired image file as input 
         strcpy( filename, argv[1] ); // copy command line filename to a local variable
         // Read the image file
@@ -361,8 +378,8 @@ int main(int argc, char** argv)
         cv::Mat frame_copy_valid_boxes;
         frame.copyTo(frame_copy_valid_boxes);
 
-        std::vector<std::vector<double>> hu_moment_feature_vec;
-        find_valid_obb_vertices_and_centroid(labelImage, contours, valid_vtx_vec, valid_centroid_vec, valid_alpha_vec,hu_moment_feature_vec, 15);
+        std::vector<double> feature_vec;
+        find_valid_obb_vertices_and_centroid(labelImage, contours, valid_vtx_vec, valid_centroid_vec, valid_alpha_vec, feature_vec, 15);
         std::cout << "Valid obb are: " << valid_alpha_vec.size() << std::endl;
 
         plot_obb_on_image(frame_copy_valid_boxes,valid_vtx_vec, valid_centroid_vec, valid_alpha_vec);
@@ -379,9 +396,14 @@ int main(int argc, char** argv)
         //                  Step 4: Compute features for each major region                                                              //
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         
-        if (hu_moment_feature_vec.size() == 1){
-            // Start writing all the feature vectors to CSV file
-        }
+        // Features of the image are already captured in function call find_valid_obb_vertices_and_centroid and present in feature_vec
+
+
+        char *label_from_user=new char[256];
+        fgets(label_from_user, 256, stdin);
+        std::vector<float> feature_vec_float(feature_vec.begin(), feature_vec.end());
+        append_image_data_csv("training_data.csv", label_from_user, feature_vec_float, reset_initially );
+        reset_initially = 0; //Don't reset the file after it has been done once. Instead start appending to it now. 
     
         
         

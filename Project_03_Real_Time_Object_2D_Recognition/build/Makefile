@@ -199,6 +199,7 @@ src/csv_util.o: src/csv_util.cpp.o
 src/csv_util.cpp.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/write_csv.dir/build.make CMakeFiles/write_csv.dir/src/csv_util.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/read_csv.dir/build.make CMakeFiles/read_csv.dir/src/csv_util.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/binProcess.dir/build.make CMakeFiles/binProcess.dir/src/csv_util.cpp.o
 .PHONY : src/csv_util.cpp.o
 
 src/csv_util.i: src/csv_util.cpp.i
@@ -208,6 +209,7 @@ src/csv_util.i: src/csv_util.cpp.i
 src/csv_util.cpp.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/write_csv.dir/build.make CMakeFiles/write_csv.dir/src/csv_util.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/read_csv.dir/build.make CMakeFiles/read_csv.dir/src/csv_util.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/binProcess.dir/build.make CMakeFiles/binProcess.dir/src/csv_util.cpp.i
 .PHONY : src/csv_util.cpp.i
 
 src/csv_util.s: src/csv_util.cpp.s
@@ -217,6 +219,7 @@ src/csv_util.s: src/csv_util.cpp.s
 src/csv_util.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/write_csv.dir/build.make CMakeFiles/write_csv.dir/src/csv_util.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/read_csv.dir/build.make CMakeFiles/read_csv.dir/src/csv_util.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/binProcess.dir/build.make CMakeFiles/binProcess.dir/src/csv_util.cpp.s
 .PHONY : src/csv_util.cpp.s
 
 src/filter.o: src/filter.cpp.o
@@ -269,6 +272,30 @@ src/helper_functions.s: src/helper_functions.cpp.s
 src/helper_functions.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/binProcess.dir/build.make CMakeFiles/binProcess.dir/src/helper_functions.cpp.s
 .PHONY : src/helper_functions.cpp.s
+
+src/modes.o: src/modes.cpp.o
+.PHONY : src/modes.o
+
+# target to build an object file
+src/modes.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/binProcess.dir/build.make CMakeFiles/binProcess.dir/src/modes.cpp.o
+.PHONY : src/modes.cpp.o
+
+src/modes.i: src/modes.cpp.i
+.PHONY : src/modes.i
+
+# target to preprocess a source file
+src/modes.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/binProcess.dir/build.make CMakeFiles/binProcess.dir/src/modes.cpp.i
+.PHONY : src/modes.cpp.i
+
+src/modes.s: src/modes.cpp.s
+.PHONY : src/modes.s
+
+# target to generate assembly for a file
+src/modes.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/binProcess.dir/build.make CMakeFiles/binProcess.dir/src/modes.cpp.s
+.PHONY : src/modes.cpp.s
 
 src/read_feature_vector.o: src/read_feature_vector.cpp.o
 .PHONY : src/read_feature_vector.o
@@ -366,6 +393,9 @@ help:
 	@echo "... src/helper_functions.o"
 	@echo "... src/helper_functions.i"
 	@echo "... src/helper_functions.s"
+	@echo "... src/modes.o"
+	@echo "... src/modes.i"
+	@echo "... src/modes.s"
 	@echo "... src/read_feature_vector.o"
 	@echo "... src/read_feature_vector.i"
 	@echo "... src/read_feature_vector.s"

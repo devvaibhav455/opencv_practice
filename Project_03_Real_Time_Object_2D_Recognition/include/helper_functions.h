@@ -15,7 +15,7 @@ int find_obb_vertices_and_centroid(cv::Mat &src, std::vector<std::vector<cv::Poi
 int plot_obb_on_image(cv::Mat &src, std::vector<cv::Point2f> &vtx_vec, std::vector<cv::Point2f> &centroid_vec, std::vector<float> &alpha_vec);
 
 
-int find_valid_obb_vertices_and_centroid(cv::Mat &src, std::vector<std::vector<cv::Point>> &contours, std::vector<cv::Point2f> &vtx_vec, std::vector<cv::Point2f> &centroid_vec, std::vector<float> &alpha_vec, std::vector<std::vector<double>> &hu_moment_vec ,int distance_from_boundary);
+int find_valid_obb_vertices_and_centroid(cv::Mat &src, std::vector<std::vector<cv::Point>> &contours, std::vector<cv::Point2f> &vtx_vec, std::vector<cv::Point2f> &centroid_vec, std::vector<float> &alpha_vec, std::vector<double> &feature_vec ,int distance_from_boundary);
 
 // int calc_mu_pq_alpha(cv::Mat &src, std::vector<cv::Point> &contour, float &alpha, int p, int q);
 

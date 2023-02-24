@@ -157,7 +157,7 @@ int plot_obb_on_image(cv::Mat &src, std::vector<cv::Point2f> &vtx_vec, std::vect
 
 
 
-int find_valid_obb_vertices_and_centroid(cv::Mat &src, std::vector<std::vector<cv::Point>> &contours, std::vector<cv::Point2f> &vtx_vec, std::vector<cv::Point2f> &centroid_vec, std::vector<float> &alpha_vec, std::vector<std::vector<double>> &hu_moment_vec ,int distance_from_boundary)
+int find_valid_obb_vertices_and_centroid(cv::Mat &src, std::vector<std::vector<cv::Point>> &contours, std::vector<cv::Point2f> &vtx_vec, std::vector<cv::Point2f> &centroid_vec, std::vector<float> &alpha_vec, std::vector<double> &feature_vec ,int distance_from_boundary)
 {
   cv::Moments m_sc;
   cv::Point2f mc; //mass center
@@ -177,10 +177,13 @@ int find_valid_obb_vertices_and_centroid(cv::Mat &src, std::vector<std::vector<c
     cv::HuMoments(m_sc, huMoments);
     std::cout << "Calculated hu moments" << std::endl;
 
+    // std::cout << "i in outer loop: " << i << std::endl;
     // Log scale hu moments 
     for(int i = 0; i < 7; i++) {
         huMoments[i] = -1 * copysign(1.0, huMoments[i]) * log10(abs(huMoments[i])); 
+        // std::cout << "i in inner loop: " << i << std::endl;
     }
+    // std::cout << "i in outer loop: " << i << std::endl;
     
     int N = sizeof(huMoments) / sizeof(huMoments[0]);
   
@@ -196,6 +199,7 @@ int find_valid_obb_vertices_and_centroid(cv::Mat &src, std::vector<std::vector<c
     
     // Get the oriented bounding box for the ith contour
     cv::RotatedRect box = cv::minAreaRect(contours[i]);
+    std::cout << "Aspect ration is: " << box.size.aspectRatio() << std::endl;
     box.points(vtx);
 
     int is_rect_valid = 0;
@@ -216,7 +220,6 @@ int find_valid_obb_vertices_and_centroid(cv::Mat &src, std::vector<std::vector<c
     }
 
     
-    
     if (is_rect_valid == 1){
       vtx_vec.push_back(vtx[0]);
       vtx_vec.push_back(vtx[1]);
@@ -224,7 +227,12 @@ int find_valid_obb_vertices_and_centroid(cv::Mat &src, std::vector<std::vector<c
       vtx_vec.push_back(vtx[3]);
       centroid_vec.push_back(mc);
       alpha_vec.push_back(alpha);
-      hu_moment_vec.push_back(huMoments_arr_to_vec);
+      for (int i = 0; i <huMoments_arr_to_vec.size(); i++){
+        feature_vec.push_back(huMoments_arr_to_vec[i]);
+      }
+      feature_vec.push_back(cv::contourArea(contours[i])/box.size.area());
+      feature_vec.push_back(box.size.aspectRatio());
+
       
       std::cout << "Pushed Valid Centroid x: " << mc.x << " | Valid Centroid y: " << mc.y << std::endl;
     }
@@ -233,14 +241,3 @@ return 0;
 }
 
 
-// int calc_mu_pq_alpha(cv::Mat &src, std::vector<cv::Point> &contour , float &alpha, int p, int q){
-//   // It will be calculated for the pixels of a particular contour/ region
-//   float x_bar = m_sc.m10/m_sc.m00;
-//   float y_bar = m_sc.m01/m_sc.m00;
-//   float sum = 0;
-//   for (int i=0; i < src.rows; i++){
-//     for (int j=0; j < src.cols; j++){
-//       sum += i - x_bar
-//     }
-//   }
-// }
