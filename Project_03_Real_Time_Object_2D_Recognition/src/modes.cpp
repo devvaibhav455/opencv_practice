@@ -18,6 +18,7 @@ Project 3: Real-time Object 2-D Recognition
 
 
 int basic_training_mode_from_directory(){
+  std::cout << " ####################### BASIC TRAINING MODE STARTED #######################" << std::endl;
   char dirname[256] = "../training_set/";
   char buffer[256];
   // std::vector <float> feature_vector{1,2,3,4,5}; //Sample vector to write in csv file
@@ -46,7 +47,7 @@ int basic_training_mode_from_directory(){
         strstr(dp->d_name, ".ppm") ||
         strstr(dp->d_name, ".tif") ) {
 
-      printf("processing image file: %s\n", dp->d_name);
+      printf("####################### processing image file: %s #######################\n", dp->d_name);
 
       // build the overall filename
       strcpy(buffer, dirname);
@@ -189,13 +190,12 @@ int basic_training_mode_from_directory(){
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       //                  Step 4: Compute features for each major region                                                              //
       ///////////////////////////////////////////////////////////////////////////////////////////
-      std::cout << "Filename is modes function: " << buffer << std::endl;
+      std::cout << "Filename in modes function: " << buffer << std::endl;
       std::vector<float> feature_vec_float(feature_vec.begin(), feature_vec.end());
       if(feature_vec_float.size() != 0 && valid_centroid_vec.size() == 1){
-        append_image_data_csv("training_data.csv", buffer, feature_vec_float, reset_initially );
+        // append_image_data_csv("training_data.csv", buffer, feature_vec_float, reset_initially );
         reset_initially = 0; //Don't reset the file after it has been done once. Instead start appending to it now. 
       }
-
     }
   }
   return 0;

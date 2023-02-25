@@ -17,8 +17,11 @@ int plot_obb_on_image(cv::Mat &src, std::vector<cv::Point2f> &vtx_vec, std::vect
 
 int find_valid_obb_vertices_and_centroid(cv::Mat &src, std::vector<std::vector<cv::Point>> &contours, std::vector<cv::Point2f> &vtx_vec, std::vector<cv::Point2f> &centroid_vec, std::vector<float> &alpha_vec, std::vector<double> &feature_vec ,int distance_from_boundary);
 
-// int calc_mu_pq_alpha(cv::Mat &src, std::vector<cv::Point> &contour, float &alpha, int p, int q);
+int calc_standard_deviation_vec(std::vector<std::vector<float>> &feature_vectors, std::vector<float> &standard_deviation_vec);
 
+int calc_feature_vector(cv::Mat &src_image, std::vector<float> &feature_vec_float);
+
+int one_object_classifier(std::vector<float> &target_image_feature_vector, std::vector<const char *> &image_names_in_db, std::vector<std::vector<float>> &vector_of_feature_vectors, std::vector<float> &standard_deviation_vec, std::string &target_image_label);
 
 
 

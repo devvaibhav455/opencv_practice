@@ -19,7 +19,7 @@ int main(int argc, char** argv)
     // For instance, CV_8UC3 means we use unsigned char types that are 8 bit long and each pixel has three of these to form the three channels. There are types predefined for up to four channels. https://docs.opencv.org/3.4/d6/d6d/tutorial_mat_the_basic_image_container.html
     
     cv::VideoCapture *capdev;
-    capdev = new cv::VideoCapture(0);
+    capdev = new cv::VideoCapture(2);
     cv::Mat frame; //frame.type() is 0 viz. 8UC1 (https://stackoverflow.com/questions/10167534/how-to-find-out-what-type-of-a-mat-object-is-with-mattype-in-opencv/39780825#39780825)
     // Use image as input if it is passed as a CLI, otherwise use video input from webcam.
 
@@ -79,7 +79,7 @@ int main(int argc, char** argv)
     int save_video_grey = 0;
     // cv::namedWindow("Window");
     while (true) {
-        // std::cout << "Frame before input from camera = " << std::endl << " " << frame << std::endl << std::endl;
+        std::cout << "REACHED START OF WHILE LOOP" << std::endl;
         if( argc == 1){
             *capdev >> frame; //frame.type() is 16 viz. 8UC3
         }

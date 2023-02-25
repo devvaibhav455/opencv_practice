@@ -80,12 +80,80 @@ int main(int argc, char** argv)
 {   
     int reset_initially = 1;
     char mode;
+    
+    // Resolution required for the window
+    int res_width = 600; //columns
+    int res_height = res_width*9/16; //rows
+    
+    std::cout << "Please enter the operating mode" << std::endl;
+    std::cout << "\tb: Basic training mode. Reads images from a directory and writes feature vectors to a csv file" << std::endl;
+    std::cout << "\to: Object recognition mode. Takes image from user and finds the closest match in the DB" << std::endl;
     std::cin >> mode;
 
     if (mode == 'b'){
         //Read images from directory
         basic_training_mode_from_directory();
         return 0;
+    }
+    else if (mode == 'o'){
+        // Take image name input from user and find the closest match from DB
+        char csv_file_name[256] = "training_data.csv";
+        const char *csv_filename = csv_file_name;
+        std::vector<const char *> files_in_csv;
+        std::vector<std::vector<float>> feature_vectors_from_csv;
+
+        //files_in_csv contains the image file names. 49 in length
+        //feature_vectors_from_csv contains 49 feature vectors. Each of length 9
+        read_image_data_csv(csv_filename, files_in_csv, feature_vectors_from_csv, 0);
+
+        //Variance calculation for each feature in the feature vector
+        std::vector<float> standard_deviation_vec;
+        calc_standard_deviation_vec(feature_vectors_from_csv, standard_deviation_vec );
+
+        std::string target_image;
+        std::cout << "Please enter the image file name which you want to label" << std::endl;
+        std::cin >> target_image;
+
+        cv::Mat frame_target = cv::imread(target_image);//,cv::ImreadModes::IMREAD_UNCHANGED);
+        
+        cv::resize(frame_target, frame_target, cv::Size(res_width, res_height));
+
+        cv::String windowName_target_image = "Target Image"; //Name of the window
+        
+
+        // Calculate feature vector for the target image
+        std::string target_image_label;
+        std::vector<float> target_image_feature_vec;
+        calc_feature_vector(frame_target, target_image_feature_vec);
+
+        std::cout << "Accessing the vectors from main" << target_image_feature_vec.size() << std::endl;
+        // std::cout << target_image_feature_vec[0] << " | " << feature_vectors_from_csv[0][0] << " | " << standard_deviation_vec[0] << std::endl;
+
+        // Calculated scaled euclidean distance with all the images in the DB and find the closest match.
+        one_object_classifier(target_image_feature_vec, files_in_csv, feature_vectors_from_csv, standard_deviation_vec, target_image_label);
+
+        int fontFace = 0;
+        double fontScale = 1;
+        int thickness = 3;
+        int baseline=0;
+ 
+
+        std::cout << "Label is: " << target_image_label  << std::endl;
+        cv::Size textSize = cv::getTextSize(target_image_label, fontFace,fontScale, thickness, &baseline);
+        baseline += thickness;
+        cv::Point textOrg((frame_target.cols - textSize.width)/2 , frame_target.rows - 20);
+        putText(frame_target, target_image_label, textOrg, fontFace, fontScale,cv::Scalar(255,0,0), thickness, 8);
+
+        cv::namedWindow(windowName_target_image); // Create a window
+        cv::imshow(windowName_target_image, frame_target); // Show our image inside the created window.
+
+
+
+
+        while(cv::waitKey(0) != 113){
+        //Wait indefinitely until 'q' is pressed. 113 is q's ASCII value  
+        }
+        cv::destroyWindow(windowName_target_image); //destroy the created window
     }
     
 
@@ -94,7 +162,7 @@ int main(int argc, char** argv)
     // For instance, CV_8UC3 means we use unsigned char types that are 8 bit long and each pixel has three of these to form the three channels. There are types predefined for up to four channels. https://docs.opencv.org/3.4/d6/d6d/tutorial_mat_the_basic_image_container.html
     
     cv::VideoCapture *capdev;
-    capdev = new cv::VideoCapture(0);
+    capdev = new cv::VideoCapture(2);
     cv::Mat frame; //frame.type() is 0 viz. 8UC1 (https://stackoverflow.com/questions/10167534/how-to-find-out-what-type-of-a-mat-object-is-with-mattype-in-opencv/39780825#39780825)
     // Use image as input if it is passed as a CLI, otherwise use video input from webcam.
 
@@ -129,9 +197,7 @@ int main(int argc, char** argv)
     }
 
 
-    // Resolution required for the window
-    int res_width = 600; //columns
-    int res_height = res_width*9/16; //rows
+    
 
     printf("Resizing image to %dx%d\n", res_width, res_height);
 
@@ -172,9 +238,12 @@ int main(int argc, char** argv)
     cv::Mat hsv_thresholded;
     // threshold_grey = 0;
     // frame = cv::imread("../sample_set/img2P3.png"); //USED FOR TESTING/ DEBUGGING ONLY
+    int saved_image_id = 0;
     while (true) {
+        std::cout << "####################### REACHED START OF WHILE LOOP #######################" << std::endl;
         // std::cout << "Frame before input from camera = " << std::endl << " " << frame << std::endl << std::endl;
         if( argc == 1){
+            std::cout << "Getting data from camera" << std::endl;
             *capdev >> frame; //frame.type() is 16 viz. 8UC3
         }
         
@@ -198,6 +267,13 @@ int main(int argc, char** argv)
             video_grey.release();
             cv::destroyWindow("1: Original_Image"); //destroy the created window
             return 0;
+        }else if (key_pressed == 's'){
+            //Save image if 's' is pressed. 115 is s's ASCII value 
+            std::cout << "Saving image to file saved_image_id.jpeg" << std::endl;
+            std::string image_name = "saved_image_" + std::to_string(saved_image_id) + ".jpeg";
+            cv::imwrite(image_name, frame);
+            saved_image_id++;
+            // cv::imwrite("saved_image.jpeg", frame);
         }
         
         // Need to fix user implementation of bgr to hsv converter not working
@@ -287,7 +363,7 @@ int main(int argc, char** argv)
         grassfire_tf(thresholded_image,cleaned_image, 8, 0, 20); // Perform erosion with 8 connectedness for at most 20 times
         cv::namedWindow("5: Cleaned Image");
         cv::imshow("5: Cleaned Image", cleaned_image);
-        std::cout << "################### Reached here ###################" << std::endl;
+        std::cout << "################### Reached clean up part ###################" << std::endl;
         // grassfire_tf(temp_cleaned,cleaned_image, 8, 1, 4);
 
         // while(cv::waitKey(0) != 113){
@@ -399,28 +475,23 @@ int main(int argc, char** argv)
         // Features of the image are already captured in function call find_valid_obb_vertices_and_centroid and present in feature_vec
 
 
-        char *label_from_user=new char[256];
-        fgets(label_from_user, 256, stdin);
-        std::vector<float> feature_vec_float(feature_vec.begin(), feature_vec.end());
-        append_image_data_csv("training_data.csv", label_from_user, feature_vec_float, reset_initially );
-        reset_initially = 0; //Don't reset the file after it has been done once. Instead start appending to it now. 
+        // char *label_from_user=new char[256];
+        // fgets(label_from_user, 256, stdin);
+        // std::vector<float> feature_vec_float(feature_vec.begin(), feature_vec.end());
+        // append_image_data_csv("training_data.csv", label_from_user, feature_vec_float, reset_initially );
+        // reset_initially = 0; //Don't reset the file after it has been done once. Instead start appending to it now. 
     
         
         
         
 
-            // sleep(10);
-            cv::Mat color_segmented(frame.size(), CV_8UC3, cv::Scalar(0));
-            frame.copyTo(color_segmented,mask_3c);
-            cv::namedWindow("6: Segmentation");
-            cv::imshow("6: Segmentation", color_segmented);
+        // sleep(10);
+        cv::Mat color_segmented(frame.size(), CV_8UC3, cv::Scalar(0));
+        frame.copyTo(color_segmented,mask_3c);
+        cv::namedWindow("6: Segmentation");
+        cv::imshow("6: Segmentation", color_segmented);
         // }
-        
-
-
-        
-        
-
+        std::cout << "####################### REACHED END OF WHILE LOOP #######################" << std::endl;
     }
     return 0;
 }
