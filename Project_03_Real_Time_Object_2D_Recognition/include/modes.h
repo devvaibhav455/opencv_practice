@@ -10,3 +10,5 @@ int basic_training_mode_from_directory();
 int object_recognition_mode(char* target_filename);
 
 int knn_classifier(int &k, char * target_filename_char_star);
+
+int testing_mode(int &source, cv::Mat &frame);
