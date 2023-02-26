@@ -262,7 +262,7 @@ int find_valid_obb_vertices_and_centroid(cv::Mat &src, std::vector<std::vector<c
       vtx_vec.push_back(vtx[3]);
       centroid_vec.push_back(mc);
       alpha_vec.push_back(alpha);
-      for (int i = 0; i <huMoments_arr_to_vec.size(); i++){
+      for (int i = 0; i < huMoments_arr_to_vec.size(); i++){
         feature_vec.push_back(huMoments_arr_to_vec[i]);
       }
       feature_vec.push_back(cv::contourArea(contours[i])/box.size.area());
@@ -594,6 +594,7 @@ int find_min_k_distance(int k, std::vector<std::pair<float,int>> &distance_metri
   //Find the image corresponding to minimum distance
   std::sort(distance_metric_vector.begin(), distance_metric_vector.end());
   
+  std::cout << "Sorted distance and their indices:" << std::endl;
   // Printing the distance_metric_vector for confirmation
   for (int i = 0; i <distance_metric_vector.size(); i++){
       std::cout << distance_metric_vector[i].first << " , " << distance_metric_vector[i].second << std::endl;

@@ -15,7 +15,9 @@ Project 3: Real-time Object 2-D Recognition
 #include <dirent.h>
 #include <csv_util.h>
 
-
+// Resolution required for the window
+int res_width = 600; //columns
+int res_height = res_width*9/16; //rows
 
 int basic_training_mode_from_directory(){
   std::cout << " ####################### BASIC TRAINING MODE STARTED #######################" << std::endl;
@@ -211,6 +213,59 @@ int basic_training_mode_from_directory(){
 }
 
 
+int object_recognition_mode(char* target_filename){
+  
+  char *target_filename_char_star = target_filename;
+  // Take image name input from user and find the closest match from DB
+  char csv_file_name[256] = "training_data.csv";
+  const char *csv_filename = csv_file_name;
+  std::vector<const char *> files_in_csv;
+  std::vector<std::vector<float>> feature_vectors_from_csv;
+
+  //files_in_csv contains the image file names. 49 in length
+  //feature_vectors_from_csv contains 49 feature vectors. Each of length 9
+  read_image_data_csv(csv_filename, files_in_csv, feature_vectors_from_csv, 0);
+
+  //Variance calculation for each feature in the feature vector
+  std::vector<float> standard_deviation_vec;
+  calc_standard_deviation_vec(feature_vectors_from_csv, standard_deviation_vec );
+
+  cv::Mat frame_target = cv::imread(target_filename);//,cv::ImreadModes::IMREAD_UNCHANGED);  
+  cv::resize(frame_target, frame_target, cv::Size(res_width, res_height));
+  cv::String windowName_target_image = "Target Image"; //Name of the window
+
+  // Calculate feature vector for the target image
+  std::string target_image_label;
+  std::vector<float> target_image_feature_vec;
+  cv::Mat src_image_copy_valid_boxes;
+  calc_feature_vector(frame_target, target_image_feature_vec, src_image_copy_valid_boxes);
+
+  std::cout << "Accessing the vectors from main: " << target_image_feature_vec.size() << std::endl;
+  // std::cout << target_image_feature_vec[0] << " | " << feature_vectors_from_csv[0][0] << " | " << standard_deviation_vec[0] << std::endl;
+
+  // Calculated scaled euclidean distance with all the images in the DB and find the closest match.
+  one_object_classifier(target_image_feature_vec, files_in_csv, feature_vectors_from_csv, standard_deviation_vec, target_filename_char_star , target_image_label);
+
+  int fontFace = 0;
+  double fontScale = 1;
+  int thickness = 3;
+  int baseline=0;
+  std::cout << "Label is: " << target_image_label  << std::endl;
+  cv::Size textSize = cv::getTextSize(target_image_label, fontFace,fontScale, thickness, &baseline);
+  baseline += thickness;
+  cv::Point textOrg((frame_target.cols - textSize.width)/2 , frame_target.rows - 20);
+  putText(src_image_copy_valid_boxes, target_image_label, textOrg, fontFace, fontScale,cv::Scalar(255,0,0), thickness, 8);
+  cv::namedWindow(windowName_target_image); // Create a window
+  cv::imshow(windowName_target_image, src_image_copy_valid_boxes); // Show our image inside the created window.
+  
+  while(cv::waitKey(0) != 113){
+  //Wait indefinitely until 'q' is pressed. 113 is q's ASCII value  
+  }
+  cv::destroyWindow(windowName_target_image); //destroy the created window
+
+  return 0;
+}
+
 int knn_classifier(int &k, char * target_filename_char_star){
 
   std::cout << "Inside KNN function" << std::endl;
@@ -222,9 +277,13 @@ int knn_classifier(int &k, char * target_filename_char_star){
   std::vector<std::vector<float>> feature_vectors_from_csv;
 
   cv::Mat frame_target = cv::imread(target_filename_char_star);//,cv::ImreadModes::IMREAD_UNCHANGED);  
+  // Check for failure
+  if (frame_target.empty()) {
+      std::cout << "Could not open or find the image" << std::endl;
+      // std::cin.get(); //wait for any key press
+      return -1;
+  }
   // Resolution required for the window
-  int res_width = 600; //columns
-  int res_height = res_width*9/16; //rows
   cv::resize(frame_target, frame_target, cv::Size(res_width, res_height));
   cv::String windowName_target_image = "Target Image"; //Name of the window
 
@@ -280,8 +339,9 @@ int knn_classifier(int &k, char * target_filename_char_star){
   }
   float all_class_min_dist;
   int all_class_min_dist_index;
+
+  std::cout << "\nDistance from all classes" << std::endl;
   all_class_min_dist_index = find_min_k_distance(1,distance_to_class,all_class_min_dist );
-  
   target_image_label = unique_labels[all_class_min_dist_index];
 
 

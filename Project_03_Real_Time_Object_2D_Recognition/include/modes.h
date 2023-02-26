@@ -7,4 +7,6 @@ Project 3: Real-time Object 2-D Recognition
 
 int basic_training_mode_from_directory();
 
+int object_recognition_mode(char* target_filename);
+
 int knn_classifier(int &k, char * target_filename_char_star);
