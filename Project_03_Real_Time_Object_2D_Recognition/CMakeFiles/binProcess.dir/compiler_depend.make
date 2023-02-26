@@ -1685,7 +1685,8 @@ CMakeFiles/binProcess.dir/src/helper_functions.cpp.o: src/helper_functions.cpp \
   /usr/include/x86_64-linux-gnu/bits/unistd_ext.h \
   /usr/include/linux/close_range.h \
   include/helper_functions.h \
-  include/filter.h
+  include/filter.h \
+  include/csv_util.h
 
 CMakeFiles/binProcess.dir/src/modes.cpp.o: src/modes.cpp \
   /usr/include/stdc-predef.h \

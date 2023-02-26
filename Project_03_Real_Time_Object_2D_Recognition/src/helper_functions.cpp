@@ -9,7 +9,41 @@ Project 3: Real-time Object 2-D Recognition
 #include <unistd.h> // To use sleep functionality
 #include "helper_functions.h"
 #include "filter.h"
+#include "csv_util.h"
+#include <set>
 
+
+std::string char_to_String(char* a)
+{
+  //Ref: https://www.geeksforgeeks.org/convert-character-array-to-string-in-c/
+    std::string s(a);
+
+    //Usage:
+    // char a[] = { 'C', 'O', 'D', 'E' };
+    // char b[] = "geeksforgeeks";
+ 
+    // string s_a = convertToString(a);
+    // string s_b = convertToString(b);
+ 
+    // cout << s_a << endl;
+    // cout << s_b << endl;
+ 
+    // we cannot use this technique again
+    // to store something in s
+    // because we use constructors
+    // which are only called
+    // when the string is declared.
+ 
+    // Remove commented portion
+    // to see for yourself
+ 
+    /*
+    char demo[] = "gfg";
+    s(demo); // compilation error
+    */
+ 
+    return s;
+}
 
 
 // src: input mask of 8UC1
@@ -146,10 +180,10 @@ int plot_obb_on_image(cv::Mat &src, std::vector<cv::Point2f> &vtx_vec, std::vect
     }
     // Plotting Axis of Least Central Moment (alcm) by finding its end and start points
     cv::Point2f alcm[2];
-    alcm[0].x = centroid_pt.x + long_dist*cos(alpha_vec[k]);
-    alcm[0].y = centroid_pt.y + long_dist*sin(alpha_vec[k]);       
-    alcm[1].x = centroid_pt.x - long_dist*cos(alpha_vec[k]);
-    alcm[1].y = centroid_pt.y - long_dist*sin(alpha_vec[k]);
+    alcm[0].x = centroid_pt.x + 5*long_dist*cos(alpha_vec[k]);
+    alcm[0].y = centroid_pt.y + 5*long_dist*sin(alpha_vec[k]);       
+    alcm[1].x = centroid_pt.x - 5*long_dist*cos(alpha_vec[k]);
+    alcm[1].y = centroid_pt.y - 5*long_dist*sin(alpha_vec[k]);
     cv::line(src, alcm[0], alcm[1], cv::Scalar(0, 0, 255), 1, cv::LINE_AA);
   }
   return 0;
@@ -260,12 +294,16 @@ int calc_standard_deviation_vec(std::vector<std::vector<float>> &vector_of_featu
       std = std/vector_of_feature_vectors.size();
       standard_deviation_vec.push_back(std);
     }
-    // std::cout << "INSIDE STD DEV: " << vector_of_feature_vectors[0][0] << std::endl;
+    std::cout << "Standard deviation vector: ";
+    for (auto i: standard_deviation_vec){
+      std::cout << i << ' ';
+    }
+
   return 0;
 }
 
 
-int calc_feature_vector(cv::Mat &src_image, std::vector<float> &feature_vec_float){
+int calc_feature_vector(cv::Mat &src_image, std::vector<float> &feature_vec_float, cv::Mat &src_image_copy_valid_boxes){
   
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //                  Applying thresholding to the masked greyscale image                                                         //
@@ -368,7 +406,7 @@ int calc_feature_vector(cv::Mat &src_image, std::vector<float> &feature_vec_floa
   cv::namedWindow(windowName_all_obb); // Create a window
   cv::imshow(windowName_all_obb,src_image_copy_all_boxes);
   
-  cv::Mat src_image_copy_valid_boxes;
+  // cv::Mat src_image_copy_valid_boxes;
   src_image.copyTo(src_image_copy_valid_boxes);
 
   std::vector<double> feature_vec;
@@ -400,33 +438,75 @@ int calc_feature_vector(cv::Mat &src_image, std::vector<float> &feature_vec_floa
   return 0;
 }
 
-int one_object_classifier(std::vector<float> &target_image_feature_vector, std::vector<const char *> &image_names_in_db, std::vector<std::vector<float>> &vector_of_feature_vectors, std::vector<float> &standard_deviation_vec, std::string &target_image_label){
+int one_object_classifier(std::vector<float> &target_image_feature_vector, std::vector<const char *> &image_names_in_db, std::vector<std::vector<float>> &vector_of_feature_vectors, std::vector<float> &standard_deviation_vec, char *target_image_filename ,std::string &target_image_label){
   
   std::vector<std::pair<float, int>> distance_metric_vector; //Less distance means that images are more similar
-  float distance;
-  for (int i = 0; i < vector_of_feature_vectors.size(); i++ ){
-    distance = 0;
-    for (int j = 0; j < vector_of_feature_vectors[0].size(); j++ ){
+  // float distance;
+  // for (int i = 0; i < vector_of_feature_vectors.size(); i++ ){
+  //   distance = 0;
+  //   for (int j = 0; j < vector_of_feature_vectors[0].size(); j++ ){
       
-      // std::cout << "Accessing the vectors" << std::endl;
-      // std::cout << target_image_feature_vector[0] << " | " << vector_of_feature_vectors[0][0] << " | " << standard_deviation_vec[0] << std::endl;
+  //     // std::cout << "Accessing the vectors" << std::endl;
+  //     // std::cout << target_image_feature_vector[0] << " | " << vector_of_feature_vectors[0][0] << " | " << standard_deviation_vec[0] << std::endl;
 
-      distance += (target_image_feature_vector[j] - vector_of_feature_vectors[i][j])/standard_deviation_vec[j];
-      distance = distance*distance;
-    }
-    distance_metric_vector.push_back(std::make_pair(distance, i));
-  }  
-  
-  //Find the image corresponding to minimum distance
+  //     distance += (target_image_feature_vector[j] - vector_of_feature_vectors[i][j])/standard_deviation_vec[j];
+  //     distance = distance*distance;
+  //   }
+  //   distance_metric_vector.push_back(std::make_pair(distance, i));
+  // }  
 
-  std::sort(distance_metric_vector.begin(), distance_metric_vector.end());
+  calc_scaled_euclidean_dist_vec(target_image_feature_vector, vector_of_feature_vectors, standard_deviation_vec, distance_metric_vector);
+  std::cout << "Calculated the scaled euclidean distance vec" << std::endl;
+
+  // //Find the image corresponding to minimum distance
+  // std::sort(distance_metric_vector.begin(), distance_metric_vector.end());
   
-  // Printing the distance_metric_vector for confirmation
-  for (int i = 0; i <distance_metric_vector.size(); i++){
-      std::cout << distance_metric_vector[i].first << " , " << distance_metric_vector[i].second << std::endl;
-  }  
-  std::string closest_match(image_names_in_db[distance_metric_vector[0].second]);
-  target_image_label = closest_match;
+  // // Printing the distance_metric_vector for confirmation
+  // for (int i = 0; i <distance_metric_vector.size(); i++){
+  //     std::cout << distance_metric_vector[i].first << " , " << distance_metric_vector[i].second << std::endl;
+  // }  
+
+  float min_dist;
+  find_min_k_distance(1, distance_metric_vector, min_dist);
+  std::cout << "Calculated the minimum distance: " << min_dist << std::endl;
+
+  // if(distance_metric_vector[0].first > 1e-10){
+  if(min_dist > 1e-10){
+    // Target image is not found in the DB. Need to add it to the feature vectors.
+    std::cout << "New image found! Adding it to the database" << std::endl;
+    // char my_char[256] = "abc";
+    // char *target_char_star_name;
+    // std::copy(target_image_filename.begin(), target_image_filename.end(), target_char_star_name);
+    // std::cin >> target_char_star_name;
+
+    std::string buffer_string = char_to_String(target_image_filename);
+    size_t last_slash_pos = buffer_string.find_last_of("/");
+    buffer_string = buffer_string.substr(last_slash_pos + 1);
+    size_t last_dot_pos = buffer_string.find_last_of(".");
+    buffer_string = buffer_string.substr(0,last_dot_pos);
+    char *buffer_star = buffer_string.data();
+
+    append_image_data_csv("training_data.csv", buffer_star, target_image_feature_vector, 0);
+    std::cout << "Appending feature vector to csv successful" << std::endl;
+    std::string closest_match(buffer_star);
+    target_image_label = closest_match;
+   }else{
+    std::string closest_match(image_names_in_db[distance_metric_vector[0].second]);
+    
+    size_t last_slash_pos = closest_match.find_last_of("/");
+    closest_match = closest_match.substr(last_slash_pos + 1);
+
+    size_t last_dot_pos = closest_match.find_last_of(".");
+    closest_match = closest_match.substr(last_dot_pos + 1);
+    // cout << file_name << endl; // prints "statue_liberty"
+    
+    // size_t last_underscor_pos = closest_match.find_last_of("_");
+    // closest_match = closest_match.substr(0, last_underscor_pos);
+
+
+    target_image_label = closest_match;
+   }
+  
 
   // strcpy(target_image_label,image_names_in_db[distance_metric_vector[0].second]);
   // std::cout << "Closest match" << target_image_label  << std::endl;
@@ -438,3 +518,101 @@ int one_object_classifier(std::vector<float> &target_image_feature_vector, std::
 }
 
 
+
+// KNN: Requires at least K examples of each class. For each class, find the K closest, sum their distances and that's the distance to that class. Find the class with the least distance and that is the class of the object.
+
+
+
+int find_unique_and_their_indices(std::vector<const char *> &image_names_in_db, std::vector<const char *> &unique_labels, std::vector<std::vector<int>> &unique_labels_indices){
+  
+  std::cout << " ################ Inside unique function ################" << std::endl;
+  std::vector<int> A{1, 0, 1, 1, 0, 0, 0, 1, 0};
+  std::vector<int> B;
+  
+  std::set<std::string> unique_strings;
+
+  for (const char* str : image_names_in_db) {
+        unique_strings.insert(str);
+  }
+
+  std::cout << "Unique strings: " << std::endl;
+  
+  // Find index for each label
+  int label_num = 0;
+  for (const std::string& str : unique_strings) {
+    std::cout << str << " ";
+    
+    const char* search_term = str.c_str();
+    std::vector<int> unique_labels_one_class_indices;
+    for (int i = 0; i < image_names_in_db.size(); i++) {
+        if (strcmp(image_names_in_db[i], search_term) == 0) {
+            unique_labels_one_class_indices.push_back(i);
+        }
+    }
+    unique_labels.push_back(str.c_str());
+    unique_labels_indices.push_back(unique_labels_one_class_indices);
+
+    std::cout << "Indexes of '" << search_term << "': ";
+    for (int i = 0; i < unique_labels_indices[label_num].size(); i++) {
+        std::cout << unique_labels_indices[label_num][i] << " ";
+    }
+    std::cout << std::endl;
+
+    label_num++;
+    
+
+  }
+  
+return 0;
+}
+
+
+int calc_scaled_euclidean_dist_vec(std::vector<float> &target_image_feature_vector, std::vector<std::vector<float>> &vector_of_feature_vectors, std::vector<float> &standard_deviation_vec, std::vector<std::pair<float, int>> &distance_metric_vector){
+  
+  float distance;
+  for (int i = 0; i < vector_of_feature_vectors.size(); i++ ){
+    distance = 0;
+    for (int j = 0; j < vector_of_feature_vectors[0].size(); j++ ){
+      
+      // std::cout << target_image_feature_vector[0] << " | " << vector_of_feature_vectors[0][0] << " | " << standard_deviation_vec[0] << std::endl;
+      // std::cout << "\nNum: " << target_image_feature_vector[j] - vector_of_feature_vectors[i][j] << " | Den: " << standard_deviation_vec[j] << std::endl;
+      distance += (target_image_feature_vector[j] - vector_of_feature_vectors[i][j])/standard_deviation_vec[j];
+      distance = distance*distance;
+    }
+    distance_metric_vector.push_back(std::make_pair(distance, i));
+  }
+  // std::cout << "\nDistance metric vector: " ;
+   // Printing the distance_metric_vector for confirmation
+  // for (int i = 0; i <distance_metric_vector.size(); i++){
+  //     std::cout << distance_metric_vector[i].first << " , " << distance_metric_vector[i].second << std::endl;
+  // }
+return 0;
+}
+
+int find_min_k_distance(int k, std::vector<std::pair<float,int>> &distance_metric_vector, float &min_dist){
+  
+  //Find the image corresponding to minimum distance
+  std::sort(distance_metric_vector.begin(), distance_metric_vector.end());
+  
+  // Printing the distance_metric_vector for confirmation
+  for (int i = 0; i <distance_metric_vector.size(); i++){
+      std::cout << distance_metric_vector[i].first << " , " << distance_metric_vector[i].second << std::endl;
+  }
+
+  min_dist = 0;
+  for (int i = 0; i < k; i++){
+    // std::cout << "Adding to dist: " << distance_metric_vector[i].first << std::endl;
+    min_dist += distance_metric_vector[i].first;
+  }
+  if(k == 1){
+    // Return the index of the minimum value
+    return distance_metric_vector[0].second;
+  }
+return 0;
+}
+
+// int knn(std::vector<float> &target_image_feature_vector, std::vector<const char *> &image_names_in_db, std::vector<std::vector<float>> &vector_of_feature_vectors, std::vector<float> &standard_deviation_vec, char *target_image_filename ,std::string &target_image_label){
+
+
+
+// }

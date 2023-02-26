@@ -193,10 +193,114 @@ int basic_training_mode_from_directory(){
       std::cout << "Filename in modes function: " << buffer << std::endl;
       std::vector<float> feature_vec_float(feature_vec.begin(), feature_vec.end());
       if(feature_vec_float.size() != 0 && valid_centroid_vec.size() == 1){
-        // append_image_data_csv("training_data.csv", buffer, feature_vec_float, reset_initially );
+        
+        // Remove unwanted file paths from the image names
+        std::string buffer_string = char_to_String(buffer);
+        size_t last_slash_pos = buffer_string.find_last_of("/");
+        buffer_string = buffer_string.substr(last_slash_pos + 1);
+        size_t last_underscor_pos = buffer_string.find_last_of("_");
+        buffer_string = buffer_string.substr(0, last_underscor_pos);
+        char *buffer_star = buffer_string.data();  
+
+        append_image_data_csv("training_data.csv", buffer_star, feature_vec_float, reset_initially );
         reset_initially = 0; //Don't reset the file after it has been done once. Instead start appending to it now. 
       }
     }
   }
   return 0;
+}
+
+
+int knn_classifier(int &k, char * target_filename_char_star){
+
+  std::cout << "Inside KNN function" << std::endl;
+  
+
+  char csv_file_name[256] = "training_data.csv";
+  const char *csv_filename = csv_file_name;
+  std::vector<const char *> files_in_csv;
+  std::vector<std::vector<float>> feature_vectors_from_csv;
+
+  cv::Mat frame_target = cv::imread(target_filename_char_star);//,cv::ImreadModes::IMREAD_UNCHANGED);  
+  // Resolution required for the window
+  int res_width = 600; //columns
+  int res_height = res_width*9/16; //rows
+  cv::resize(frame_target, frame_target, cv::Size(res_width, res_height));
+  cv::String windowName_target_image = "Target Image"; //Name of the window
+
+  // Calculate feature vector for the target image
+  std::string target_image_label;
+  std::vector<float> target_image_feature_vec;
+  cv::Mat src_image_copy_valid_boxes;
+  calc_feature_vector(frame_target, target_image_feature_vec, src_image_copy_valid_boxes);
+
+  //files_in_csv contains the image file names. 49 in length
+  //feature_vectors_from_csv contains 49 feature vectors. Each of length 9
+  read_image_data_csv(csv_filename, files_in_csv, feature_vectors_from_csv, 0);
+
+  std::vector<const char *> unique_labels;
+  std::vector<std::vector<int>> unique_labels_indices;
+  find_unique_and_their_indices(files_in_csv, unique_labels, unique_labels_indices);
+
+
+  // Perform calculation of distances to each class
+  std::vector<std::pair<float, int>> distance_to_class;
+
+  std::vector<float> sdv_all_class;
+  calc_standard_deviation_vec(feature_vectors_from_csv,sdv_all_class);
+
+  // Iterate over every label
+  for (int i = 0; i < unique_labels.size(); i++){
+    std::cout << "\nCurrent class under check: " << unique_labels[i] << std::endl;
+    // Vector which stores distance of target image within a class. If class has 10 pictures, 10 distances will be stored in it. 
+    std::vector<float> distance_within_class_vec;
+    if(unique_labels_indices[i].size() < k){
+      std::cout << "Class: " << unique_labels[i] << " contains less than " << k << " images. Skipping this class for feature matching" << std::endl;
+      continue;
+    }
+
+    // Vector of feature vector (vofv) within a class
+    std::vector<std::vector<float>> vofv_within_class;
+    for (int j = 0; j < unique_labels_indices[i].size(); j++){
+      vofv_within_class.push_back(feature_vectors_from_csv[i]);
+    }
+
+    //Calculate standard deviation vector (sdv) within a class. One for each element of the feature vector
+    // std::vector<float> sdv_within_class;
+    // calc_standard_deviation_vec(vofv_within_class,sdv_within_class);
+
+
+    // Distance metric vector (dmv) within class. Contains distance of target image with all the images in a class/ label
+    std::vector<std::pair<float, int>> dmv_within_class;
+    calc_scaled_euclidean_dist_vec(target_image_feature_vec, vofv_within_class, sdv_all_class, dmv_within_class);
+
+    float min_dist;
+    find_min_k_distance(k, dmv_within_class, min_dist);
+    distance_to_class.push_back((std::make_pair(min_dist, i)));
+  }
+  float all_class_min_dist;
+  int all_class_min_dist_index;
+  all_class_min_dist_index = find_min_k_distance(1,distance_to_class,all_class_min_dist );
+  
+  target_image_label = unique_labels[all_class_min_dist_index];
+
+
+  int fontFace = 0;
+  double fontScale = 1;
+  int thickness = 3;
+  int baseline=0;
+  std::cout << "Label is: " << target_image_label  << std::endl;
+  cv::Size textSize = cv::getTextSize(target_image_label, fontFace,fontScale, thickness, &baseline);
+  baseline += thickness;
+  cv::Point textOrg((frame_target.cols - textSize.width)/2 , frame_target.rows - 20);
+  putText(src_image_copy_valid_boxes, target_image_label, textOrg, fontFace, fontScale,cv::Scalar(255,0,0), thickness, 8);
+  cv::namedWindow(windowName_target_image); // Create a window
+  cv::imshow(windowName_target_image, src_image_copy_valid_boxes); // Show our image inside the created window.
+  
+  while(cv::waitKey(0) != 113){
+  //Wait indefinitely until 'q' is pressed. 113 is q's ASCII value  
+  }
+  cv::destroyWindow(windowName_target_image); //destroy the created window
+
+return 0;
 }
