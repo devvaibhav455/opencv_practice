@@ -1,6 +1,6 @@
 /*Dev Vaibhav
 Spring 2023 CS 5330
-Project 2: Content-based Image Retrieval is using files from Project 1: Real-time filtering
+Project 3: Real-time Object 2-D Recognition  | Some code is from Project 1: Real-time filtering which just lies and does nothing
 */
 
 #include <opencv2/opencv.hpp>
@@ -573,6 +573,10 @@ int bgr_to_hsv(cv::Mat &src, cv::Mat&dst){
 // src: input image: 8UC3
 // dst: output image: 8UC3
 // input is a binary image (uchar) and the output should is also a binary image (type uchar)
+// Implements Grassfire transform.
+// Connectedness : 4 or 8
+// Operation : 0 : Erosion | 1 : Dilation
+// max_num_operations: Max. number of erosions or dilations to do in the third pass.
 int grassfire_tf(cv::Mat &src, cv::Mat&dst, int connectedness, int operation, int max_num_operations){
   src.copyTo(dst);
   cv::Mat distance_transform(src.size(), CV_8UC1), temp(src.size(), CV_8UC1);
@@ -696,7 +700,8 @@ return(0);
 
 }
 
-
+// Draws the HSV histogram.
+// Input: 3 channels of the image (BGR or HSV)
 // Src: https://anothertechs.com/programming/cpp/opencv/calculate-histogram/; https://www.december.com/html/spec/colorhsltable10.html
 void drawHistogram(cv::Mat& b_hist,cv::Mat& g_hist,cv::Mat& r_hist) {
     const int histSize = 256;

@@ -13,6 +13,7 @@ Project 3: Real-time Object 2-D Recognition
 #include <set>
 
 
+// Converts char[] to std::string
 std::string char_to_String(char* a)
 {
   //Ref: https://www.geeksforgeeks.org/convert-character-array-to-string-in-c/
@@ -106,8 +107,12 @@ int thresholding( cv::Mat &src, cv::Mat &dst ){
 }
 
 
-// src: input mask of 8UC3
-// dst: output binary image of 8UC1
+// Finds all the possible bounding boxes corresponding to the contours in the image
+// Input:   src           --> cv::Mat, input mask of 8UC1 having 255 at foreground and zero elsewhere
+//          contours      --> std::vector<std::vector<cv::Point>> , contour coordinates of all the contours in the image
+// Output:  vtx_vec       --> std::vector<cv::Point2f> , vertices of all the bounding boxes (4 each)
+//          centroid_vec  --> std::vector<cv::Point2f> , coordinates of the centroids of all the bounding boxes
+//          alpha_vel     --> std::vector<float> , Orientation of the axis of least central moment for all the contours
 int find_obb_vertices_and_centroid(cv::Mat &src, std::vector<std::vector<cv::Point>> &contours, std::vector<cv::Point2f> &vtx_vec, std::vector<cv::Point2f> &centroid_vec, std::vector<float> &alpha_vel){
   cv::Moments m_sc; //Spatial and central moment  | Src: https://docs.opencv.org/3.4/d8/d23/classcv_1_1Moments.html#ab8972f76cccd51af351cbda199fb4a0d
   float alpha;
@@ -137,7 +142,11 @@ int find_obb_vertices_and_centroid(cv::Mat &src, std::vector<std::vector<cv::Poi
   return 0;    
 }
 
-
+// Plots the oriented bounding boxes in the image
+// Input:   src           --> cv::Mat, input image on which the obb needs to be drawn. It gets modified
+//          vtx_vec       --> std::vector<cv::Point2f> , vertices of all the bounding boxes (4 each)
+//          centroid_vec  --> std::vector<cv::Point2f> , coordinates of the centroids of the bounding boxes
+//          alpha_vel     --> std::vector<float> , Orientation of the axis of least central moment for the contours
 int plot_obb_on_image(cv::Mat &src, std::vector<cv::Point2f> &vtx_vec, std::vector<cv::Point2f> &centroid_vec, std::vector<float> &alpha_vec){
   int dist, dx, dy, short_index = 0, short_dist, long_dist;
   // Draw the oriented bounding box
@@ -191,16 +200,22 @@ int plot_obb_on_image(cv::Mat &src, std::vector<cv::Point2f> &vtx_vec, std::vect
 }
 
 
-
-int find_valid_obb_vertices_and_centroid(cv::Mat &src, std::vector<std::vector<cv::Point>> &contours, std::vector<cv::Point2f> &vtx_vec, std::vector<cv::Point2f> &centroid_vec, std::vector<float> &alpha_vec, std::vector<double> &feature_vec ,int distance_from_boundary)
+// Finds all the valid bounding boxes corresponding to the contours in the image. Validity checked on certain conditions inside the code
+// Input:   src                     --> cv::Mat, input image on which the obb needs to be drawn. It gets modified
+//          contours                --> std::vector<std::vector<cv::Point>> , contour coordinates of all the contours in the image
+//          distance_from_boundary  --> No. of pixels from the edges within which a the obb corners/ centroid are not considered to be valid
+// Output:  vtx_vec                 --> std::vector<cv::Point2f> , vertices of all the valid bounding boxes (4 each)
+//          centroid_vec            --> std::vector<cv::Point2f> , coordinates of the valid centroids of the bounding boxes
+//          alpha_vel               --> std::vector<float> , Orientation of the axis of least central moment for the valid contours/ obb
+int find_valid_obb_vertices_and_centroid(cv::Mat &src, std::vector<std::vector<cv::Point>> &contours, std::vector<cv::Point2f> &vtx_vec, std::vector<cv::Point2f> &centroid_vec, std::vector<float> &alpha_vec, std::vector<std::vector<double>> &vector_of_feature_vec ,int distance_from_boundary)
 {
   cv::Moments m_sc;
   cv::Point2f mc; //mass center
   cv::Point2f vtx[4]; //vertices of 4 corners of bounding box rectangle
   float alpha;
-
-  std::cout << "Valid Centroid rangle x: (" << distance_from_boundary << " , " << src.cols - distance_from_boundary << ")"
-  << " | Valid Centroid rangle y: (" << distance_from_boundary << " , " << src.rows - distance_from_boundary << ")" << std::endl;
+  std::vector<double> fv_one_obb;
+  std::cout << "Valid Centroid range x: (" << distance_from_boundary << " , " << src.cols - distance_from_boundary << ")"
+  << " | Valid Centroid range y: (" << distance_from_boundary << " , " << src.rows - distance_from_boundary << ")" << std::endl;
   
   for (int i=0; i < contours.size(); i++){
     // Get the moments
@@ -262,17 +277,23 @@ int find_valid_obb_vertices_and_centroid(cv::Mat &src, std::vector<std::vector<c
       vtx_vec.push_back(vtx[3]);
       centroid_vec.push_back(mc);
       alpha_vec.push_back(alpha);
+      fv_one_obb.clear();
       for (int i = 0; i < huMoments_arr_to_vec.size(); i++){
-        feature_vec.push_back(huMoments_arr_to_vec[i]);
+        fv_one_obb.push_back(huMoments_arr_to_vec[i]);
       }
-      feature_vec.push_back(cv::contourArea(contours[i])/box.size.area());
-      feature_vec.push_back(box.size.aspectRatio());
+      fv_one_obb.push_back(cv::contourArea(contours[i])/box.size.area());
+      fv_one_obb.push_back(box.size.aspectRatio());
+      vector_of_feature_vec.push_back(fv_one_obb);
       std::cout << "Pushed Valid Centroid x: " << mc.x << " | Valid Centroid y: " << mc.y << std::endl;
     }
   }
 return 0;    
 }
 
+
+// Finds a standard deviation vector whose elements correspond to each element of the feature vector
+// Input:   vector_of_feature_vectors    --> std::vector<std::vector<float>>, A vector containing all the feature vectors
+// Output:  standard_deviation_vec       --> std::vector<float> , A vector containing standard deviations for each elemnt of the feature vector
 int calc_standard_deviation_vec(std::vector<std::vector<float>> &vector_of_feature_vectors, std::vector<float> &standard_deviation_vec){
   
   std::cout << "Feature vector size is: " << vector_of_feature_vectors[0].size() << std::endl;
@@ -303,7 +324,11 @@ int calc_standard_deviation_vec(std::vector<std::vector<float>> &vector_of_featu
 }
 
 
-int calc_feature_vector(cv::Mat &src_image, std::vector<float> &feature_vec_float, cv::Mat &src_image_copy_valid_boxes){
+// Calculates the feature vector of an image
+// Input:   src_image                   --> cv::Mat, Image for which the feature vector needs to be computed
+// Output:  feature_vec_float           --> std::vector<float> , Feature vector of the image
+//          src_image_copy_valid_boxes  --> cv::Mat , An image which is copy of the source image but has valid obb drawn on it
+int calc_feature_vector(cv::Mat &src_image, std::vector<std::vector<float>> &vec_of_feature_vec_float, cv::Mat &src_image_copy_valid_boxes, std::vector<cv::Point2f> &valid_centroid_vec){
   
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //                  Applying thresholding to the masked greyscale image                                                         //
@@ -347,17 +372,17 @@ int calc_feature_vector(cv::Mat &src_image, std::vector<float> &feature_vec_floa
       // Que: How to use binary "and" in opencv mat?
       // Ans: https://stackoverflow.com/questions/17961092/how-do-i-do-boolean-operation-on-mat-such-as-mat3-mat1-mat2
 
-  int num_filtered_regions = 0;
+  int num_regions = 0;
   // Ignore the background pixel. That's why, starting the counter from 1 instead of 0.
   for (int i = 1; i < nLabels; i++){
       if (surfSup.at<uchar>(i, 0)){
           //All the pixels with label id i will be set to 255/ 1 with this operation
           // Src: Observation and https://stackoverflow.com/questions/26776045/compare-opencv-mat-with-scalar-elementwise
           mask_1c = mask_1c | (labelImage==i); // (labelImage==i) will return a mat with the pixel having label 'i' as 255 and rest zero. After ORing with mask and doing it repeatedly for all the labels, mask will have 255 for all the clusters/ regions and 0 elsewhere.
-          num_filtered_regions++;
+          num_regions++;
       }
   }
-  std::cout << "Filtered regions are: " << num_filtered_regions << std::endl;
+  std::cout << "Number of regions are: " << num_regions << std::endl;
   
   // if (num_filtered_regions == 1){
   // Src: https://answers.opencv.org/question/4183/what-is-the-best-way-to-find-bounding-box-for-binary-mask/
@@ -393,7 +418,7 @@ int calc_feature_vector(cv::Mat &src_image, std::vector<float> &feature_vec_floa
   // Find the oriented bounding box from the outermost contors | Src: https://docs.opencv.org/3.4/df/dee/samples_2cpp_2minarea_8cpp-example.html
   cv::Point2f vtx[4];
   std::vector<cv::Moments> all_mu(contours.size());
-  std::vector<cv::Point2f> all_vtx_vec, valid_vtx_vec, all_centroid_vec, valid_centroid_vec;
+  std::vector<cv::Point2f> all_vtx_vec, valid_vtx_vec, all_centroid_vec; //, valid_centroid_vec;
   std::vector<cv::Point2f> mc(contours.size() );
   std::vector<float> all_alpha_vec, valid_alpha_vec;
   
@@ -409,8 +434,8 @@ int calc_feature_vector(cv::Mat &src_image, std::vector<float> &feature_vec_floa
   // cv::Mat src_image_copy_valid_boxes;
   src_image.copyTo(src_image_copy_valid_boxes);
 
-  std::vector<double> feature_vec;
-  find_valid_obb_vertices_and_centroid(labelImage, contours, valid_vtx_vec, valid_centroid_vec, valid_alpha_vec, feature_vec, 15);
+  std::vector<std::vector<double>> vofv_double;
+  find_valid_obb_vertices_and_centroid(labelImage, contours, valid_vtx_vec, valid_centroid_vec, valid_alpha_vec, vofv_double, 15);
   std::cout << "Valid obb are: " << valid_alpha_vec.size() << std::endl;
 
   plot_obb_on_image(src_image_copy_valid_boxes,valid_vtx_vec, valid_centroid_vec, valid_alpha_vec);
@@ -418,8 +443,13 @@ int calc_feature_vector(cv::Mat &src_image, std::vector<float> &feature_vec_floa
   cv::namedWindow(windowName_valid_obb); // Create a window
   cv::imshow(windowName_valid_obb,src_image_copy_valid_boxes);
 
-  for(auto it:feature_vec){
-    std::cout << it << std::endl;
+
+  // Displaying the vofv_double
+  for (int i = 0; i < vofv_double.size(); i++) {
+      std::cout << "Valid OBB: " << i << " feature vector is: ";
+      for (int j = 0; j < vofv_double[i].size(); j++)
+          std::cout << vofv_double[i][j] << " ";
+      std::cout << std::endl;
   }
 
   // Axis Aligned Bounding Box (AABB) | NOT USED
@@ -429,57 +459,59 @@ int calc_feature_vector(cv::Mat &src_image, std::vector<float> &feature_vec_floa
   //                  Step 4: Compute features for each major region                                                              //
   ///////////////////////////////////////////////////////////////////////////////////////////
   
-  if (valid_alpha_vec.size() != 1){
+  if (valid_alpha_vec.size() != 0){
     std::cout << "Either could not find any OBB or found multiple OBB" << std::endl;
-    exit(-1);
+    std::vector<std::vector<float>> feature_vec_new(vofv_double.size(), std::vector<float>(vofv_double[0].size()));
+  
+    for (int i = 0; i < vofv_double.size(); i++) {
+      for (int j = 0; j < vofv_double[i].size(); j++) {
+          feature_vec_new[i][j] = static_cast<float>(vofv_double[i][j]);
+      }
+    }
+    vec_of_feature_vec_float = feature_vec_new;
   }
-  std::vector<float> feature_vec_new(feature_vec.begin(), feature_vec.end());
-  feature_vec_float = feature_vec_new;
+  
+  std::cout << "calculate_feature_vector #### : Reached here" << std::endl;
+  
   return 0;
 }
 
-int one_object_classifier(std::vector<float> &target_image_feature_vector, std::vector<const char *> &image_names_in_db, std::vector<std::vector<float>> &vector_of_feature_vectors, std::vector<float> &standard_deviation_vec, char *target_image_filename ,std::string &target_image_label){
+
+// Classifies an object
+// Input:   target_image_feature_vector --> std::vector<float>, Feature vector of the target image
+//          image_names_in_db           --> std::vector<const char *> , All the images names in the DB
+//          vector_of_feature_vectors   --> std::vector<std::vector<float>> , A vector containing all the feature vectors of all the images
+//          standard_deviation_vec      --> std::vector<float> , A vector containing standard deviations for each elemnt of the feature vector
+//          target_image_filename       --> char * , Image name of the target file. Used if it is a new image and add it to the DB
+// Output:  target_image_label          --> std::string , Label/ class of the target image
+int one_object_classifier(cv::Mat &frame, std::vector<float> &target_image_feature_vector, std::vector<const char *> &image_names_in_db, std::vector<std::vector<float>> &vector_of_feature_vectors, std::vector<float> &standard_deviation_vec ,std::string &target_image_label){
   
   std::vector<std::pair<float, int>> distance_metric_vector; //Less distance means that images are more similar
-  // float distance;
-  // for (int i = 0; i < vector_of_feature_vectors.size(); i++ ){
-  //   distance = 0;
-  //   for (int j = 0; j < vector_of_feature_vectors[0].size(); j++ ){
-      
-  //     // std::cout << "Accessing the vectors" << std::endl;
-  //     // std::cout << target_image_feature_vector[0] << " | " << vector_of_feature_vectors[0][0] << " | " << standard_deviation_vec[0] << std::endl;
-
-  //     distance += (target_image_feature_vector[j] - vector_of_feature_vectors[i][j])/standard_deviation_vec[j];
-  //     distance = distance*distance;
-  //   }
-  //   distance_metric_vector.push_back(std::make_pair(distance, i));
-  // }  
-
   calc_scaled_euclidean_dist_vec(target_image_feature_vector, vector_of_feature_vectors, standard_deviation_vec, distance_metric_vector);
-  std::cout << "Calculated the scaled euclidean distance vec" << std::endl;
+  // calc_manhattan_l1_dist_vec(target_image_feature_vector, vector_of_feature_vectors, standard_deviation_vec, distance_metric_vector);
+  // calc_chisquare_dist_vec(target_image_feature_vector, vector_of_feature_vectors, standard_deviation_vec, distance_metric_vector);
 
-  // //Find the image corresponding to minimum distance
-  // std::sort(distance_metric_vector.begin(), distance_metric_vector.end());
-  
-  // // Printing the distance_metric_vector for confirmation
-  // for (int i = 0; i <distance_metric_vector.size(); i++){
-  //     std::cout << distance_metric_vector[i].first << " , " << distance_metric_vector[i].second << std::endl;
-  // }  
+  std::cout << "Calculated the scaled euclidean distance vec" << std::endl;
 
   float min_dist;
   find_min_k_distance(1, distance_metric_vector, min_dist);
   std::cout << "Calculated the minimum distance: " << min_dist << std::endl;
 
   // if(distance_metric_vector[0].first > 1e-10){
-  if(min_dist > 1e-10){
+  // if(min_dist > 1e-3){
     // Target image is not found in the DB. Need to add it to the feature vectors.
+  int key_pressed = cv::waitKey(1); //Gets key input from user. Returns -1 if key is not pressed within the given time. Here, 1 ms.
+  if (key_pressed == 'n' && min_dist > 1e-3){
     std::cout << "New image found! Adding it to the database" << std::endl;
+    std::cout << "!!! Please enter the label which you want to save!!!" << std::endl;
     // char my_char[256] = "abc";
     // char *target_char_star_name;
     // std::copy(target_image_filename.begin(), target_image_filename.end(), target_char_star_name);
     // std::cin >> target_char_star_name;
+    char user_input_label[256];
+    std::cin >> user_input_label;
+    std::string buffer_string = char_to_String(user_input_label);
 
-    std::string buffer_string = char_to_String(target_image_filename);
     size_t last_slash_pos = buffer_string.find_last_of("/");
     buffer_string = buffer_string.substr(last_slash_pos + 1);
     size_t last_dot_pos = buffer_string.find_last_of(".");
@@ -488,9 +520,11 @@ int one_object_classifier(std::vector<float> &target_image_feature_vector, std::
 
     append_image_data_csv("training_data.csv", buffer_star, target_image_feature_vector, 0);
     std::cout << "Appending feature vector to csv successful" << std::endl;
+    std::string image_name = char_to_String(user_input_label) + ".jpeg";
+    cv::imwrite(image_name, frame);
     std::string closest_match(buffer_star);
     target_image_label = closest_match;
-   }else{
+  }else{
     std::string closest_match(image_names_in_db[distance_metric_vector[0].second]);
     
     size_t last_slash_pos = closest_match.find_last_of("/");
@@ -518,11 +552,10 @@ int one_object_classifier(std::vector<float> &target_image_feature_vector, std::
 }
 
 
-
-// KNN: Requires at least K examples of each class. For each class, find the K closest, sum their distances and that's the distance to that class. Find the class with the least distance and that is the class of the object.
-
-
-
+// Finds unique entries and their indices from a vector
+// Input:   image_names_in_db           --> std::vector<const char *> , All the images names in the DB 
+// Output:  unique_labels               --> std::vector<const char *> , Unique labels/ classes in the DB
+//          unique_labels_indices       --> std::vector<std::vector<int>>, Indices for each of the class in the DB
 int find_unique_and_their_indices(std::vector<const char *> &image_names_in_db, std::vector<const char *> &unique_labels, std::vector<std::vector<int>> &unique_labels_indices){
   
   std::cout << " ################ Inside unique function ################" << std::endl;
@@ -566,18 +599,28 @@ int find_unique_and_their_indices(std::vector<const char *> &image_names_in_db, 
 return 0;
 }
 
-
+// Calculates scaled euclidean distance of a target image with all the images in the DB
+// Input:   target_image_feature_vector --> std::vector<float>, Feature vector of the target image
+//          vector_of_feature_vectors   --> std::vector<std::vector<float>> , A vector containing all the feature vectors of all the images
+//          standard_deviation_vec      --> std::vector<float> , A vector containing standard deviations for each elemnt of the feature vector
+// Output:  distance_metric_vector      --> std::vector<std::pair<float, int>> , A vector containing distance and class/ label index pair for each of the class
 int calc_scaled_euclidean_dist_vec(std::vector<float> &target_image_feature_vector, std::vector<std::vector<float>> &vector_of_feature_vectors, std::vector<float> &standard_deviation_vec, std::vector<std::pair<float, int>> &distance_metric_vector){
-  
-  float distance;
+  std::cout << "Printing the target image feature vector inside distance function" << std::endl;
+  for (auto it:target_image_feature_vector){
+    std::cout << it << " ";
+  }
+  std::cout << std::endl;
+
+
+  float distance, diff;
   for (int i = 0; i < vector_of_feature_vectors.size(); i++ ){
     distance = 0;
     for (int j = 0; j < vector_of_feature_vectors[0].size(); j++ ){
       
       // std::cout << target_image_feature_vector[0] << " | " << vector_of_feature_vectors[0][0] << " | " << standard_deviation_vec[0] << std::endl;
       // std::cout << "\nNum: " << target_image_feature_vector[j] - vector_of_feature_vectors[i][j] << " | Den: " << standard_deviation_vec[j] << std::endl;
-      distance += (target_image_feature_vector[j] - vector_of_feature_vectors[i][j])/standard_deviation_vec[j];
-      distance = distance*distance;
+      diff = (target_image_feature_vector[j] - vector_of_feature_vectors[i][j])/standard_deviation_vec[j];
+      distance += diff*diff;
     }
     distance_metric_vector.push_back(std::make_pair(distance, i));
   }
@@ -589,6 +632,12 @@ int calc_scaled_euclidean_dist_vec(std::vector<float> &target_image_feature_vect
 return 0;
 }
 
+
+// Finds the KNN distance to each class/ label
+// Input:   k                        --> int, K parameter for the algorithm.. 1/2/3....
+//          distance_metric_vector   --> std::vector<std::pair<float, int>>,A vector containing distance and class/ label index pair for each of the class
+// Output:  min_dist                 --> float, If k != 1, Distance to the class for which distance_metric_vector is provided
+// If k=1, returns the index of the class corresponding to the minimum index
 int find_min_k_distance(int k, std::vector<std::pair<float,int>> &distance_metric_vector, float &min_dist){
   
   //Find the image corresponding to minimum distance
@@ -612,8 +661,57 @@ int find_min_k_distance(int k, std::vector<std::pair<float,int>> &distance_metri
 return 0;
 }
 
-// int knn(std::vector<float> &target_image_feature_vector, std::vector<const char *> &image_names_in_db, std::vector<std::vector<float>> &vector_of_feature_vectors, std::vector<float> &standard_deviation_vec, char *target_image_filename ,std::string &target_image_label){
 
+// Calculates scaled manhattan L1 distance of a target image with all the images in the DB
+// Input:   target_image_feature_vector --> std::vector<float>, Feature vector of the target image
+//          vector_of_feature_vectors   --> std::vector<std::vector<float>> , A vector containing all the feature vectors of all the images
+//          standard_deviation_vec      --> std::vector<float> , A vector containing standard deviations for each elemnt of the feature vector
+// Output:  distance_metric_vector      --> std::vector<std::pair<float, int>> , A vector containing distance and class/ label index pair for each of the class
+int calc_manhattan_l1_dist_vec(std::vector<float> &target_image_feature_vector, std::vector<std::vector<float>> &vector_of_feature_vectors, std::vector<float> &standard_deviation_vec, std::vector<std::pair<float, int>> &distance_metric_vector){
+  
+  float distance;
+  for (int i = 0; i < vector_of_feature_vectors.size(); i++ ){
+    distance = 0;
+    for (int j = 0; j < vector_of_feature_vectors[0].size(); j++ ){
+      
+      // std::cout << target_image_feature_vector[0] << " | " << vector_of_feature_vectors[0][0] << " | " << standard_deviation_vec[0] << std::endl;
+      // std::cout << "\nNum: " << target_image_feature_vector[j] - vector_of_feature_vectors[i][j] << " | Den: " << standard_deviation_vec[j] << std::endl;
+      distance += abs((target_image_feature_vector[j] - vector_of_feature_vectors[i][j])/standard_deviation_vec[j]);
+    }
+    distance_metric_vector.push_back(std::make_pair(distance, i));
+  }
+  // std::cout << "\nDistance metric vector: " ;
+   // Printing the distance_metric_vector for confirmation
+  // for (int i = 0; i <distance_metric_vector.size(); i++){
+  //     std::cout << distance_metric_vector[i].first << " , " << distance_metric_vector[i].second << std::endl;
+  // }
+return 0;
+}
 
-
-// }
+// Calculates scaled Chi-Square distance of a target image with all the images in the DB
+// Input:   target_image_feature_vector --> std::vector<float>, Feature vector of the target image
+//          vector_of_feature_vectors   --> std::vector<std::vector<float>> , A vector containing all the feature vectors of all the images
+//          standard_deviation_vec      --> std::vector<float> , A vector containing standard deviations for each elemnt of the feature vector
+// Output:  distance_metric_vector      --> std::vector<std::pair<float, int>> , A vector containing distance and class/ label index pair for each of the class
+int calc_chisquare_dist_vec(std::vector<float> &target_image_feature_vector, std::vector<std::vector<float>> &vector_of_feature_vectors, std::vector<float> &standard_deviation_vec, std::vector<std::pair<float, int>> &distance_metric_vector){
+  //Ref: https://www.geeksforgeeks.org/chi-square-distance-in-python/
+  float distance, num, den;
+  for (int i = 0; i < vector_of_feature_vectors.size(); i++ ){
+    distance = 0;
+    for (int j = 0; j < vector_of_feature_vectors[0].size(); j++ ){
+      
+      // std::cout << target_image_feature_vector[0] << " | " << vector_of_feature_vectors[0][0] << " | " << standard_deviation_vec[0] << std::endl;
+      // std::cout << "\nNum: " << target_image_feature_vector[j] - vector_of_feature_vectors[i][j] << " | Den: " << standard_deviation_vec[j] << std::endl;
+      num = target_image_feature_vector[j] - vector_of_feature_vectors[i][j];
+      den = standard_deviation_vec[j]*(target_image_feature_vector[j] + vector_of_feature_vectors[i][j]);
+      distance += num*num/den;
+    }
+    distance_metric_vector.push_back(std::make_pair(distance, i));
+  }
+  // std::cout << "\nDistance metric vector: " ;
+   // Printing the distance_metric_vector for confirmation
+  // for (int i = 0; i <distance_metric_vector.size(); i++){
+  //     std::cout << distance_metric_vector[i].first << " , " << distance_metric_vector[i].second << std::endl;
+  // }
+return 0;
+}

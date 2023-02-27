@@ -25,6 +25,12 @@ Notes: Some code adapted from Project 1/2
 
 int main(int argc, char** argv)
 {   
+    std::cout << "Please enter the operating mode" << std::endl;
+    std::cout << "\tb: Basic training mode. Reads images from a directory and writes feature vectors to a csv file" << std::endl;
+    std::cout << "\to: Object recognition mode. Takes image from user and finds the closest match in the DB" << std::endl;
+    std::cout << "\tk: KNN classifier mode. Takes image from user and finds the closest match in the DB using KNN search" << std::endl;
+    std::cout << "\tt: Testing mode. Takes live feed from the camera to tune and test the system" << std::endl;
+
     int reset_initially = 1;
     char mode[256];
     char target_filename[256];
@@ -34,11 +40,7 @@ int main(int argc, char** argv)
     int res_width = 600; //columns
     int res_height = res_width*9/16; //rows
     
-    std::cout << "Please enter the operating mode" << std::endl;
-    std::cout << "\tb: Basic training mode. Reads images from a directory and writes feature vectors to a csv file" << std::endl;
-    std::cout << "\to: Object recognition mode. Takes image from user and finds the closest match in the DB" << std::endl;
-    std::cout << "\tk: KNN classifier mode. Takes image from user and finds the closest match in the DB using KNN search" << std::endl;
-    std::cout << "\tl: Testing mode. Takes live feed from the camera to tune and test the system" << std::endl;
+    
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -56,8 +58,28 @@ int main(int argc, char** argv)
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     else if (strcmp("o", mode) == 0){
-        strcpy(target_filename, argv[2] ); 
-        object_recognition_mode(target_filename);
+        int source;
+        cv::Mat frame;
+
+        if( argc == 3) {
+            strcpy(target_filename, argv[2] );
+            std::cout << "Reading image from directory" << std::endl;
+            // Read the image file
+            frame = cv::imread(target_filename);//,cv::ImreadModes::IMREAD_UNCHANGED);
+            std::cout << "Number of channels: " << frame.channels() << std::endl;
+
+            // Check for failure
+            if (frame.empty()) {
+                std::cout << "Could not open or find the image" << std::endl;
+                // std::cin.get(); //wait for any key press
+                return -1;
+            }
+            source = 0;
+        }else{
+            source = 1;
+        }
+
+        object_recognition_mode(source, frame);
         return 0;
     }
     
