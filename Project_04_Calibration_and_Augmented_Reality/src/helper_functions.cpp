@@ -229,23 +229,46 @@ int calc_calib_params(char dirname[]){
         std::cout << "First corner: x-> " << corner_set[0].x << " | y-> " << corner_set[0].y << std::endl;
       }
       
-      int key_pressed = cv::waitKey(0); //Gets key input from user. Returns -1 if key is not pressed within the given time. Here, 1 ms.
+      // int key_pressed = cv::waitKey(0); //Gets key input from user. Returns -1 if key is not pressed within the given time. Here, 1 ms.
       // std::cout << "Pressed key is: " << key_pressed << std::endl;
 
       // ASCII table reference: http://sticksandstones.kstrom.com/appen.html
-      if(key_pressed == 'q'){ //Search for the function's output if no key is pressed within the given time           
-          //Wait indefinitely until 'q' is pressed. 113 is q's ASCII value  
-          std::cout << "q is pressed. Exiting the program" << std::endl;
-          cv::destroyWindow("1: Original_Image"); //destroy the created window
-          return 0;
-      }
-        cv::imshow(window_original_image, frame);
-
-
-
+      // if(key_pressed == 'q'){ //Search for the function's output if no key is pressed within the given time           
+      //     //Wait indefinitely until 'q' is pressed. 113 is q's ASCII value  
+      //     std::cout << "q is pressed. Exiting the program" << std::endl;
+      //     cv::destroyWindow("1: Original_Image"); //destroy the created window
+      //     return 0;
+      // }
+      //   cv::imshow(window_original_image, frame);
     }
-
-      ///////////////////////////////////////////////////////////////////////////////////////////////////
   }
+
+  double data_for_initialization[9] = { 1, 0, (double)res_width/2, 0, 1, (double)res_height/2, 0, 0, 1};
+  cv::Mat cameraMatrix = cv::Mat(3, 3, CV_64FC1, data_for_initialization);
+  // cv::Mat camera_calib_mat(cv::Matx33f::eye());  // intrinsic camera matrix
+  cv::Vec<float, 5> distCoeffs(0, 0, 0, 0, 0); // distortion coefficients
+
+  std::vector<cv::Mat> rvecs, tvecs;
+  std::vector<double> stdIntrinsics, stdExtrinsics, perViewErrors;
+  int flags = cv::CALIB_FIX_ASPECT_RATIO + cv::CALIB_FIX_K3 +
+              cv::CALIB_ZERO_TANGENT_DIST + cv::CALIB_FIX_PRINCIPAL_POINT;
+  cv::Size frameSize(res_width, res_height);
+
+  std::cout << "Calibrating..." << std::endl;
+  // 4. Call "float error = cv::calibrateCamera()" with the input coordinates
+  // and output parameters as declared above...
+
+  std::cout << "Before calibration" << "\ncameraMatrix =\n"
+            << cameraMatrix << "\ndistCoeffs=\n"
+            << distCoeffs << std::endl;
+
+  float error = cv::calibrateCamera(point_list, corner_list, frameSize, cameraMatrix, distCoeffs, rvecs, tvecs, flags);
+
+  std::cout << "Reprojection error = " << error << "\ncameraMatrix =\n"
+            << cameraMatrix << "\ndistCoeffs=\n"
+            << distCoeffs << std::endl;
+
+  // Write to CSV: https://docs.opencv.org/4.x/dd/d74/tutorial_file_input_output_with_xml_yml.html
+
   return 0;
 }
