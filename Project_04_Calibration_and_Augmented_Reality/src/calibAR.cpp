@@ -26,6 +26,7 @@ int main(int argc, char** argv)
 {   
     std::cout << "Please enter the operating mode" << std::endl;
     std::cout << "\tc: Calculate camera calibration parameters" << std::endl;
+    std::cout << "\tp: Projection mode" << std::endl;
     
 
     int reset_initially = 1;
@@ -34,14 +35,14 @@ int main(int argc, char** argv)
     strcpy(mode, argv[1] ); 
     
     // Resolution required for the window
-    int res_width = 600; //columns
-    int res_height = res_width*9/16; //rows
+    // int res_width = 600; //columns
+    // int res_height = res_width*9/16; //rows
     
     
 
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                  BASIC TRAINING MODE: Reads images from a directory and writes feature vectors to a csv file                 //
+    //                  CAMERA CALIBRATION MODE: Captures pictures of checkerboard if not already taken and calibrates the camera   //
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     if (strcmp("c", mode) == 0){
@@ -54,31 +55,10 @@ int main(int argc, char** argv)
     //                  OBJECT RECOGNITION MODE MODE: Takes image from user and finds the closest match in the DB                   //
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    else if (strcmp("o", mode) == 0){
-        int source;
-        cv::Mat frame;
-
-        if( argc == 3) {
-            strcpy(target_filename, argv[2] );
-            std::cout << "Reading image from directory" << std::endl;
-            // Read the image file
-            frame = cv::imread(target_filename);//,cv::ImreadModes::IMREAD_UNCHANGED);
-            std::cout << "Number of channels: " << frame.channels() << std::endl;
-
-            // Check for failure
-            if (frame.empty()) {
-                std::cout << "Could not open or find the image" << std::endl;
-                // std::cin.get(); //wait for any key press
-                return -1;
-            }
-            source = 0;
-        }else{
-            source = 1;
-        }
-
+    else if (strcmp("p", mode) == 0){
+        project();
         return 0;
     }
-    
     
     return 0;
 }

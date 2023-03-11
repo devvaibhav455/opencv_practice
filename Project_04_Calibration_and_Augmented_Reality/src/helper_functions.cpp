@@ -13,10 +13,12 @@ Project 3: Real-time Object 2-D Recognition
 #include <set>
 #include <dirent.h>
 
+
 cv::Size patternsize(9,6); //interior number of corners
 // Resolution required for the window
 int res_width = 600; //columns
 int res_height = res_width*9/16; //rows
+
 
 // Converts char[] to std::string
 std::string char_to_String(char* a)
@@ -269,6 +271,33 @@ int calc_calib_params(char dirname[]){
             << distCoeffs << std::endl;
 
   // Write to CSV: https://docs.opencv.org/4.x/dd/d74/tutorial_file_input_output_with_xml_yml.html
+  MyData m(1);
+  cv::FileStorage fs("calibparam.yaml", cv::FileStorage::WRITE);
+  // or:
+  // FileStorage fs;
+  // fs.open(filename, FileStorage::WRITE);
+  // fs << "iterationNr" << 100;
+
+  // fs << "strings" << "[";                              // text - string sequence
+  // fs << "image1.jpg" << "Awesomeness" << "../data/baboon.jpg";
+  // fs << "]";                                           // close sequence
+  
+  // fs << "Mapping";                              // text - mapping
+  // fs << "{" << "One" << 1;
+  // fs <<        "Two" << 2 << "}";
+
+  fs << "Camera_Matrix" << cameraMatrix;                                      // cv::Mat
+  fs << "Distortion_Coefficients" << distCoeffs;
+  fs << "Point_List" << point_list;
+  fs << "Rotations" << rvecs;
+  fs << "Translations" << tvecs;
+
+
+  // fs << "MyData" << m;                                // your own data structures
+  fs.release();                                       // explicit close
+  std::cout << "Write Done." << std::endl;
+
 
   return 0;
 }
+
