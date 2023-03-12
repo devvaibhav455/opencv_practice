@@ -324,7 +324,7 @@ int draw_shape_on_image(std::string shape, cv::Mat &frame, cv::Mat &cameraMatrix
     std::cout << "First corner: x-> " << corner_set[0].x << " | y-> " << corner_set[0].y << std::endl;
     std::cout << "rvec: " << rvec << "\ntvec " << tvec << std::endl;
   }else if(shape.compare("wa_monument") == 0){
-    // Generate points for the cube
+    // Generate points for the shape washington monument.
 
     //Projecting the cube with an offset of x = 4
     points_to_project3D.push_back(cv::Point3d(4,0,0)); //Base TL

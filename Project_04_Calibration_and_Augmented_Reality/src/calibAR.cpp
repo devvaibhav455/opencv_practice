@@ -31,16 +31,10 @@ int main(int argc, char** argv)
 
     int reset_initially = 1;
     char mode[256];
+    char source[256];
     char target_filename[256];
     strcpy(mode, argv[1] ); 
     
-    // Resolution required for the window
-    // int res_width = 600; //columns
-    // int res_height = res_width*9/16; //rows
-    
-    
-
-
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                  CAMERA CALIBRATION MODE: Captures pictures of checkerboard if not already taken and calibrates the camera   //
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -56,7 +50,18 @@ int main(int argc, char** argv)
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     else if (strcmp("p", mode) == 0){
-        project();
+        int source = 0; //0 :image | 1 : video from file | 2 : live video from webcam
+        cv::Mat frame;
+
+        if( argc == 3) {
+            strcpy(target_filename, argv[2] );
+            char *target_filename_char_star = target_filename;
+            std::cout << "Reading image/ video from directory" << std::endl;
+            source = 0; //It could be 0 or 1
+        }else{
+            source = 2;
+        }
+        project(source, target_filename);
         return 0;
     }
     

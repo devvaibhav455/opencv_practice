@@ -63,7 +63,62 @@ int calibrate_camera(){
 }
 
 
-int project(){
+int project(int &source, char *target_filename_char_star){
+
+  //Source: 0 :image | 1 : video from file | 2 : live video from webcam
+  cv::Mat frame;
+  cv::VideoCapture *capdev;
+  int fps;
+  if(source == 0){
+    // Check if the input is image or video file by counting the number of frames in the input
+    
+    capdev = new cv::VideoCapture(target_filename_char_star); 
+    // Print error message if the stream is invalid
+    if (!capdev->isOpened()){
+      std::cout << "Error opening video stream or image file" << std::endl;
+    }else{
+      // Obtain fps and frame count by get() method and print
+      // You can replace 5 with CAP_PROP_FPS as well, they are enumerations
+      fps = capdev->get(5);
+      std::cout << "Frames per second in video:" << fps << std::endl;
+  
+      // Obtain frame_count using opencv built in frame count reading method
+      // You can replace 7 with CAP_PROP_FRAME_COUNT as well, they are enumerations
+      int frame_count = capdev->get(7);
+      std::cout << "  Frame count :" << frame_count << std::endl;
+
+      (frame_count == 1) ? source = 0 : source = 1;
+      std::cout << "Source is: " << source << std::endl;
+    }
+
+    if (source == 0){
+      // Read the image file
+      frame = cv::imread(target_filename_char_star);//,cv::ImreadModes::IMREAD_UNCHANGED);
+      std::cout << "Reading image from disk successful. Number of channels in image: " << frame.channels() << std::endl;
+      
+      // Check for failure
+      if (frame.empty()) {
+          std::cout << "Could not open or find the image" << std::endl;
+          // std::cin.get(); //wait for any key press
+          return -1;
+      }
+    }
+  }
+
+  if (source == 2){
+    capdev = new cv::VideoCapture(0);
+    if (!capdev->isOpened()) {
+      throw std::runtime_error("Error");
+      return -1;
+    }
+    fps = capdev->get(5);
+    std::cout << "Input feed is camera" << std::endl;
+    // get some properties of the image
+    cv::Size refS( (int) capdev->get(cv::CAP_PROP_FRAME_WIDTH ),
+                (int) capdev->get(cv::CAP_PROP_FRAME_HEIGHT));
+    printf("Image size(WidthxHeight) from camera: %dx%d\n", refS.width, refS.height);
+  }
+    
 
   // Read calibration parameters from the yaml file
   std::cout << std::endl << "Reading: " << std::endl;
@@ -106,7 +161,6 @@ int project(){
   fs["Point_List"] >> point_list;
 
 
-  
   std::cout << std::endl
       << "Camera_Matrix = " << cameraMatrix << std::endl;
   // std::cout << " ############### REACHED HERE ############### " << std::endl;
@@ -127,53 +181,43 @@ int project(){
   // CV_[The number of bits per item][Signed or Unsigned][Type Prefix]C[The channel number]
   // For instance, CV_8UC3 means we use unsigned char types that are 8 bit long and each pixel has three of these to form the three channels. There are types predefined for up to four channels. https://docs.opencv.org/3.4/d6/d6d/tutorial_mat_the_basic_image_container.html
   
-  cv::Mat frame;
-  cv::VideoCapture *capdev;
-
-  capdev = new cv::VideoCapture(0);
-  if (!capdev->isOpened()) {
-    throw std::runtime_error("Error");
-    return -1;
-  }
-  std::cout << "Input feed is camera" << std::endl;
-  // get some properties of the image
-  cv::Size refS( (int) capdev->get(cv::CAP_PROP_FRAME_WIDTH ),
-              (int) capdev->get(cv::CAP_PROP_FRAME_HEIGHT));
-  printf("Image size(WidthxHeight) from camera: %dx%d\n", refS.width, refS.height);
-
-  // Integer to save images from live feed with _1, _2, .... .jpeg in the name
-  int saved_image_id = 0;
-  
+    
   int window_id = 1;
   cv::String window_original_image = std::to_string(window_id) + " :Original image";
   window_id++;
 
   cv::Mat grey_image;
-  cv::Mat mriwc; //most recent image with corners
   
   std::vector<cv::Point2f> corner_set; //this will be filled by the detected corners
   bool patternfound;
   cv::Mat rvec, tvec;
 
+  int key_pressed;
+
   while (true) {
     // std::cout << "####################### REACHED START OF WHILE LOOP #######################" << std::endl;
     // std::cout << "Frame before input from camera = " << std::endl << " " << frame << std::endl << std::endl;
     // std::cout << "Getting data from camera" << std::endl;
-    *capdev >> frame; //frame.type() is 16 viz. 8UC3
+    
+    
+    if( source == 1){
+      bool isSuccess = capdev->read(frame);
+
+      // If frames are not there, close it
+      if (isSuccess == false){
+        std::cout << "Video file has ended. Running the video in loop" << std::endl;
+        capdev->set(1,0);
+        capdev->read(frame); //Src: https://stackoverflow.com/questions/17158602/playback-loop-option-in-opencv-videos
+      }
+    }else if( source == 2){
+        // std::cout << "Getting data from camera" << std::endl;
+        *capdev >> frame; //frame.type() is 16 viz. 8UC3
+    }
 
     cv::resize(frame, frame, cv::Size(res_width, res_height));    
     // printf("Resizing image to %dx%d\n", res_width, res_height);
     
-    int key_pressed = cv::waitKey(1); //Gets key input from user. Returns -1 if key is not pressed within the given time. Here, 1 ms.
-    // std::cout << "Pressed key is: " << key_pressed << std::endl;
-
-    // ASCII table reference: http://sticksandstones.kstrom.com/appen.html
-    if(key_pressed == 'q'){ //Search for the function's output if no key is pressed within the given time           
-        //Wait indefinitely until 'q' is pressed. 113 is q's ASCII value  
-        std::cout << "q is pressed. Exiting the program" << std::endl;
-        cv::destroyWindow("1: Original_Image"); //destroy the created window
-        return 0;
-    }
+    
 
     // STEP 1: Detect and Extract Chessboard Corners
     // Src: https://docs.opencv.org/3.4/d9/d0c/group__calib3d.html#ga93efa9b0aa890de240ca32b11253dd4a
@@ -185,7 +229,6 @@ int project(){
             + cv::CALIB_CB_FAST_CHECK);
     if(patternfound){
       cornerSubPix(grey_image, corner_set, cv::Size(11, 11), cv::Size(-1, -1), cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::MAX_ITER, 30, 0.1));
-      frame.copyTo(mriwc); //Need to store the original image without corners for calibration purposes
       // drawChessboardCorners(frame, patternsize, cv::Mat(corner_set), patternfound);
       std::cout << "Number of corners found: " << corner_set.size() << std::endl;
       
@@ -198,14 +241,24 @@ int project(){
       
     }
 
-    if(key_pressed == 's'){ //Save the last calibration image          
-      std::cout << "Saving image to file calibration_image_.jpeg" << std::endl;
-      std::string folderName = "../calibration_images/";
-      std::string image_name = "calibration_image_" + std::to_string(saved_image_id) + ".jpeg";
-      cv::imwrite(folderName + image_name, mriwc);
-      saved_image_id++;
-    }
+  
     cv::imshow(window_original_image, frame);
+    //  = cv::waitKey(1); //Gets key input from user. Returns -1 if key is not pressed within the given time. Here, 1 ms.
+    // std::cout << "Pressed key is: " << key_pressed << std::endl;
+
+    // ASCII table reference: http://sticksandstones.kstrom.com/appen.html
+    
+    if(source == 0){
+      key_pressed = cv::waitKey(0);
+    }else{
+      key_pressed = cv::waitKey(1000/fps); // It will play video at its original fps
+    }
+    if(key_pressed == 'q'){ //Search for the function's output if no key is pressed within the given time           
+      //Wait indefinitely until 'q' is pressed. 113 is q's ASCII value  
+      std::cout << "q is pressed. Exiting the program" << std::endl;
+      cv::destroyWindow("1: Original_Image"); //destroy the created window
+      return 0;
+    }
 
   }
 
