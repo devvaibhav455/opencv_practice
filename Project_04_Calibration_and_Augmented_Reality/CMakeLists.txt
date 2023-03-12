@@ -7,8 +7,7 @@ if (${OpenCV_FOUND})
   message(FATAL_ERROR "OpenCV not found!")
 endif()
 
-set( SRC_FILES_PATH_WRITE_CSV src/write_feature_vector.cpp src/csv_util.cpp src/filter.cpp)
-set( SRC_FILES_PATH_READ_CSV src/read_feature_vector.cpp src/csv_util.cpp)
+set( SRC_FILES_PATH_HARRIS src/harrisCornerDetector.cpp src/filter.cpp src/helper_functions.cpp)
 set( SRC_FILES_PATH_CALIBAR src/calibAR.cpp src/filter.cpp src/helper_functions.cpp src/csv_util.cpp src/modes.cpp)
 set( SRC_FILES_PATH_SAMPLE_CODE src/sample_code.cpp)
 
@@ -28,13 +27,10 @@ message("[MY_MESSAGE] CMake link_directories set to: ${CMAKE_BINARY_DIR}/bin")
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
-set(p03_write_csv write_csv)
-add_executable( ${p03_write_csv} ${SRC_FILES_PATH_WRITE_CSV} )
-target_link_libraries( ${p03_write_csv} ${OpenCV_LIBS} )
+set(p04_harrisCornerDetector harrisCornerDetector)
+add_executable( ${p04_harrisCornerDetector} ${SRC_FILES_PATH_HARRIS} )
+target_link_libraries( ${p04_harrisCornerDetector} ${OpenCV_LIBS} )
 
-set(p03_read_csv read_csv)
-add_executable( ${p03_read_csv} ${SRC_FILES_PATH_READ_CSV} )
-target_link_libraries( ${p03_read_csv} ${OpenCV_LIBS} )
 
 set(p04_calibAR calibAR)
 add_executable( ${p04_calibAR} ${SRC_FILES_PATH_CALIBAR} )
@@ -48,6 +44,5 @@ target_link_libraries( ${p03_sample_code} ${OpenCV_LIBS} )
 
 
 # message("[MY_MESSAGE] Executable ${p02_write_csv} is linked against: ${OpenCV_LIBS}")
-message("[MY_MESSAGE] Executable is saved to: ${EXECUTABLE_OUTPUT_PATH}/${p03_write_csv}")
-message("[MY_MESSAGE] Executable is saved to: ${EXECUTABLE_OUTPUT_PATH}/${p03_read_csv}")
+message("[MY_MESSAGE] Executable is saved to: ${EXECUTABLE_OUTPUT_PATH}/${p04_harrisCornerDetector}")
 message("[MY_MESSAGE] Executable is saved to: ${EXECUTABLE_OUTPUT_PATH}/${p04_calibAR}")

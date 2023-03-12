@@ -57,3 +57,5 @@ std::string char_to_String(char* a);
 int capture_calibration_images();
 
 int calc_calib_params(char dirname[]);
+
+int draw_shape_on_image(std::string shape, cv::Mat &frame, cv::Mat &cameraMatrix, cv::Vec<float, 5> &distCoeffs, cv::Mat &rvec, cv::Mat &tvec, std::vector<cv::Point2f> &corner_set);

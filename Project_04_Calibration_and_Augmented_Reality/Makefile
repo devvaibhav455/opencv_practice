@@ -117,30 +117,17 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named write_csv
+# Target rules for targets named harrisCornerDetector
 
 # Build rule for target.
-write_csv: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 write_csv
-.PHONY : write_csv
+harrisCornerDetector: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 harrisCornerDetector
+.PHONY : harrisCornerDetector
 
 # fast build rule for target.
-write_csv/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/write_csv.dir/build.make CMakeFiles/write_csv.dir/build
-.PHONY : write_csv/fast
-
-#=============================================================================
-# Target rules for targets named read_csv
-
-# Build rule for target.
-read_csv: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 read_csv
-.PHONY : read_csv
-
-# fast build rule for target.
-read_csv/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/read_csv.dir/build.make CMakeFiles/read_csv.dir/build
-.PHONY : read_csv/fast
+harrisCornerDetector/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/harrisCornerDetector.dir/build.make CMakeFiles/harrisCornerDetector.dir/build
+.PHONY : harrisCornerDetector/fast
 
 #=============================================================================
 # Target rules for targets named calibAR
@@ -197,8 +184,6 @@ src/csv_util.o: src/csv_util.cpp.o
 
 # target to build an object file
 src/csv_util.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/write_csv.dir/build.make CMakeFiles/write_csv.dir/src/csv_util.cpp.o
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/read_csv.dir/build.make CMakeFiles/read_csv.dir/src/csv_util.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/calibAR.dir/build.make CMakeFiles/calibAR.dir/src/csv_util.cpp.o
 .PHONY : src/csv_util.cpp.o
 
@@ -207,8 +192,6 @@ src/csv_util.i: src/csv_util.cpp.i
 
 # target to preprocess a source file
 src/csv_util.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/write_csv.dir/build.make CMakeFiles/write_csv.dir/src/csv_util.cpp.i
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/read_csv.dir/build.make CMakeFiles/read_csv.dir/src/csv_util.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/calibAR.dir/build.make CMakeFiles/calibAR.dir/src/csv_util.cpp.i
 .PHONY : src/csv_util.cpp.i
 
@@ -217,8 +200,6 @@ src/csv_util.s: src/csv_util.cpp.s
 
 # target to generate assembly for a file
 src/csv_util.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/write_csv.dir/build.make CMakeFiles/write_csv.dir/src/csv_util.cpp.s
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/read_csv.dir/build.make CMakeFiles/read_csv.dir/src/csv_util.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/calibAR.dir/build.make CMakeFiles/calibAR.dir/src/csv_util.cpp.s
 .PHONY : src/csv_util.cpp.s
 
@@ -227,7 +208,7 @@ src/filter.o: src/filter.cpp.o
 
 # target to build an object file
 src/filter.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/write_csv.dir/build.make CMakeFiles/write_csv.dir/src/filter.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/harrisCornerDetector.dir/build.make CMakeFiles/harrisCornerDetector.dir/src/filter.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/calibAR.dir/build.make CMakeFiles/calibAR.dir/src/filter.cpp.o
 .PHONY : src/filter.cpp.o
 
@@ -236,7 +217,7 @@ src/filter.i: src/filter.cpp.i
 
 # target to preprocess a source file
 src/filter.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/write_csv.dir/build.make CMakeFiles/write_csv.dir/src/filter.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/harrisCornerDetector.dir/build.make CMakeFiles/harrisCornerDetector.dir/src/filter.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/calibAR.dir/build.make CMakeFiles/calibAR.dir/src/filter.cpp.i
 .PHONY : src/filter.cpp.i
 
@@ -245,15 +226,40 @@ src/filter.s: src/filter.cpp.s
 
 # target to generate assembly for a file
 src/filter.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/write_csv.dir/build.make CMakeFiles/write_csv.dir/src/filter.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/harrisCornerDetector.dir/build.make CMakeFiles/harrisCornerDetector.dir/src/filter.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/calibAR.dir/build.make CMakeFiles/calibAR.dir/src/filter.cpp.s
 .PHONY : src/filter.cpp.s
+
+src/harrisCornerDetector.o: src/harrisCornerDetector.cpp.o
+.PHONY : src/harrisCornerDetector.o
+
+# target to build an object file
+src/harrisCornerDetector.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/harrisCornerDetector.dir/build.make CMakeFiles/harrisCornerDetector.dir/src/harrisCornerDetector.cpp.o
+.PHONY : src/harrisCornerDetector.cpp.o
+
+src/harrisCornerDetector.i: src/harrisCornerDetector.cpp.i
+.PHONY : src/harrisCornerDetector.i
+
+# target to preprocess a source file
+src/harrisCornerDetector.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/harrisCornerDetector.dir/build.make CMakeFiles/harrisCornerDetector.dir/src/harrisCornerDetector.cpp.i
+.PHONY : src/harrisCornerDetector.cpp.i
+
+src/harrisCornerDetector.s: src/harrisCornerDetector.cpp.s
+.PHONY : src/harrisCornerDetector.s
+
+# target to generate assembly for a file
+src/harrisCornerDetector.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/harrisCornerDetector.dir/build.make CMakeFiles/harrisCornerDetector.dir/src/harrisCornerDetector.cpp.s
+.PHONY : src/harrisCornerDetector.cpp.s
 
 src/helper_functions.o: src/helper_functions.cpp.o
 .PHONY : src/helper_functions.o
 
 # target to build an object file
 src/helper_functions.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/harrisCornerDetector.dir/build.make CMakeFiles/harrisCornerDetector.dir/src/helper_functions.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/calibAR.dir/build.make CMakeFiles/calibAR.dir/src/helper_functions.cpp.o
 .PHONY : src/helper_functions.cpp.o
 
@@ -262,6 +268,7 @@ src/helper_functions.i: src/helper_functions.cpp.i
 
 # target to preprocess a source file
 src/helper_functions.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/harrisCornerDetector.dir/build.make CMakeFiles/harrisCornerDetector.dir/src/helper_functions.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/calibAR.dir/build.make CMakeFiles/calibAR.dir/src/helper_functions.cpp.i
 .PHONY : src/helper_functions.cpp.i
 
@@ -270,6 +277,7 @@ src/helper_functions.s: src/helper_functions.cpp.s
 
 # target to generate assembly for a file
 src/helper_functions.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/harrisCornerDetector.dir/build.make CMakeFiles/harrisCornerDetector.dir/src/helper_functions.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/calibAR.dir/build.make CMakeFiles/calibAR.dir/src/helper_functions.cpp.s
 .PHONY : src/helper_functions.cpp.s
 
@@ -297,30 +305,6 @@ src/modes.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/calibAR.dir/build.make CMakeFiles/calibAR.dir/src/modes.cpp.s
 .PHONY : src/modes.cpp.s
 
-src/read_feature_vector.o: src/read_feature_vector.cpp.o
-.PHONY : src/read_feature_vector.o
-
-# target to build an object file
-src/read_feature_vector.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/read_csv.dir/build.make CMakeFiles/read_csv.dir/src/read_feature_vector.cpp.o
-.PHONY : src/read_feature_vector.cpp.o
-
-src/read_feature_vector.i: src/read_feature_vector.cpp.i
-.PHONY : src/read_feature_vector.i
-
-# target to preprocess a source file
-src/read_feature_vector.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/read_csv.dir/build.make CMakeFiles/read_csv.dir/src/read_feature_vector.cpp.i
-.PHONY : src/read_feature_vector.cpp.i
-
-src/read_feature_vector.s: src/read_feature_vector.cpp.s
-.PHONY : src/read_feature_vector.s
-
-# target to generate assembly for a file
-src/read_feature_vector.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/read_csv.dir/build.make CMakeFiles/read_csv.dir/src/read_feature_vector.cpp.s
-.PHONY : src/read_feature_vector.cpp.s
-
 src/sample_code.o: src/sample_code.cpp.o
 .PHONY : src/sample_code.o
 
@@ -345,30 +329,6 @@ src/sample_code.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sample_code.dir/build.make CMakeFiles/sample_code.dir/src/sample_code.cpp.s
 .PHONY : src/sample_code.cpp.s
 
-src/write_feature_vector.o: src/write_feature_vector.cpp.o
-.PHONY : src/write_feature_vector.o
-
-# target to build an object file
-src/write_feature_vector.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/write_csv.dir/build.make CMakeFiles/write_csv.dir/src/write_feature_vector.cpp.o
-.PHONY : src/write_feature_vector.cpp.o
-
-src/write_feature_vector.i: src/write_feature_vector.cpp.i
-.PHONY : src/write_feature_vector.i
-
-# target to preprocess a source file
-src/write_feature_vector.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/write_csv.dir/build.make CMakeFiles/write_csv.dir/src/write_feature_vector.cpp.i
-.PHONY : src/write_feature_vector.cpp.i
-
-src/write_feature_vector.s: src/write_feature_vector.cpp.s
-.PHONY : src/write_feature_vector.s
-
-# target to generate assembly for a file
-src/write_feature_vector.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/write_csv.dir/build.make CMakeFiles/write_csv.dir/src/write_feature_vector.cpp.s
-.PHONY : src/write_feature_vector.cpp.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -378,9 +338,8 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... calibAR"
-	@echo "... read_csv"
+	@echo "... harrisCornerDetector"
 	@echo "... sample_code"
-	@echo "... write_csv"
 	@echo "... src/calibAR.o"
 	@echo "... src/calibAR.i"
 	@echo "... src/calibAR.s"
@@ -390,21 +349,18 @@ help:
 	@echo "... src/filter.o"
 	@echo "... src/filter.i"
 	@echo "... src/filter.s"
+	@echo "... src/harrisCornerDetector.o"
+	@echo "... src/harrisCornerDetector.i"
+	@echo "... src/harrisCornerDetector.s"
 	@echo "... src/helper_functions.o"
 	@echo "... src/helper_functions.i"
 	@echo "... src/helper_functions.s"
 	@echo "... src/modes.o"
 	@echo "... src/modes.i"
 	@echo "... src/modes.s"
-	@echo "... src/read_feature_vector.o"
-	@echo "... src/read_feature_vector.i"
-	@echo "... src/read_feature_vector.s"
 	@echo "... src/sample_code.o"
 	@echo "... src/sample_code.i"
 	@echo "... src/sample_code.s"
-	@echo "... src/write_feature_vector.o"
-	@echo "... src/write_feature_vector.i"
-	@echo "... src/write_feature_vector.s"
 .PHONY : help
 
 

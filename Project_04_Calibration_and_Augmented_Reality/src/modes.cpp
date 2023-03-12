@@ -186,7 +186,7 @@ int project(){
     if(patternfound){
       cornerSubPix(grey_image, corner_set, cv::Size(11, 11), cv::Size(-1, -1), cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::MAX_ITER, 30, 0.1));
       frame.copyTo(mriwc); //Need to store the original image without corners for calibration purposes
-      drawChessboardCorners(frame, patternsize, cv::Mat(corner_set), patternfound);
+      // drawChessboardCorners(frame, patternsize, cv::Mat(corner_set), patternfound);
       std::cout << "Number of corners found: " << corner_set.size() << std::endl;
       
       //Src: https://learnopencv.com/head-pose-estimation-using-opencv-and-dlib/
@@ -194,25 +194,8 @@ int project(){
 
       // Project a 3D point (0, 0, 1000.0) onto the image plane.
       // We use this to draw a line sticking out of the nose
-  
-      std::vector<cv::Point3d> points_to_project3D;
-      std::vector<cv::Point2d> projected_points2D;
+      draw_shape_on_image("wa_monument", frame, cameraMatrix, distCoeffs, rvec, tvec, corner_set);
       
-      points_to_project3D.push_back(cv::Point3d(2,0,0)); //X-axis; RED in color
-      points_to_project3D.push_back(cv::Point3d(0,-2,0)); //Y-axis; GREEN in color
-      points_to_project3D.push_back(cv::Point3d(0,0,2)); //Z-axis; BLUE in color
-  
-      projectPoints(points_to_project3D, rvec, tvec, cameraMatrix, distCoeffs, projected_points2D);
-    
-      cv::arrowedLine(frame,corner_set[0], projected_points2D[0], cv::Scalar(0,0,255), 4); //Plotting X-axis; RED in color
-      putText(frame, "X", projected_points2D[0], cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(255,0,0), 2.0);
-      cv::arrowedLine(frame,corner_set[0], projected_points2D[1], cv::Scalar(0,255,0), 4); //Plotting Y-axis; GREEN in color
-      putText(frame, "Y", projected_points2D[1], cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(0,255,0), 2.0);
-      cv::arrowedLine(frame,corner_set[0], projected_points2D[2], cv::Scalar(255,0,0), 4); //Plotting Z-axis; BLUE in color
-      putText(frame, "Z", projected_points2D[2], cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(0,0,255), 2.0);
-      
-      std::cout << "First corner: x-> " << corner_set[0].x << " | y-> " << corner_set[0].y << std::endl;
-      std::cout << "rvec: " << rvec << "\ntvec " << tvec << std::endl;
     }
 
     if(key_pressed == 's'){ //Save the last calibration image          

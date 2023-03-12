@@ -301,3 +301,68 @@ int calc_calib_params(char dirname[]){
   return 0;
 }
 
+int draw_shape_on_image(std::string shape, cv::Mat &frame, cv::Mat &cameraMatrix, cv::Vec<float, 5> &distCoeffs, cv::Mat &rvec, cv::Mat &tvec, std::vector<cv::Point2f> &corner_set){
+  
+  std::vector<cv::Point3d> points_to_project3D;
+  std::vector<cv::Point2d> projected_points2D;
+  
+  if (shape.compare("axis") == 0){
+    // Generate points for the axis
+    points_to_project3D.push_back(cv::Point3d(2,0,0)); //X-axis; RED in color
+    points_to_project3D.push_back(cv::Point3d(0,-2,0)); //Y-axis; GREEN in color
+    points_to_project3D.push_back(cv::Point3d(0,0,2)); //Z-axis; BLUE in color
+
+    projectPoints(points_to_project3D, rvec, tvec, cameraMatrix, distCoeffs, projected_points2D);
+  
+    cv::arrowedLine(frame,corner_set[0], projected_points2D[0], cv::Scalar(0,0,255), 4); //Plotting X-axis; RED in color
+    putText(frame, "X", projected_points2D[0], cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(255,0,0), 2.0);
+    cv::arrowedLine(frame,corner_set[0], projected_points2D[1], cv::Scalar(0,255,0), 4); //Plotting Y-axis; GREEN in color
+    putText(frame, "Y", projected_points2D[1] + cv::Point2d(0, 20), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(0,255,0), 2.0);
+    cv::arrowedLine(frame,corner_set[0], projected_points2D[2], cv::Scalar(255,0,0), 4); //Plotting Z-axis; BLUE in color
+    putText(frame, "Z", projected_points2D[2], cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(0,0,255), 2.0);
+    
+    std::cout << "First corner: x-> " << corner_set[0].x << " | y-> " << corner_set[0].y << std::endl;
+    std::cout << "rvec: " << rvec << "\ntvec " << tvec << std::endl;
+  }else if(shape.compare("wa_monument") == 0){
+    // Generate points for the cube
+
+    //Projecting the cube with an offset of x = 4
+    points_to_project3D.push_back(cv::Point3d(4,0,0)); //Base TL
+    points_to_project3D.push_back(cv::Point3d(4,-4,0)); //Base BL
+    points_to_project3D.push_back(cv::Point3d(8,0,0)); //Base TR
+    points_to_project3D.push_back(cv::Point3d(8,-4,0)); //Base BR
+
+    points_to_project3D.push_back(cv::Point3d(4,0,6)); //Roof TL
+    points_to_project3D.push_back(cv::Point3d(4,-4,6)); //Roof BL
+    points_to_project3D.push_back(cv::Point3d(8,0,6)); //Roof TR
+    points_to_project3D.push_back(cv::Point3d(8,-4,6)); //Roof BR
+
+    points_to_project3D.push_back(cv::Point3d(6,-2,3)); //Pin within cuboid at the center
+    points_to_project3D.push_back(cv::Point3d(6,-2,9)); //Pin outside cuboid at the center
+
+    projectPoints(points_to_project3D, rvec, tvec, cameraMatrix, distCoeffs, projected_points2D);
+
+    cv::line(frame, projected_points2D[0], projected_points2D[1], cv::Scalar(255,0,0), 3, 8, 0); //Base TL to Base BL
+    cv::line(frame, projected_points2D[0], projected_points2D[2], cv::Scalar(255,0,0), 3, 8, 0); //Base TL to Base TR
+    cv::line(frame, projected_points2D[0], projected_points2D[4], cv::Scalar(255,0,0), 3, 8, 0); //Base TL to Roof TL
+    cv::line(frame, projected_points2D[2], projected_points2D[3], cv::Scalar(255,0,0), 3, 8, 0); //Base TR to Base BR
+    cv::line(frame, projected_points2D[2], projected_points2D[6], cv::Scalar(255,0,0), 3, 8, 0); //Base TR to Roof TR
+    cv::line(frame, projected_points2D[1], projected_points2D[3], cv::Scalar(255,0,0), 3, 8, 0); //Base BL to Base BR
+    cv::line(frame, projected_points2D[1], projected_points2D[5], cv::Scalar(255,0,0), 3, 8, 0); //Base BL to Roof BL
+    cv::line(frame, projected_points2D[3], projected_points2D[7], cv::Scalar(255,0,0), 3, 8, 0); //Base BR to Roof BR
+    cv::line(frame, projected_points2D[4], projected_points2D[6], cv::Scalar(255,0,0), 3, 8, 0); //Roof TL to Roof TR
+    cv::line(frame, projected_points2D[4], projected_points2D[5], cv::Scalar(255,0,0), 3, 8, 0); //Roof TL to Roof BL
+    cv::line(frame, projected_points2D[7], projected_points2D[6], cv::Scalar(255,0,0), 3, 8, 0); //Roof BR to Roof TR
+    cv::line(frame, projected_points2D[7], projected_points2D[5], cv::Scalar(255,0,0), 3, 8, 0); //Roof BR to Roof BL
+    cv::line(frame, projected_points2D[4], projected_points2D[8], cv::Scalar(255,0,0), 3, 8, 0); //Roof TL to Pin withing cuboid
+    cv::line(frame, projected_points2D[5], projected_points2D[8], cv::Scalar(255,0,0), 3, 8, 0); //Roof BL to Pin withing cuboid
+    cv::line(frame, projected_points2D[6], projected_points2D[8], cv::Scalar(255,0,0), 3, 8, 0); //Roof TR to Pin withing cuboid
+    cv::line(frame, projected_points2D[7], projected_points2D[8], cv::Scalar(255,0,0), 3, 8, 0); //Roof BR to Pin withing cuboid
+    cv::line(frame, projected_points2D[4], projected_points2D[9], cv::Scalar(255,0,0), 3, 8, 0); //Roof TL to Pin outside cuboid 
+    cv::line(frame, projected_points2D[5], projected_points2D[9], cv::Scalar(255,0,0), 3, 8, 0); //Roof BL to Pin outside cuboid
+    cv::line(frame, projected_points2D[6], projected_points2D[9], cv::Scalar(255,0,0), 3, 8, 0); //Roof TR to Pin outside cuboid
+    cv::line(frame, projected_points2D[7], projected_points2D[9], cv::Scalar(255,0,0), 3, 8, 0); //Roof BR to Pin outside cuboid
+  }
+
+  return 0;
+}
