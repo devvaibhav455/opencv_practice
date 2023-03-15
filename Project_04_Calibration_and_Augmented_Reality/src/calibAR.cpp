@@ -27,6 +27,7 @@ int main(int argc, char** argv)
     std::cout << "Please enter the operating mode" << std::endl;
     std::cout << "\tc: Calculate camera calibration parameters" << std::endl;
     std::cout << "\tp: Projection mode" << std::endl;
+    std::cout << "\t1: AR TV using Aruco tags" << std::endl;
     
 
     int reset_initially = 1;
@@ -62,6 +63,22 @@ int main(int argc, char** argv)
             source = 2;
         }
         project(source, target_filename);
+        return 0;
+    }
+
+    else if (strcmp("1", mode) == 0){
+        int ar_source = 0; //0 :image | 1 : video from file | 2 : live video from webcam
+        cv::Mat frame;
+
+        if( argc == 3) {
+            strcpy(target_filename, argv[2] );
+            char *target_filename_char_star = target_filename;
+            std::cout << "Reading image/ video from directory" << std::endl;
+            ar_source = 0; //It could be 0 or 1
+        }else{
+            ar_source = 2;
+        }
+        arucoTV(ar_source, target_filename);
         return 0;
     }
     

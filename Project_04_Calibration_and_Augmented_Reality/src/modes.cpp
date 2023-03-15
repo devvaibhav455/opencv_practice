@@ -15,6 +15,11 @@ Project 4: Calibration and Augmented Reality
 #include <dirent.h>
 #include <csv_util.h>
 
+// Import the aruco module in OpenCV
+#include <opencv2/aruco.hpp>
+ 
+
+
 
 
 // Basic training mode. Reads images from directory and writes the feature vectors to a csv file
@@ -263,5 +268,182 @@ int project(int &source, char *target_filename_char_star){
   }
 
 
+  return 0;
+}
+
+int arucoTV(int &ar_source, char *target_filename_char_star){
+
+  //ar_source: 0 :image | 1 : video from file | 2 : live video from webcam
+  cv::Mat frame, frame_ar;
+  cv::VideoCapture *capdev;
+  int fps;
+  if(ar_source == 0){
+    // Check if the input is image or video file by counting the number of frames in the input
+    
+    capdev = new cv::VideoCapture(target_filename_char_star); 
+    // Print error message if the stream is invalid
+    if (!capdev->isOpened()){
+      std::cout << "Error opening video stream or image file" << std::endl;
+    }else{
+      // Obtain fps and frame count by get() method and print
+      // You can replace 5 with CAP_PROP_FPS as well, they are enumerations
+      fps = capdev->get(5);
+      std::cout << "Frames per second in video:" << fps << std::endl;
+  
+      // Obtain frame_count using opencv built in frame count reading method
+      // You can replace 7 with CAP_PROP_FRAME_COUNT as well, they are enumerations
+      int frame_count = capdev->get(7);
+      std::cout << "  Frame count :" << frame_count << std::endl;
+
+      (frame_count == 1) ? ar_source = 0 : ar_source = 1;
+      
+    }
+
+    if (ar_source == 0){
+      // Read the image file
+      frame_ar = cv::imread(target_filename_char_star);//,cv::ImreadModes::IMREAD_UNCHANGED);
+      std::cout << "Reading image from disk successful. Number of channels in image: " << frame.channels() << std::endl;
+      
+      // Check for failure
+      if (frame_ar.empty()) {
+          std::cout << "Could not open or find the image" << std::endl;
+          // std::cin.get(); //wait for any key press
+          return -1;
+      }
+    }
+  }
+
+  
+  capdev = new cv::VideoCapture(0);
+  if (!capdev->isOpened()) {
+    throw std::runtime_error("Error");
+    return -1;
+  }
+  fps = capdev->get(5);
+  std::cout << "Input feed is camera" << std::endl;
+  // get some properties of the image
+  cv::Size refS( (int) capdev->get(cv::CAP_PROP_FRAME_WIDTH ),
+              (int) capdev->get(cv::CAP_PROP_FRAME_HEIGHT));
+  printf("Image size(WidthxHeight) from camera: %dx%d\n", refS.width, refS.height);
+  
+  std::cout << "ar_source is: " << ar_source << std::endl;
+
+  int window_id = 1;
+  cv::String window_original_image = std::to_string(window_id) + " :Original image";
+  window_id++;
+
+  cv::String window_artv_image = std::to_string(window_id) + " :AR TV";
+  window_id++;
+
+  while (true) {
+    // std::cout << "####################### REACHED START OF WHILE LOOP #######################" << std::endl;
+    // std::cout << "Frame before input from camera = " << std::endl << " " << frame << std::endl << std::endl;
+    // std::cout << "Getting data from camera" << std::endl;
+    
+    *capdev >> frame; //frame.type() is 16 viz. 8UC3
+    cv::resize(frame, frame, cv::Size(res_width, res_height));    
+    
+
+
+    if( ar_source == 1){
+      bool isSuccess = capdev->read(frame_ar);
+
+      // If frames are not there, close it
+      if (isSuccess == false){
+        std::cout << "Video file has ended. Running the video in loop" << std::endl;
+        capdev->set(1,0);
+        capdev->read(frame_ar); //Src: https://stackoverflow.com/questions/17158602/playback-loop-option-in-opencv-videos
+      }
+    }else if( ar_source == 2){
+      // std::cout << "Getting data from camera" << std::endl;
+      frame_ar = frame;
+    }
+
+    // printf("Resizing image to %dx%d\n", res_width, res_height);
+    
+    int key_pressed = cv::waitKey(1); //Gets key input from user. Returns -1 if key is not pressed within the given time. Here, 1 ms.
+    // std::cout << "Pressed key is: " << key_pressed << std::endl;
+
+    // ASCII table reference: http://sticksandstones.kstrom.com/appen.html
+    if(key_pressed == 'q'){ //Search for the function's output if no key is pressed within the given time           
+        //Wait indefinitely until 'q' is pressed. 113 is q's ASCII value  
+        std::cout << "q is pressed. Exiting the program" << std::endl;
+        cv::destroyWindow("1: Original_Image"); //destroy the created window
+        return 0;
+    }
+
+    // Load the dictionary that was used to generate the markers.
+    cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_250); // Try 50, 100, 1000 as well
+    
+    // Initialize the detector parameters using default values
+    cv::Ptr<cv::aruco::DetectorParameters> parameters = cv::aruco::DetectorParameters::create();
+                
+    // Declare the vectors that would contain the detected marker corners and the rejected marker candidates
+    std::vector<std::vector<cv::Point2f>> markerCorners, rejectedCandidates;
+    
+    // The ids of the detected markers are stored in a vector
+    std::vector<int> markerIds;
+                
+    // Detect the markers in the image. Please not that the markers can be detected in any order. It is not fixed that id 0 will be detected first.
+    cv::aruco::detectMarkers(frame, dictionary, markerCorners, markerIds, parameters, rejectedCandidates);
+
+    
+    // draw detected markers: frame, corner id
+    cv::aruco::drawDetectedMarkers(frame, markerCorners, markerIds);
+    
+    for (auto it:markerIds){
+      std::cout << "Marker id: " << it << " "; 
+    }
+    std::cout << std::endl;
+
+    // pts_src contains the 4 corners of the ar_source frame in clockwise order. TL, TR, BR, BL
+    std::vector<cv::Point2i> pts_src{cv::Point2i(0,0), cv::Point2i(res_width,0), cv::Point2i(res_width,res_height), cv::Point2i(0,res_height) };
+    
+    
+    std::vector<cv::Point2i> BoxCoordinates;
+    if (markerIds.size() == 4){
+
+      BoxCoordinates.push_back(markerCorners[find(markerIds.begin(), markerIds.end(), 0) - markerIds.begin()][0]);
+      BoxCoordinates.push_back(markerCorners[find(markerIds.begin(), markerIds.end(), 1) - markerIds.begin()][1]);
+      BoxCoordinates.push_back(markerCorners[find(markerIds.begin(), markerIds.end(), 3) - markerIds.begin()][2]);
+      BoxCoordinates.push_back(markerCorners[find(markerIds.begin(), markerIds.end(), 2) - markerIds.begin()][3]);
+      // pts_dst contains the 4 corners where we want to show another video/ image (i.e. using corners of 4 aruco markers). They also need to be stores the  same way as pts_src
+      std::vector<cv::Point2i> pts_dst = BoxCoordinates;
+      //Resize frame_wr wrt the dimensions of the 
+
+
+      // std::cout << "pts_src 0th points is: " << pts_src[1] <<  std::endl;
+
+      // Compute homography from ar_source and destination points
+      cv::Mat h = cv::findHomography(pts_src, pts_dst);
+      
+      // Warped image
+      cv::Mat warpedImage;
+                  
+      // Warp ar_source image to destination based on homography
+      cv::warpPerspective(frame_ar, warpedImage, h, frame.size(), cv::INTER_CUBIC);
+      cv::imshow("warpPerspective output", warpedImage);       
+      // Prepare a mask representing region to copy from the warped image into the original frame.
+      cv::Mat mask = cv::Mat::zeros(frame.rows, frame.cols, CV_8UC1);
+      cv::imshow("Mask original", mask);
+      // Src: https://stackoverflow.com/questions/43629978/opencv-exception-fillconvexppoly
+      cv::fillConvexPoly(mask, pts_dst, cv::Scalar(255, 255, 255));
+      // Mask now contains 255 inside the bounding box rectangle
+      cv::imshow("Mask after filling", mask);
+      std::cout << " ########### REACHED HERE ###########" << std::endl;
+                  
+      // Erode the mask to not copy the boundary effects from the warping
+      cv::Mat element = cv::getStructuringElement( cv::MORPH_RECT, cv::Size(3,3) );
+      cv::erode(mask, mask, element);
+      cv::imshow("Mask after eroding", mask); //almost the same as mask before eroding
+      
+      // // Copy the masked warped image into the original frame in the mask region.
+      // cv::Mat imOut = frame_ar.clone();
+      // warpedImage.copyTo(imOut, mask);
+      // cv::imshow(window_artv_image, warpedImage);
+    }
+    
+    cv::imshow(window_original_image, frame);
+  }
   return 0;
 }

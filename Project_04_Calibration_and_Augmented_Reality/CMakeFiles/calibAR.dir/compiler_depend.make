@@ -2116,8 +2116,12 @@ CMakeFiles/calibAR.dir/src/modes.cpp.o: src/modes.cpp \
   /usr/include/dirent.h \
   /usr/include/x86_64-linux-gnu/bits/dirent.h \
   /usr/include/x86_64-linux-gnu/bits/dirent_ext.h \
-  include/csv_util.h
+  include/csv_util.h \
+  /usr/include/opencv4/opencv2/aruco.hpp \
+  /usr/include/opencv4/opencv2/aruco/dictionary.hpp
 
+
+/usr/include/opencv4/opencv2/aruco.hpp:
 
 src/modes.cpp:
 
@@ -2202,6 +2206,8 @@ include/csv_util.h:
 /usr/include/opencv4/opencv2/flann/heap.h:
 
 /usr/include/opencv4/opencv2/flann/dist.h:
+
+/usr/include/opencv4/opencv2/aruco/dictionary.hpp:
 
 /usr/include/opencv4/opencv2/flann/dynamic_bitset.h:
 

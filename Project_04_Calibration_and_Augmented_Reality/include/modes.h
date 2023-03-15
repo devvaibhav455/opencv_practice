@@ -7,3 +7,5 @@ Project 4: Calibration and Augmented Reality
 int calibrate_camera();
 
 int project(int &source, char *target_filename_char_star);
+
+int arucoTV(int &ar_source, char *target_filename_char_star);

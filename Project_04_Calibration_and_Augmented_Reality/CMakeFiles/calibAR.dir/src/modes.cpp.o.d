@@ -357,4 +357,6 @@ CMakeFiles/calibAR.dir/src/modes.cpp.o: \
  /home/dev/Documents/opencv_practice/Project_04_Calibration_and_Augmented_Reality/include/filter.h \
  /usr/include/dirent.h /usr/include/x86_64-linux-gnu/bits/dirent.h \
  /usr/include/x86_64-linux-gnu/bits/dirent_ext.h \
- /home/dev/Documents/opencv_practice/Project_04_Calibration_and_Augmented_Reality/include/csv_util.h
+ /home/dev/Documents/opencv_practice/Project_04_Calibration_and_Augmented_Reality/include/csv_util.h \
+ /usr/include/opencv4/opencv2/aruco.hpp \
+ /usr/include/opencv4/opencv2/aruco/dictionary.hpp
