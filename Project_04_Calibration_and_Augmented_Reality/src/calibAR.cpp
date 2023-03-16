@@ -43,7 +43,6 @@ int main(int argc, char** argv)
     if (strcmp("c", mode) == 0){
         //Read images from directory and write feature vector to a csv file
         calibrate_camera();
-        return 0;
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -62,8 +61,8 @@ int main(int argc, char** argv)
         }else{
             source = 2;
         }
-        project(source, target_filename);
-        return 0;
+        int alter_base = 0;
+        project(source, target_filename, alter_base);
     }
 
     else if (strcmp("1", mode) == 0){
@@ -79,7 +78,22 @@ int main(int argc, char** argv)
             ar_source = 2;
         }
         arucoTV(ar_source, target_filename);
-        return 0;
+    }
+
+    else if (strcmp("2", mode) == 0){
+        int source = 0; //0 :image | 1 : video from file | 2 : live video from webcam
+        cv::Mat frame;
+
+        if( argc == 3) {
+            strcpy(target_filename, argv[2] );
+            char *target_filename_char_star = target_filename;
+            std::cout << "Reading image/ video from directory" << std::endl;
+            source = 0; //It could be 0 or 1
+        }else{
+            source = 2;
+        }
+        int alter_base = 1;
+        project(source, target_filename, alter_base);
     }
     
     return 0;

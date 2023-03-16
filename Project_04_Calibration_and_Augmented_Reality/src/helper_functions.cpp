@@ -301,7 +301,7 @@ int calc_calib_params(char dirname[]){
   return 0;
 }
 
-int draw_shape_on_image(std::string shape, cv::Mat &frame, cv::Mat &cameraMatrix, cv::Vec<float, 5> &distCoeffs, cv::Mat &rvec, cv::Mat &tvec, std::vector<cv::Point2f> &corner_set){
+int draw_shape_on_image(std::string shape, cv::Mat &frame, cv::Mat &cameraMatrix, cv::Vec<float, 5> &distCoeffs, cv::Mat &rvec, cv::Mat &tvec, std::vector<cv::Point2f> &corner_set, int &alter_base){
   
   std::vector<cv::Point3d> points_to_project3D;
   std::vector<cv::Point2d> projected_points2D;
@@ -362,6 +362,17 @@ int draw_shape_on_image(std::string shape, cv::Mat &frame, cv::Mat &cameraMatrix
     cv::line(frame, projected_points2D[5], projected_points2D[9], cv::Scalar(255,0,0), 3, 8, 0); //Roof BL to Pin outside cuboid
     cv::line(frame, projected_points2D[6], projected_points2D[9], cv::Scalar(255,0,0), 3, 8, 0); //Roof TR to Pin outside cuboid
     cv::line(frame, projected_points2D[7], projected_points2D[9], cv::Scalar(255,0,0), 3, 8, 0); //Roof BR to Pin outside cuboid
+  }
+
+  if (alter_base == 1){
+    std::vector<cv::Point> base_poly;
+    base_poly.push_back(projected_points2D[0]); // Base TL
+    base_poly.push_back(projected_points2D[2]); // Base TR
+    base_poly.push_back(projected_points2D[3]); // Base BR
+    base_poly.push_back(projected_points2D[1]); // Base BL
+    // for (std::size_t i = 0; i < BoxCoordinates.size(); i++)
+    //       BoxCoordinates_Converted.push_back(cv::Point(BoxCoordinates[i].x, BoxCoordinates[i].y));
+    cv::fillConvexPoly(frame, base_poly, cv::Scalar(0, 0, 255)); //Color in BGR order
   }
 
   return 0;
