@@ -53,9 +53,20 @@ static std::ostream& operator<<(std::ostream& out, const MyData& m)
 // Converts char[] to std::string
 std::string char_to_String(char* a);
 
-// Saves the images used for camera calibration to disk
+// Capture/ save calibration images from camera when user presses 's' if not already saved in "calibration_images" directory
 int capture_calibration_images();
 
+// Calculate the calibration parameters from the images in the directory "calibration_images" which is provided as an argument to the function
 int calc_calib_params(char dirname[]);
 
+// Draw either the 3d axes or washington monument like structure on particular predefined checkerboard corners
+// Input:               std::string shape                       --> The shape which we want to be projected. Either "axis" or "wa_monument"
+//                      cv::Mat &cameraMatrix                   --> Camera calibration matrix
+//                      cv::Vec<float, 5> &distCoeffs           --> Distortion co-efficients of the camera
+//                      cv::Mat &rvec                           --> Rotation vector of the current frame
+//                      cv::Mat &tvec                           --> Translation vector of the current frame
+//                      cv::Mat &tvec                           --> Translation vector of the current frame
+//                      std::vector<cv::Point2f> &corner_set    --> Vector of detected checkerboard corners (0 through 53) 
+//                      int &alter_base                         --> Fill the base with a color if set to 1; otherwise 0
+// Input/ Output        cv::Mat &frame                          --> Image on which shape should be drawn
 int draw_shape_on_image(std::string shape, cv::Mat &frame, cv::Mat &cameraMatrix, cv::Vec<float, 5> &distCoeffs, cv::Mat &rvec, cv::Mat &tvec, std::vector<cv::Point2f> &corner_set, int &alter_base);

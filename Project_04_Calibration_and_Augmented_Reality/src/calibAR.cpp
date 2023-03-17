@@ -28,6 +28,7 @@ int main(int argc, char** argv)
     std::cout << "\tc: Calculate camera calibration parameters" << std::endl;
     std::cout << "\tp: Projection mode" << std::endl;
     std::cout << "\t1: AR TV using Aruco tags" << std::endl;
+    std::cout << "\t2: Alter the target mode" << std::endl;
     
 
     int reset_initially = 1;
@@ -46,7 +47,7 @@ int main(int argc, char** argv)
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                  OBJECT RECOGNITION MODE MODE: Takes image from user and finds the closest match in the DB                   //
+    //                  PROJECTION MODE: Project a virtual object on the checkerboard                  //
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     else if (strcmp("p", mode) == 0){
@@ -65,6 +66,10 @@ int main(int argc, char** argv)
         project(source, target_filename, alter_base);
     }
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                  AR TV using Aruco tags: Project and image/ video if 4 Aruco markers are detected in the frame               //
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     else if (strcmp("1", mode) == 0){
         int ar_source = 0; //0 :image | 1 : video from file | 2 : live video from webcam
         cv::Mat frame;
@@ -79,6 +84,10 @@ int main(int argc, char** argv)
         }
         arucoTV(ar_source, target_filename);
     }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                  Change the target so that it does not look like a target mode                                               //
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     else if (strcmp("2", mode) == 0){
         int source = 0; //0 :image | 1 : video from file | 2 : live video from webcam

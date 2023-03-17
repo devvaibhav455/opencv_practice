@@ -22,7 +22,7 @@ Project 4: Calibration and Augmented Reality
 
 
 
-// Basic training mode. Reads images from directory and writes the feature vectors to a csv file
+// Calibrates the camera by finding its intrinsic and extrinsic parameters
 int calibrate_camera(){
 
   char dirname[256] = "../calibration_images/";
@@ -57,7 +57,7 @@ int calibrate_camera(){
   printf("There's %d files in the current directory.\n", i);
 
   if (i == 0){
-    //Capture calibration images from the camera
+    //Capture calibration images from the camera if the directory is empty
     capture_calibration_images();  
   }
 
@@ -67,7 +67,7 @@ int calibrate_camera(){
  return 0;
 }
 
-
+// Project a virtual object to the scene if checkerboard is detected
 int project(int &source, char *target_filename_char_star, int &alter_base){
 
   //Source: 0 :image | 1 : video from file | 2 : live video from webcam
@@ -110,6 +110,7 @@ int project(int &source, char *target_filename_char_star, int &alter_base){
     }
   }
 
+  // Source is live video
   if (source == 2){
     capdev = new cv::VideoCapture(0);
     if (!capdev->isOpened()) {
@@ -125,7 +126,7 @@ int project(int &source, char *target_filename_char_star, int &alter_base){
   }
     
 
-  // Read calibration parameters from the yaml file
+  // Read calibration parameters from the yaml file (calibparam.yaml)
   std::cout << std::endl << "Reading: " << std::endl;
   cv::FileStorage fs;
   fs.open("calibparam.yaml", cv::FileStorage::READ);
@@ -194,26 +195,27 @@ int project(int &source, char *target_filename_char_star, int &alter_base){
   cv::Mat grey_image;
   
   std::vector<cv::Point2f> corner_set; //this will be filled by the detected corners
-  bool patternfound;
+  bool patternfound; // Its true when all 54 corners are detected in the checkerboard
   cv::Mat rvec, tvec;
 
-  int key_pressed;
+  int key_pressed; // Stores the key pressed by the user when the function is running
 
   while (true) {
     // std::cout << "####################### REACHED START OF WHILE LOOP #######################" << std::endl;
     // std::cout << "Frame before input from camera = " << std::endl << " " << frame << std::endl << std::endl;
     // std::cout << "Getting data from camera" << std::endl;
     
-    
+    // Read video file as source frame if source == 1
     if( source == 1){
       bool isSuccess = capdev->read(frame);
 
-      // If frames are not there, close it
+      // If video file has ended playing, play it again (i.e. in loop)
       if (isSuccess == false){
         std::cout << "Video file has ended. Running the video in loop" << std::endl;
-        capdev->set(1,0);
+        capdev->set(1,0); // Read the video file from beginning | https://docs.opencv.org/4.x/d4/d15/group__videoio__flags__base.html#ggaeb8dd9c89c10a5c63c139bf7c4f5704da6223452891755166a4fd5173ea257068
         capdev->read(frame); //Src: https://stackoverflow.com/questions/17158602/playback-loop-option-in-opencv-videos
       }
+    
     }else if( source == 2){
         // std::cout << "Getting data from camera" << std::endl;
         *capdev >> frame; //frame.type() is 16 viz. 8UC3
@@ -223,7 +225,7 @@ int project(int &source, char *target_filename_char_star, int &alter_base){
     // printf("Resizing image to %dx%d\n", res_width, res_height);
     
     
-    cv::Mat temp;
+    cv::Mat temp; // Using temp matrix to detected multiple checkerboards
     frame.copyTo(temp);
 
     // STEP 1: Detect and Extract Chessboard Corners
@@ -235,7 +237,7 @@ int project(int &source, char *target_filename_char_star, int &alter_base){
     patternfound = false;
     int num_patters_found = 0;
     while(patternfound == true || num_patters_found == 0 ){
-      greyscale(temp, grey_image); //source image
+      greyscale(temp, grey_image); // Converting the image to greyscale
       patternfound = findChessboardCorners(grey_image, patternsize, corner_set,
             cv::CALIB_CB_ADAPTIVE_THRESH + cv::CALIB_CB_NORMALIZE_IMAGE
             + cv::CALIB_CB_FAST_CHECK);
@@ -253,6 +255,7 @@ int project(int &source, char *target_filename_char_star, int &alter_base){
 
       // Project a 3D point (0, 0, 1000.0) onto the image plane.
       // We use this to draw a line sticking out of the nose
+      draw_shape_on_image("axis", frame, cameraMatrix, distCoeffs, rvec, tvec, corner_set, alter_base);
       draw_shape_on_image("wa_monument", frame, cameraMatrix, distCoeffs, rvec, tvec, corner_set, alter_base);
 
       //whiten the pixels for the found checkerboard and find the next
@@ -262,7 +265,7 @@ int project(int &source, char *target_filename_char_star, int &alter_base){
       checker_board_ibb.push_back(corner_set[53]); //BR
       checker_board_ibb.push_back(corner_set[45]); //BL
 
-      cv::fillConvexPoly(temp, checker_board_ibb, cv::Scalar(255,255,255) ); //Painting the checkerboard ibb in white
+      cv::fillConvexPoly(temp, checker_board_ibb, cv::Scalar(255,255,255) ); //Painting the deected checkerboard's internal corners in white to detect multiple checkerboards| https://stackoverflow.com/questions/51772947/multiple-checkerboard-detection-opencv
       num_patters_found++;
       // cv::imshow("Painted in white" , temp);
     }
@@ -276,6 +279,7 @@ int project(int &source, char *target_filename_char_star, int &alter_base){
     // ASCII table reference: http://sticksandstones.kstrom.com/appen.html
     
     if(source == 0){
+      // If source frame is image, don't run the processing again and again. So, wait indefinitely for user's input
       key_pressed = cv::waitKey(0);
     }else{
       key_pressed = cv::waitKey(1000/fps); // It will play video at its original fps
@@ -286,21 +290,20 @@ int project(int &source, char *target_filename_char_star, int &alter_base){
       cv::destroyWindow("1: Original_Image"); //destroy the created window
       return 0;
     }
-
   }
-
-
   return 0;
 }
 
+// Project an image or recorded video on the source frame if four aruco tags are detected
 int arucoTV(int &ar_source, char *target_filename_char_star){
 
-  int test = 0; //Load a test video to check aruco tag detection code
+  int test = 0; //Load a test video to check aruco tag detection code. Used for debugging
 
-  //ar_source: 0 :image | 1 : video from file | 2 : live video from webcam
   cv::Mat frame, frame_ar;
-  cv::VideoCapture *capdev, *capdev2;
-  int fps;
+  cv::VideoCapture *capdev, *capdev2; //capdev is for the live feed from webcam | capdev2 is for the ar frame which needs to be superimposed on the Aruco markers
+  int fps; //Stores frame per second of the AR image/ video/ live feed
+  
+  //ar_source: 0 :image | 1 : video from file | 2 : live video from webcam
   if(ar_source == 0){
     // Check if the input is image or video file by counting the number of frames in the input
     
@@ -319,8 +322,8 @@ int arucoTV(int &ar_source, char *target_filename_char_star){
       int frame_count = capdev2->get(7);
       std::cout << "  Frame count :" << frame_count << std::endl;
 
-      (frame_count == 1) ? ar_source = 0 : ar_source = 1;
-      
+      // If no. of frames is 1, it is an image, otherwise a video
+      (frame_count == 1) ? ar_source = 0 : ar_source = 1;   
     }
 
     if (ar_source == 0){
@@ -336,8 +339,8 @@ int arucoTV(int &ar_source, char *target_filename_char_star){
       }
     }
   }
-
   
+  // Read live feed from webcam
   capdev = new cv::VideoCapture(0);
   if (!capdev->isOpened()) {
     throw std::runtime_error("Error");
@@ -388,8 +391,6 @@ int arucoTV(int &ar_source, char *target_filename_char_star){
     }
     
     cv::resize(frame, frame, cv::Size(res_width, res_height));    
-    
-
 
     if( ar_source == 1){
       bool isSuccess = capdev2->read(frame_ar);
@@ -438,17 +439,17 @@ int arucoTV(int &ar_source, char *target_filename_char_star){
     // draw detected markers: frame, corner id
     // cv::aruco::drawDetectedMarkers(frame, markerCorners, markerIds);
     
-    // pts_src contains the 4 corners of the ar_source frame in clockwise order. TL, TR, BR, BL
+    // pts_src contains the 4 corners of the original frame in clockwise order. TL, TR, BR, BL
     std::vector<cv::Point2f> pts_src{cv::Point2f(0,0), cv::Point2f(res_width-1,0), cv::Point2f(res_width-1,res_height-1), cv::Point2f(0,res_height-1) };
     
     std::vector<cv::Point2f> BoxCoordinates;
     if (markerIds.size() == 4){
 
-      BoxCoordinates.push_back(markerCorners[find(markerIds.begin(), markerIds.end(), 0) - markerIds.begin()][0]);
-      BoxCoordinates.push_back(markerCorners[find(markerIds.begin(), markerIds.end(), 1) - markerIds.begin()][1]);
-      BoxCoordinates.push_back(markerCorners[find(markerIds.begin(), markerIds.end(), 3) - markerIds.begin()][2]);
-      BoxCoordinates.push_back(markerCorners[find(markerIds.begin(), markerIds.end(), 2) - markerIds.begin()][3]);
-      // pts_dst contains the 4 corners where we want to show another video/ image (i.e. using corners of 4 aruco markers). They also need to be stores the  same way as pts_src
+      // BoxCoordinates contains the 4 corners where we want to show another video/ image (i.e. using corners of 4 aruco markers). They also need to be stored the same way as pts_src
+      BoxCoordinates.push_back(markerCorners[find(markerIds.begin(), markerIds.end(), 0) - markerIds.begin()][0]); // TL(0 th) corner of the marker with ID 0 (printed on TL corner of the page)
+      BoxCoordinates.push_back(markerCorners[find(markerIds.begin(), markerIds.end(), 1) - markerIds.begin()][1]);// TR(1 st) corner of the marker with ID 1 (printed on TR corner of the page)
+      BoxCoordinates.push_back(markerCorners[find(markerIds.begin(), markerIds.end(), 3) - markerIds.begin()][2]);// TL(2 nd) corner of the marker with ID 3 (printed on BR corner of the page)
+      BoxCoordinates.push_back(markerCorners[find(markerIds.begin(), markerIds.end(), 2) - markerIds.begin()][3]);// TL(3 rd) corner of the marker with ID 2 (printed on BL corner of the page)
 
       std::cout << "Marker id: ";
       for (auto it:markerIds){
@@ -514,14 +515,15 @@ int arucoTV(int &ar_source, char *target_filename_char_star){
       cv::imshow("Mask original", mask);
       // Src: https://stackoverflow.com/questions/43629978/opencv-exception-fillconvexppoly
       cv::fillConvexPoly(mask, BoxCoordinates_Converted, cv::Scalar(255,255,255));
+      // Mask now contains 255 (white) inside the bounding box rectangle and 0 (black) everywhere else
 
       // cv::circle(mask, )
       cv::imshow("Mask after filling", mask);
 
       cv::Mat mask_not;
       cv::bitwise_not(mask, mask_not);
+      // mask_not now contains 0 (black) inside the bounding box rectangle and 255 (white) everywhere else
       cv::imshow("Mask not is", mask_not);
-      // Mask now contains 255 inside the bounding box rectangle
       std::cout << " ########### REACHED HERE ###########" << std::endl;
                   
       // Erode the mask to not copy the boundary effects from the warping
@@ -537,7 +539,6 @@ int arucoTV(int &ar_source, char *target_filename_char_star){
 
       overlapped_frame = frame_masked.clone();
       cv::bitwise_or(frame_masked, warpedImage, overlapped_frame);
-
 
       // frame.copyTo(imOut, mask);
       cv::imshow(window_artv_image, overlapped_frame);

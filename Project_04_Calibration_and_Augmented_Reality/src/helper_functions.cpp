@@ -53,6 +53,7 @@ std::string char_to_String(char* a)
     return s;
 }
 
+// Capture/ save calibration images from camera when user presses 's' if not already saved in "calibration_images" directory
 int capture_calibration_images(){
   // Step 1 | Displaying live video
   // CV_[The number of bits per item][Signed or Unsigned][Type Prefix]C[The channel number]
@@ -61,7 +62,7 @@ int capture_calibration_images(){
   cv::Mat frame;
   cv::VideoCapture *capdev;
 
-  capdev = new cv::VideoCapture(0);
+  capdev = new cv::VideoCapture(3);
   if (!capdev->isOpened()) {
     throw std::runtime_error("Error");
     return -1;
@@ -135,7 +136,7 @@ return 0;
 }
 
 
-// Calculate the calibration parameters from the images in the directory
+// Calculate the calibration parameters from the images in the directory "calibration_images"
 int calc_calib_params(char dirname[]){
   // char dirname[256] = "../calibration_images/";
   char buffer[256];
@@ -288,6 +289,7 @@ int calc_calib_params(char dirname[]){
 
   fs << "Camera_Matrix" << cameraMatrix;                                      // cv::Mat
   fs << "Distortion_Coefficients" << distCoeffs;
+  fs << "Reprojection error" << error;
   fs << "Point_List" << point_list;
   fs << "Rotations" << rvecs;
   fs << "Translations" << tvecs;
@@ -301,6 +303,16 @@ int calc_calib_params(char dirname[]){
   return 0;
 }
 
+// Draw either the 3d axes or washington monument like structure on particular predefined checkerboard corners
+// Input:               std::string shape                       --> The shape which we want to be projected. Either "axis" or "wa_monument"
+//                      cv::Mat &cameraMatrix                   --> Camera calibration matrix
+//                      cv::Vec<float, 5> &distCoeffs           --> Distortion co-efficients of the camera
+//                      cv::Mat &rvec                           --> Rotation vector of the current frame
+//                      cv::Mat &tvec                           --> Translation vector of the current frame
+//                      cv::Mat &tvec                           --> Translation vector of the current frame
+//                      std::vector<cv::Point2f> &corner_set    --> Vector of detected checkerboard corners (0 through 53) 
+//                      int &alter_base                         --> Fill the base with a color if set to 1; otherwise 0
+// Input/ Output        cv::Mat &frame                          --> Image on which shape should be drawn
 int draw_shape_on_image(std::string shape, cv::Mat &frame, cv::Mat &cameraMatrix, cv::Vec<float, 5> &distCoeffs, cv::Mat &rvec, cv::Mat &tvec, std::vector<cv::Point2f> &corner_set, int &alter_base){
   
   std::vector<cv::Point3d> points_to_project3D;
@@ -309,7 +321,7 @@ int draw_shape_on_image(std::string shape, cv::Mat &frame, cv::Mat &cameraMatrix
   if (shape.compare("axis") == 0){
     // Generate points for the axis
     points_to_project3D.push_back(cv::Point3d(2,0,0)); //X-axis; RED in color
-    points_to_project3D.push_back(cv::Point3d(0,-2,0)); //Y-axis; GREEN in color
+    points_to_project3D.push_back(cv::Point3d(0,2,0)); //Y-axis; GREEN in color
     points_to_project3D.push_back(cv::Point3d(0,0,2)); //Z-axis; BLUE in color
 
     projectPoints(points_to_project3D, rvec, tvec, cameraMatrix, distCoeffs, projected_points2D);

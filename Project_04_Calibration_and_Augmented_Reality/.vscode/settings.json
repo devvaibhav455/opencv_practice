@@ -85,6 +85,7 @@
         "scoped_allocator": "cpp",
         "span": "cpp",
         "syncstream": "cpp",
-        "valarray": "cpp"
+        "valarray": "cpp",
+        "*.ipp": "cpp"
     }
 }

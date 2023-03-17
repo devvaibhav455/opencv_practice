@@ -4,6 +4,7 @@
 #include "helper_functions.h"
 #include "filter.h"
 
+// Do nothing when the user changes the threshold on GUI trackbar
 static void on_trackbar( int, void* ){
     //It does nothing
 }    
