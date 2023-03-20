@@ -1,6 +1,6 @@
 /*Dev Vaibhav
 Spring 2023 CS 5330
-Project 3: Real-time Object 2-D Recognition  | Some code is from Project 1: Real-time filtering which just lies and does nothing
+Project 4: Calibration and Augmented Reality  | Some code is from Project 1: Real-time filtering which just lies and does nothing
 */
 
 #include <opencv2/opencv.hpp>

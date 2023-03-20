@@ -1,6 +1,6 @@
-Working alone for Project 3: Real-time 2-D Object Recognition 
-Used two time travel days for this project. Total used: 1(Project 1); 2 (Project 2) = 3
-LINK TO REPORT: https://wiki.khoury.northeastern.edu/display/~vaibhavd/Project+3%3A+Real-time+2-D+Object+Recognition
+Working alone for Project 4: Calibration and Augmented Reality
+Used zero time travel days for this project. Total used: 1(Project 1); 2 (Project 2) = 3
+LINK TO REPORT: https://wiki.khoury.northeastern.edu/display/~vaibhavd/Project+4%3A+Calibration+and+Augmented+Reality
 
 I have no idea about the permission. Please let me know if you face any issue in accessing it.
 
@@ -10,29 +10,35 @@ OS: Ubuntu 22.04
 IDE: VS Code
 OpenCV version: 4.5.4
 
-I made a program binProcess which has four mode of operations
+I made two programs: calibAR and harrisCornerDetector
 There is some code which is commented that I used for debugging and building up the project. Though, it can be removed to make the code look cleaner but I have not removed it for my future reference, to freshen up my basics.
 
 ############################ Instructions to execute binary ############################
-NOTE: The csv file needs to be in the same directory as that of the binary.
+NOTE: The "calibration_images" folder needs to be stored one directory level up with respect to the present working directory of the terminal.
 
 usage:
- ./binProcess <mode>
+ ./calibAR <mode>
 Valid modes:
-	b: Basic training mode. Reads images from a directory and writes feature vectors to a csv file
-	o: Object recognition mode. Takes image from user/ live feed and finds the closest match in the DB
-	k: KNN classifier mode. Takes image from user and finds the closest match in the DB using KNN search
-	t: Testing mode. Takes live feed from the camera to tune and test the system
+	c: Calculate camera calibration parameters
+	p: Projection mode
+	1: AR TV using Aruco tags
+	2: Alter the target mode
 
-'b' mode: 	./binProcess b
-'o' mode: 	./binProcess o <image name>(optional)
-			If image name is entered, an image for disk is read. Otherwise, camera live feed is used
-'k' mode:	./binProcess <k>(int) <image name>
-'t' mode:	./binProcess t <image name>(optional)
-			If image name is entered, an image for disk is read. Otherwise, camera live feed is used
+'c' mode: 	./calibAR c
+'p' mode: 	./calibAR p <image/video name>(optional)
+			If image/ video name is entered, projection will be tried on that frame, otherwise on live video.
+'1' mode:	./calibAR <1>(int) <image/video name to display>
+'2' mode:	./calibAR t <image/video name>(optional)
+			If image/video name is entered, projection and alteration will be tried on that frame, otherwise on live video.
 
 Instructions for extensions:
 
-EXTENSION 5) Comparing different distance metrics: Program is not made further complex by adding in a new CLI. Instead, a line of code is commented to test the new distance metric. Line #395 in modes.cpp 
-
-No separate instructions for other extensions
+1) Get your system working with multiple targets in the scene: No separate instructions for other extensions
+2) Enable your system to use static images or pre-captured video sequences with targets and demonstrate inserting virtual objects into the scenes
+	Please follow the instructions for mode 'p'
+3) Alter target to make it not look like a target any more
+	Please follow the instructions for mode '2'
+4) Test out several different cameras and compare the calibrations and quality of the results
+	Different images need to be put in "calibration_images" folder to compare different cameras
+5) Augmented Reality Television
+	Please follow the instructions for mode '1'

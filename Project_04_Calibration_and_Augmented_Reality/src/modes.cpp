@@ -112,7 +112,7 @@ int project(int &source, char *target_filename_char_star, int &alter_base){
 
   // Source is live video
   if (source == 2){
-    capdev = new cv::VideoCapture(0);
+    capdev = new cv::VideoCapture(1);
     if (!capdev->isOpened()) {
       throw std::runtime_error("Error");
       return -1;
@@ -255,7 +255,7 @@ int project(int &source, char *target_filename_char_star, int &alter_base){
 
       // Project a 3D point (0, 0, 1000.0) onto the image plane.
       // We use this to draw a line sticking out of the nose
-      draw_shape_on_image("axis", frame, cameraMatrix, distCoeffs, rvec, tvec, corner_set, alter_base);
+      // draw_shape_on_image("axis", frame, cameraMatrix, distCoeffs, rvec, tvec, corner_set, alter_base);
       draw_shape_on_image("wa_monument", frame, cameraMatrix, distCoeffs, rvec, tvec, corner_set, alter_base);
 
       //whiten the pixels for the found checkerboard and find the next
@@ -341,7 +341,7 @@ int arucoTV(int &ar_source, char *target_filename_char_star){
   }
   
   // Read live feed from webcam
-  capdev = new cv::VideoCapture(0);
+  capdev = new cv::VideoCapture(1);
   if (!capdev->isOpened()) {
     throw std::runtime_error("Error");
     return -1;

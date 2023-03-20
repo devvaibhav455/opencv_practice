@@ -1,6 +1,6 @@
 /*Dev Vaibhav
 Spring 2023 CS 5330
-Project 2: Content-based Image Retrieval is using files from Project 1: Real-time filtering
+Project 4: Calibration and Augmented Reality| Using functions from project 1
 */
 
 // function computing horizontal gradient

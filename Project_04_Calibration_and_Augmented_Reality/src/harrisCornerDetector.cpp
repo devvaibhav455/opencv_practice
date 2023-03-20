@@ -1,3 +1,8 @@
+/*Dev Vaibhav
+Spring 2023 CS 5330
+Project 4: Calibration and Augmented Reality
+*/
+
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgproc.hpp"
 #include <iostream>
@@ -14,7 +19,7 @@ int main( int argc, char** argv ){
     cv::Mat frame, frame_gray;
     cv::VideoCapture *capdev;
 
-    capdev = new cv::VideoCapture(0);
+    capdev = new cv::VideoCapture(1);
     if (!capdev->isOpened()) {
         throw std::runtime_error("Error");
         return -1;

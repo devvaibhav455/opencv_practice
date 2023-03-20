@@ -1,6 +1,6 @@
 /*Dev Vaibhav
 Spring 2023 CS 5330
-Project 3: Real-time Object 2-D Recognition 
+Project 4: Calibration and Augmented Reality
 */
 
 extern cv::Size patternsize; //interior number of corners
