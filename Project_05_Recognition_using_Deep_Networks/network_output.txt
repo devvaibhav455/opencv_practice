@@ -1,0 +1,1 @@
+Batch Size Train,Dropout Rate,Learning Rate,Momentum,Train Loss,Validation Loss,Epoch,Accuracy
