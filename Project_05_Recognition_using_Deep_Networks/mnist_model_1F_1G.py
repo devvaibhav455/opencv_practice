@@ -65,7 +65,7 @@ def main(argv):
 
     # main function code
     network = MyNetwork()
-    network.load_state_dict(torch.load("./results/model.pth"))
+    network.load_state_dict(torch.load("./results/model_1A_1E.pth"))
     network.eval()
 
     #If dataset is already downloaded, it is not downloaded again.
@@ -130,7 +130,7 @@ def main(argv):
     
     print("Batch shape: ", batch.shape)
     
-
+    # Get the NW output on handwritten digits
     with torch.no_grad():
         handwritten_output = network(batch)
 

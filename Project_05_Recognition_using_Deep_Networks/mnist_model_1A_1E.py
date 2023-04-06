@@ -56,8 +56,7 @@ def train_network( epoch, network, train_loader, optimizer, train_losses, train_
         loss = F.nll_loss(output, target)
         loss.backward()
         optimizer.step()
-        if batch_idx % log_interval == 0: #Print the log after every 10 batches. each batch is 64. so, after 640 images
-            #If the number of batches is not perfectly divisible by log_interval (10 here), the model after training last set of batches won't be saved
+        if batch_idx % log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.item()))
@@ -83,9 +82,6 @@ def test_network(network, test_loader, test_losses):
   print('\nTest set: Avg. loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
     test_loss, correct, len(test_loader.dataset),
     100. * correct / len(test_loader.dataset)))
-  
-  #return the accuracy
-  return(100. * correct / len(test_loader.dataset))
 
 # main function (yes, it needs a comment too)
 def main(argv):
@@ -136,41 +132,12 @@ def main(argv):
     train_losses = []
     train_counter = []
     test_losses = []
-    accuracies = [] #Accuracy for each epoch after network is tested on test set
     test_counter = [i*len(train_loader.dataset) for i in range(n_epochs + 1)]
 
-    accuracies.append(test_network(network, test_loader, test_losses))
-   
+    test_network(network, test_loader, test_losses)
     for epoch in range(1, n_epochs + 1):
         train_network(epoch, network, train_loader, optimizer, train_losses, train_counter)
-        accuracies.append(test_network(network, test_loader, test_losses))
-    
-    #WRITE THE RESULTS TO A FILE TO LATER USE
-    # Opening a file
-    file1 = open('network_output.txt', 'w')
-
-    #WRITE THE RESULTS TO A FILE TO LATER USE
-    # Opening a file
-    file1 = open('network_output.txt', 'w')
-
-    print("Accuracy is: ", round(accuracies[-1].item(),2))
-    s1 = "Batch Size Train," + "Dropout Rate," + "Learning Rate," + "Momentum," + "Train Loss," + "Validation Loss," "Epoch," + "Accuracy" + "\n"
-    s2 = str(batch_size_train) + ","\
-    + str(0.1) + ","\
-    + str(learning_rate) + ","\
-    + str(momentum) + ","\
-    + str(round(train_losses[-1],4)) + ","\
-    + str(round(test_losses[-1],4)) + ","\
-    + str(n_epochs) + ","\
-    + str(round(accuracies[-1].item(),2))
-
-    # Writing a Line to file
-    L = s1 + s2 + "\n"
-    file1.write(L)
-
-    # Closing file
-    file1.close()
-
+        test_network(network, test_loader, test_losses)
     fig = plt.figure()
     plt.plot(train_counter, train_losses, color='blue')
     plt.scatter(test_counter, test_losses, color='red')
@@ -182,7 +149,7 @@ def main(argv):
     return
 
 if __name__ == "__main__":
-    n_epochs = 2
+    n_epochs = 5
     batch_size_train = 64
     batch_size_test = 1000
     learning_rate = 0.01
