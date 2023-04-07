@@ -2,9 +2,8 @@
 Dev Vaibhav
 Spring 2023 CS 5330
 Project 5: Recognition using Deep Networks 
+Task3: Transfer Learning on Greek Letters 
 """
-
-
 
 #Src: https://nextjournal.com/gkoehler/pytorch-mnist
 # import statements
@@ -17,106 +16,37 @@ from torch import nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torchsummary import summary
+# Helpful to understand imports: https://redirect.cs.umbc.edu/courses/331/fall11/notes/python/python3.ppt.pdf
+# Import classes and functions from helper.py
+from helper import *
+import os
+from PIL import Image
+import numpy as np
+import cv2
 
-
-# greek data set transform
-class GreekTransform:
-    def __init__(self):
-        pass
-
-    def __call__(self, x):
-        x = torchvision.transforms.functional.rgb_to_grayscale( x )
-        x = torchvision.transforms.functional.affine( x, 0, (0,0), 36/128, 0 )
-        x = torchvision.transforms.functional.center_crop( x, (28, 28) )
-        return torchvision.transforms.functional.invert( x )
-
-# class definitions
-class MyNetwork(nn.Module):
-    def __init__(self):
-        
-        super(MyNetwork, self).__init__()
-
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=10, kernel_size=5)
-        self.conv2 = nn.Conv2d(in_channels=10, out_channels=20, kernel_size=5)
-        self.conv2_drop = nn.Dropout2d()
-        self.fc1 = nn.Linear(in_features=320, out_features=50)
-        self.fc2 = nn.Linear(in_features=50, out_features=10)
-
-        
-        
-
-    # computes a forward pass for the network
-    # methods need a summary comment
-    def forward(self, x):
-        x = F.relu(F.max_pool2d(self.conv1(x), 2))
-        x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)),2))
-        x = x.view(-1,320)
-        x = F.relu(self.fc1(x))
-        x = F.dropout(x, training=self.training) #During training, randomly zeroes some of the elements of the input tensor with probability p using samples from a Bernoulli distribution. Default probability: 0.5
-        x = self.fc2(x)
-        return F.log_softmax(x, dim=1)
-
-
-# useful functions with a comment for each function
-# Src: https://medium.com/@nutanbhogendrasharma/pytorch-convolutional-neural-network-with-mnist-dataset-4e8a4265e118
-def train_network( epoch, network, train_loader, optimizer, train_losses, train_counter ):
-    
-    network.train()
-    for batch_idx, (data, target) in enumerate(train_loader):
-        optimizer.zero_grad()
-        output = network(data)
-        loss = F.nll_loss(output, target)
-        loss.backward()
-        optimizer.step()
-        if batch_idx % log_interval == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss.item()))
-            train_losses.append(loss.item())
-            train_counter.append(
-                (batch_idx*64) + ((epoch-1)*len(train_loader.dataset)))
-            torch.save(network.state_dict(), './results/model_greek.pth')
-            torch.save(optimizer.state_dict(), './results/optimizer_greek.pth')
-    return
-
-def test_network(network, test_loader, test_losses):
-  network.eval()
-  test_loss = 0
-  correct = 0
-  with torch.no_grad():
-    for data, target in test_loader:
-      output = network(data)
-      test_loss += F.nll_loss(output, target, size_average=False).item()
-      pred = output.data.max(1, keepdim=True)[1]
-      correct += pred.eq(target.data.view_as(pred)).sum()
-  test_loss /= len(test_loader.dataset)
-  test_losses.append(test_loss)
-  print('\nTest set: Avg. loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-    test_loss, correct, len(test_loader.dataset),
-    100. * correct / len(test_loader.dataset)))
-
-# main function (yes, it needs a comment too)
+# Main function which instantiates an object of the MyNetwork class , loads the weight from the already trained model from tasks 1A to 1E and tries to learn three greek letters alpha, beta and gamma from a total of 27 images. I renamed the model name manually and load model_1A_1E.
 def main(argv):
-    # handle any command line arguments in argv
-
+    # print("Arg 1 is: ", argv[1])
     # main function code
     network = MyNetwork()
-    network.load_state_dict(torch.load("./results/model.pth"))
+    network.load_state_dict(torch.load("./results/model_1A_1E.pth"))
 
-    
    
-    # Useful resource: https://jimmy-shen.medium.com/pytorch-freeze-part-of-the-layers-4554105e03a6
     # freezes the parameters for the whole network
+    # Useful resource: https://jimmy-shen.medium.com/pytorch-freeze-part-of-the-layers-4554105e03a6
     for param in network.parameters():
         param.requires_grad = False   
 
-    # network.fc2 = nn.Identity()
+    # Replace the last layer with a new Linear layer with three nodes
+    # Modifying the last layer so that it has only three outputs
     network.fc2 = nn.Linear(in_features=50, out_features=3)
+    
+    #Unfreezing the parameters of the newly added layer. Though, I think this does not need to be done.
     network.fc2.weight.requires_grad = True
-    #Modifying the last layer so that it has only three outputs
-    # network = nn.Sequential(network, nn.Linear(in_features=50, out_features=3))
+    
+    # Set the optimizer
     optimizer = optim.SGD(network.parameters(), lr=learning_rate, momentum=momentum)
-    # optimizer.load_state_dict(torch.load("./results/optimizer.pth"))
+    
 
     # print("Model after changing is: ", network)
 
@@ -127,18 +57,49 @@ def main(argv):
     summary(network, (1,28,28))
     #If dataset is already downloaded, it is not downloaded again.
     # DataLoader for the Greek data set
+
+
+    
+    folder_train = "./greek_train/"
+    folder_test  = "./greek_test/"
+    
+    transform = GreekTransform()
+    # A set of operations to apply on the handwritten images to pass to the network
+    convert_tensor = torchvision.transforms.Compose([
+        # torchvision.transforms.ToTensor(), #Converts [0,255] to [0,1]
+        torchvision.transforms.Grayscale(),
+        torchvision.transforms.Resize(28, antialias=True),
+        torchvision.transforms.RandomInvert(p=1.0),
+        ThresholdTransform(thr_255=85),
+        torchvision.transforms.Normalize((0.1307,), (0.3081,))
+    ]
+    )    
+
+    if len(argv) != 1:
+        if argv[1] == "1": #Handwritten alpha, beta, gamma test
+            print("Testing for handwritten_greek_test")
+            folder_test_no_class  = "./handwritten_greek_test/"
+        elif argv[1] == "2": #Extension: Handwritten pi, theta, omega train and test
+            print("Testing for handwritten_greek_extra")
+            transform = convert_tensor
+            # omega is 0 | pi is 1 | theta is 2
+            folder_train = "./handwritten_greek_extra_train/"
+            folder_test  = "./handwritten_greek_extra_val/"
+
+    
+
     greek_train_loader = torch.utils.data.DataLoader(
-            torchvision.datasets.ImageFolder( "./greek_train/", transform = torchvision.transforms.Compose( [
+            torchvision.datasets.ImageFolder( folder_train, transform = torchvision.transforms.Compose( [
                 torchvision.transforms.ToTensor(),
-                GreekTransform(),
+                transform,
                 torchvision.transforms.Normalize((0.1307,), (0.3081,))
                 ])),
             batch_size = 5, shuffle = True)
     
     greek_test_loader = torch.utils.data.DataLoader(
-            torchvision.datasets.ImageFolder( "./greek_test/", transform = torchvision.transforms.Compose( [
+            torchvision.datasets.ImageFolder( folder_test, transform = torchvision.transforms.Compose( [
                 torchvision.transforms.ToTensor(),
-                GreekTransform(),
+                transform,
                 torchvision.transforms.Normalize((0.1307,), (0.3081,))
                 ])),
             batch_size = 1, shuffle = True)
@@ -190,12 +151,69 @@ def main(argv):
     plt.ylabel('negative log likelihood loss')
     fig
     plt.show()
+
+    print("Arg 1 is: ", argv[1])
+    #################################################################################
+    # TESTING ON THE HANDWRITTEN GREEK
+    #################################################################################
+    if argv[1] == "1":
+        network = MyNetwork_Greek()
+        network.load_state_dict(torch.load("./results/model_greek.pth"))
+        # Model is set in evaluation mode
+        network.eval()
+
+        # Initializing the batch with zeros
+        batch = torch.zeros(20, 1,28,28)#,dtype=float)
+        
+        # A set of operations to apply on the handwritten images to pass to the network
+        convert_tensor = torchvision.transforms.Compose([
+            torchvision.transforms.ToTensor(), #Converts [0,255] to [0,1]
+            torchvision.transforms.Grayscale(),
+            torchvision.transforms.Resize(28, antialias=True),
+            torchvision.transforms.RandomInvert(p=1.0),
+            ThresholdTransform(thr_255=85),
+            torchvision.transforms.Normalize((0.1307,), (0.3081,))
+        ]
+        )
+        
+        # Loading all the images inside the folder folder_test
+        i = 0
+        for filename in os.listdir(folder_test_no_class):
+            img = Image.open(os.path.join(folder_test_no_class,filename))
+            # cv_img = np.array(img)
+            # cv_img = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
+            # cv_img = cv2.threshold(cv_img, 0, 255, cv2.THRESH_OTSU)
+            # img = Image.fromarray(cv_img, mode ="") #Convert the cv::Mat to PIL image which is fine
+            img = convert_tensor(img) #img is 0/ 1 here after binary
+            # print("img is:" , img)
+            batch[i] = img
+            i = i+1
+    
+        print("Batch shape: ", batch.shape)
+
+        # Get the NW output on handwritten digits
+        with torch.no_grad():
+            handwritten_output = network(batch)
+        
+        # Visualizing the effect of 10 filters of the first layer on the first training example
+        fig = plt.figure()
+        for i in range(10):
+            plt.subplot(4,3,i+1)
+            plt.tight_layout()
+            plt.imshow(batch[i][0], cmap='gray', interpolation='none')
+            plt.title("Prediction: {}".format(
+                handwritten_output.data.max(1, keepdim=True)[1][i].item()))
+            plt.xticks([])
+            plt.yticks([])
+        fig
+        plt.show()
+    
     return
 
 if __name__ == "__main__":
-    n_epochs = 65
-    batch_size_train = 64
-    batch_size_test = 1000
+    n_epochs = 5 #72
+    batch_size_train = 7
+    batch_size_test = 2
     learning_rate = 0.01
     momentum = 0.5
     log_interval = 10

@@ -16,22 +16,21 @@ import torchvision
 from torch import nn
 import torch.nn.functional as F
 import torch.optim as optim
-from my_class import ThresholdTransform, MyNetwork
+from helper import ThresholdTransform, MyNetwork
 import os
 from PIL import Image
 
-
+# Function to detect figits from live video
+# main function code
 def main():
-    print("Hello World!")
-
 
     # Live video code based on Src: https://www.geeksforgeeks.org/python-opencv-capture-video-from-camera/
 
-    # main function code
     network = MyNetwork()
     network.load_state_dict(torch.load("./results/model_1A_1E.pth"))
     network.eval()
 
+    # A series of operations to get the desired input in the network
     convert_tensor = torchvision.transforms.Compose([
         torchvision.transforms.ToTensor(), #Converts [0,255] to [0,1]
         torchvision.transforms.Grayscale(),
@@ -42,64 +41,30 @@ def main():
         torchvision.transforms.Normalize((0.1307,), (0.3081,))
     ]
     )
-    # batch = torch.zeros(10, 1,28,28)#,dtype=float)
-
-    # my_folder = "./handwritten_digits/"
-    # i = 0
-    # for filename in os.listdir(my_folder):
-    #     img = Image.open(os.path.join(my_folder,filename))
-    #     img = convert_tensor(img) #img is 0/ 1 here after binary
-    #     # print("img is:" , img)
-    #     batch[i] = img
-    #     i = i+1
-
-    # print("Batch shape: ", batch.shape)
-
-    # # Get the NW output on handwritten digits
-    # with torch.no_grad():
-    #     handwritten_output = network(batch)
-
-    # fig = plt.figure()
-    # for i in range(10):
-    #     plt.subplot(4,3,i+1)
-    #     plt.tight_layout()
-    #     plt.imshow(batch[i][0], cmap='gray', interpolation='none')
-    #     plt.title("Prediction: {}".format(
-    #         handwritten_output.data.max(1, keepdim=True)[1][i].item()))
-    #     plt.xticks([])
-    #     plt.yticks([])
-    # fig
-    # plt.show()
-
-
-
-    # define a video capture object
+        # define a video capture object
     vid = cv2.VideoCapture(1)
-
-
-
 
     #Show live video using matplotlib: https://stackoverflow.com/questions/44598124/update-frame-in-matplotlib-with-live-camera-preview
 
-
-
-        
-
+    # Interactive mode on for matplotlib pyplot module
     plt.ion()
+
+    #Infinite loop to show/ process the live video
     while(True):
         print(" ################################### LOOP STARTED ###################################")
-        # Capture the video frame
-        # by frame
+        # Capture the video frame by frame
         ret, frame_color = vid.read()
 
-        
+        # Resizing to 500x500
         frame_color = cv2.resize(frame_color, (500,500)) #cv::Mat
-        #create two image plots
+        # Changing order from BGR ti RGB so that it can be used by PIL
         frame_rgb = cv2.cvtColor(frame_color, cv2.COLOR_BGR2RGB) # cv::Mat
         
-
+        # Grayscale image for processing
         frame_gray = cv2.cvtColor(frame_color, cv2.COLOR_BGR2GRAY)
+        # Gaussian blur applied on the grayscale image
         blurred = cv2.GaussianBlur(frame_gray, (5, 5), 0)
+        # Canny edge detection applied on the blurred image
         edged = cv2.Canny(blurred, 50, 200, 255)
 
         
@@ -114,17 +79,18 @@ def main():
         cv2.drawContours(frame_gray, cnts, -1, (0, 255,0), 3)
         
         print("Number of contours detected: ", len(cnts))
-        pbibb = 20 #Pixel buffer in bb
+        pbibb = 20 #Pixel buffer in bb. Used to move AABB corners by this much pixel value
         
-        displayCnt = None
-        roi_array = []
+        roi_array = [] #Array of images containg the region of interes (digits) in the image
+        tl_array = [] #Co-ord of top ledt corner of AABB
+        
         # loop over the contours
-        tl_array = []
         for c in cnts:
-            # approximate the contour
+            # Find the area of  the contour
             area = cv2.contourArea(c)
-            if area > 300 and area < 3000:
+            if area > 300 and area < 3000: #Pick contour within this area range only
                 # compute the center of the contour
+                # Finding center of contours using moments
                 M = cv2.moments(c)
                 cX = int(M["m10"] / M["m00"])
                 cY = int(M["m01"] / M["m00"])
@@ -133,10 +99,14 @@ def main():
                 cv2.circle(frame_gray, (cX, cY), 7, (255, 255, 255), -1)
                 # cv2.putText(frame_gray,str(area), (cX - 20, cY - 20),
                 #     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                # Find corners of the AABB
                 x,y,w,h = cv2.boundingRect(c)
                 # draw the bounding rectangle | https://stackoverflow.com/questions/21104664/extract-all-bounding-boxes-using-opencv-python
                 # print(frame_color.shape[0])
+                
+                # Top left corner coordinate of the AABB accounting for not too tight packing
                 tl_coord = (cX-w//2 - pbibb, cY-h//2 - pbibb)
+                # Ignoring AABB which is very close to the edge
                 if (tl_coord[0] < pbibb or tl_coord[0] > frame_color.shape[0] - pbibb or tl_coord[1] < pbibb or tl_coord[1] > frame_color.shape[1] - pbibb) != 1:
                     # frame_gray = cv2.rectangle(frame_gray,(x-pbibb,y-pbibb),(x+max(w,h)+(pbibb//4),y+max(w,h)+(pbibb//4)),(0,0,255),1)
                     # roi = frame_color[y-pbibb:y+max(w,h)+(pbibb//4),x-pbibb:x+max(w,h)+(pbibb//4)]
@@ -145,10 +115,11 @@ def main():
                     # print(y-pbibb, " ", y+max(w,h)+pbibb, " ", x-pbibb, " ", x+max(w,h)+pbibb)
                     print(tl_coord[0], " ", new_width, " ", tl_coord[1], " ", new_height)
 
+                    # Extracting region of interest from the image
                     roi = frame_color[tl_coord[1]:tl_coord[1] + new_height,tl_coord[0]:tl_coord[0] + new_width]
                     frame_color = cv2.rectangle(frame_color,tl_coord,(tl_coord[0] + new_width,tl_coord[1] + new_height),(0,0,255),1)
 
-                    # cv2.imshow('ROI', roi )
+                    # Storing the roi and top left coordinate for future use
                     roi_array.append(roi)
                     tl_array.append(tl_coord)
 
@@ -156,44 +127,38 @@ def main():
 
 
         
-        # Notice the COLOR_BGR2RGB which means that the color is
-        # converted from BGR to RGB
-
         
-        
-
-        # cv2.imshow('frame', frame)
 
         #Modes: https://pillow.readthedocs.io/en/stable/handbook/concepts.html#concept-modes
         # Src: https://www.geeksforgeeks.org/convert-opencv-image-to-pil-image-in-python/
         
-        # im2 = ax2.imshow(frame_rgb_PIL)
-        # im2.set_data(frame_rgb_PIL)
-        
-
         
 
         print("Number of ROI: ", len(roi_array))
-        # batch = torch.empty((1,1,28,28))
+        # Only process if at least one roi is detected
         if (len(roi_array) != 0):
-
             batch = torch.zeros(len(roi_array),1,28,28)#,dtype=float)
-            
+            # Process for all roi
             for i in range(len(roi_array)):
                 # cv2.imshow('ROI image: ' + str(i) , roi_array[i])
                 # im3 = ax3.imshow(roi_array[i]) #Matplot lib expects input in RGB order but openCV is BGR
                 # im3.set_data(roi_array[i])
                 
+                # CV image to PIL image
                 frame_rgb_PIL = Image.fromarray(roi_array[i], mode="RGB") #Convert the cv::Mat to PIL image which is fine
+                # PIL to tensor conversion and some processing
                 frame_tensor = convert_tensor(frame_rgb_PIL) #img is 0/ 1 as soon as we convert it to a tensor from PIL image
+                # Storing the tensor into the batch
                 batch[i] = frame_tensor
 
                 # im2 = ax2.imshow(frame_tensor[0],cmap='gray', interpolation='none')
                 # im2.set_data(frame_tensor[0])
             
+            # Processing the batch with network
             with torch.no_grad():
                 handwritten_output = network(batch)
 
+            # Printing/ visualizing the results on GUI
             for i in range(len(roi_array)):
                 #create two subplots
                 ax1 = plt.subplot(len(roi_array),2,2*i+1)
@@ -207,7 +172,7 @@ def main():
                 plt.xticks([])
                 plt.yticks([])
 
-                im1 = ax1.imshow(roi_array[i]) #Matplot lib expects input in RGB order but openCV is BGR
+                im1 = ax1.imshow(roi_array[i]) 
                 im1.set_data(roi_array[i])
 
                 im2 = ax2.imshow(batch[i][0],cmap='gray', interpolation='none') #Matplot lib expects input in RGB order but openCV is BGR
@@ -221,35 +186,9 @@ def main():
 
         cv2.imshow('Original Image', frame_color)
 
-
-        # print("Tensor shape: ", frame_tensor.size())
+        # Useful info: If your tensor doesn’t contain a color channel dimension the colormap is undefined and matplotlib will use its default one. Src: https://discuss.pytorch.org/t/grayscale-image-plotted-to-have-colours/135860 
         
-        # If your tensor doesn’t contain a color channel dimension the colormap is undefined and matplotlib will use its default one. Src: https://discuss.pytorch.org/t/grayscale-image-plotted-to-have-colours/135860 
-        
-        # plt.imshow(frame)
-        # plt.imshow(frame.permute(1, 2, 0))
-        # plt.show()
-        # print("img is:" , img)
-        # plt.imshow(batch[0][0], cmap='gray', interpolation='none')
-
-        # Get the NW output on live video
-        
-
-
-        
-        # Put variable in matplotlib title: https://stackoverflow.com/questions/43757820/how-to-add-a-variable-to-python-plt-title
-        # ax2.set_title('Detected digit: {}'.format(handwritten_output.data.max(1, keepdim=True)[1][0].item()))
-        # print("Detected digit: ",handwritten_output.data.max(1, keepdim=True)[1][0].item() )
     
-        # Displaying the Scanned Image by using cv2.imshow() method
-        # Display the resulting frame
-
-        # Displaying the converted image
-        # pil_image.show()
-        
-        # the 'q' button is set as the
-        # quitting button you may use any
-        # desired button of your choice
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
     
